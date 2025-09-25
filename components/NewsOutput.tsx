@@ -67,8 +67,120 @@ export function NewsOutput({ isLoading, error, data, lastRequest, compactMode }:
           let host = (url.hostname || '').replace(/^www\./, '');
           const currentText = (link.textContent || '').trim();
           const looksLikeUrl = /^https?:\/\//i.test(currentText) || currentText === href;
-          if (!currentText || looksLikeUrl || currentText.length > 42) {
-            link.textContent = host || 'source';
+          // Also consider host-like text that ends with punctuation (e.g. "bbc.co.uk?")
+          const endsWithPunct = /[.,;:!?]+$/.test(currentText);
+          const looksLikeHostWithPunct = Boolean(host && currentText && currentText.toLowerCase().includes(host.toLowerCase()) && endsWithPunct);
+
+          if (!currentText || looksLikeUrl || currentText.length > 42 || looksLikeHostWithPunct) {
+            try {
+              const prev = link.previousSibling;
+              if (prev && prev.nodeType === Node.TEXT_NODE) {
+                const txt = (prev.textContent || '');
+                // Handle common broken markdown pattern: "[Label](" left in a text node before the link
+                // e.g. "... [The New York Times](" and the link node contains the url/host only.
+                const m = txt.match(/\[([^\]]+)\]\($/);
+                if (m) {
+                  const label = m[1];
+                  // remove the trailing bracketed fragment from the previous text node
+                  prev.textContent = txt.slice(0, m.index);
+                  // Insert the label before the link (it was intended to be link text)
+                  const labelNode = document.createTextNode(label + ' ');
+                  link.parentNode?.insertBefore(labelNode, link);
+                  // Remove any stray closing parenthesis that might follow the link
+                  const next = link.nextSibling;
+                  if (next && next.nodeType === Node.TEXT_NODE) {
+                    const nextTxt = next.textContent || '';
+                    if (/^\)/.test(nextTxt)) {
+                      next.textContent = nextTxt.replace(/^\)+\s*/, '');
+                    }
+                  }
+                } else {
+                  // If previous sibling is a text node that doesn't end with whitespace,
+                  // insert a separating space to avoid concatenation like "[BBC]bbc.co.uk".
+                  if (txt.length > 0 && !/\s$/.test(txt)) {
+                    link.parentNode?.insertBefore(document.createTextNode(' '), link);
+                  }
+                }
+              }
+            } catch (e) {
+              // ignore in case DOM operations fail
+            }
+            link.textContent = (host || 'source').trim().replace(/[\uFFFD\uFEFF\u200B]+/g, '');
+            // Helper: remove leading punctuation and stray replacement chars from a text node
+            const trimLeadingPunctFromText = (textNode: Node | null) => {
+              try {
+                if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return;
+                let t = (textNode.textContent || '');
+                // strip common leading punctuation (with optional closing parens/brackets)
+                const m = t.match(/^([)\]\.,;:!?\u2026]+)\s*/);
+                if (m) {
+                  t = t.slice(m[0].length);
+                  (textNode as any).textContent = t;
+                }
+                // remove sole replacement/zero-width chars
+                (textNode as any).textContent = (textNode as any).textContent.replace(/^[\uFFFD\uFEFF\u200B\u00A0\s]+/, '');
+              } catch (e) {}
+            };
+
+            // Helper: if next sibling is an element whose first child is punctuation-only, trim it
+            const trimLeadingPunctFromElementFirstChild = (el: Node | null) => {
+              try {
+                if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
+                const first = (el as Element).firstChild;
+                if (first && first.nodeType === Node.TEXT_NODE) {
+                  trimLeadingPunctFromText(first);
+                  // If the element now starts empty, remove that empty text node
+                  if (((first.textContent || '').trim().length) === 0) {
+                    (el as Element).removeChild(first);
+                  }
+                }
+              } catch (e) {}
+            };
+
+            try {
+              const nextNode = link.nextSibling;
+              trimLeadingPunctFromText(nextNode);
+              if (nextNode && nextNode.nodeType === Node.ELEMENT_NODE) {
+                trimLeadingPunctFromElementFirstChild(nextNode);
+              }
+
+              // Aggressive clean: remove punctuation-only siblings (up to 3) around the link
+              const removePunctSiblings = (node: Node | null) => {
+                try {
+                  let n = node;
+                  for (let i = 0; i < 3 && n; i++) {
+                    if (n.nodeType === Node.TEXT_NODE) {
+                      const txt = (n.textContent || '').trim();
+                      if (/^[\u00A0\uFEFF\uFFFD\u200B\s]*[.,;:!?\u2026]+[\u00A0\uFEFF\uFFFD\u200B\s]*$/.test(txt)) {
+                        const toRemove = n;
+                        n = n.nextSibling;
+                        toRemove.parentNode?.removeChild(toRemove);
+                        continue;
+                      }
+                    }
+                    n = n.nextSibling;
+                  }
+                } catch (e) {}
+              };
+              removePunctSiblings(link.nextSibling);
+              // Also check previous siblings for stray punctuation glued to end
+              const removePrevPunct = (node: Node | null) => {
+                try {
+                  let n = node;
+                  for (let i = 0; i < 3 && n; i++) {
+                    if (n.nodeType === Node.TEXT_NODE) {
+                      const txt = (n.textContent || '');
+                      // remove trailing punctuation-only content
+                      if (/([\u00A0\uFEFF\uFFFD\u200B\s]*[.,;:!?\u2026]+)\s*$/.test(txt)) {
+                        n.textContent = txt.replace(/([\u00A0\uFEFF\uFFFD\u200B\s]*[.,;:!?\u2026]+)\s*$/, '');
+                      }
+                    }
+                    n = n.previousSibling;
+                  }
+                } catch (e) {}
+              };
+              removePrevPunct(link.previousSibling);
+            } catch (e) {}
           }
           link.title = `Open ${host || 'link'} in new tab`;
           // Handle Google News links

@@ -45,8 +45,103 @@ export default function Home() {
           let host = (url.hostname || '').replace(/^www\./, '');
           const currentText = (link.textContent || '').trim();
           const looksLikeUrl = /^https?:\/\//i.test(currentText) || currentText === href;
-          if (!currentText || looksLikeUrl || currentText.length > 42) {
-            link.textContent = host || 'source';
+          const endsWithPunct = /[.,;:!?]+$/.test(currentText);
+          const looksLikeHostWithPunct = Boolean(host && currentText && currentText.toLowerCase().includes(host.toLowerCase()) && endsWithPunct);
+          if (!currentText || looksLikeUrl || currentText.length > 42 || looksLikeHostWithPunct) {
+            try {
+              const prev = link.previousSibling;
+              if (prev && prev.nodeType === Node.TEXT_NODE) {
+                const txt = (prev.textContent || '');
+                const m = txt.match(/\[([^\]]+)\]\($/);
+                if (m) {
+                  const label = m[1];
+                  prev.textContent = txt.slice(0, m.index);
+                  const labelNode = document.createTextNode(label + ' ');
+                  link.parentNode?.insertBefore(labelNode, link);
+                  const next = link.nextSibling;
+                  if (next && next.nodeType === Node.TEXT_NODE) {
+                    const nextTxt = next.textContent || '';
+                    if (/^\)/.test(nextTxt)) {
+                      next.textContent = nextTxt.replace(/^\)+\s*/, '');
+                    }
+                  }
+                } else {
+                  if (txt.length > 0 && !/\s$/.test(txt)) {
+                    link.parentNode?.insertBefore(document.createTextNode(' '), link);
+                  }
+                }
+              }
+            } catch {}
+            link.textContent = (host || 'source').trim().replace(/[\uFFFD\uFEFF\u200B]+/g, '');
+
+            const trimLeadingPunctFromText = (textNode: Node | null) => {
+              try {
+                if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return;
+                let t = (textNode.textContent || '');
+                const m = t.match(/^([)\]\.,;:!?\u2026]+)\s*/);
+                if (m) {
+                  t = t.slice(m[0].length);
+                  (textNode as any).textContent = t;
+                }
+                (textNode as any).textContent = (textNode as any).textContent.replace(/^[\uFFFD\uFEFF\u200B\u00A0\s]+/, '');
+              } catch (e) {}
+            };
+
+            const trimLeadingPunctFromElementFirstChild = (el: Node | null) => {
+              try {
+                if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
+                const first = (el as Element).firstChild;
+                if (first && first.nodeType === Node.TEXT_NODE) {
+                  trimLeadingPunctFromText(first);
+                  if (((first.textContent || '').trim().length) === 0) {
+                    (el as Element).removeChild(first);
+                  }
+                }
+              } catch (e) {}
+            };
+
+            try {
+              const nextNode = link.nextSibling;
+              trimLeadingPunctFromText(nextNode);
+              if (nextNode && nextNode.nodeType === Node.ELEMENT_NODE) {
+                trimLeadingPunctFromElementFirstChild(nextNode);
+              }
+
+              const removePunctSiblings = (node: Node | null) => {
+                try {
+                  let n = node;
+                  for (let i = 0; i < 3 && n; i++) {
+                    if (n.nodeType === Node.TEXT_NODE) {
+                      const txt = (n.textContent || '').trim();
+                      if (/^[\u00A0\uFEFF\uFFFD\u200B\s]*[.,;:!?\u2026]+[\u00A0\uFEFF\uFFFD\u200B\s]*$/.test(txt)) {
+                        const toRemove = n;
+                        n = n.nextSibling;
+                        toRemove.parentNode?.removeChild(toRemove);
+                        continue;
+                      }
+                    }
+                    n = n.nextSibling;
+                  }
+                } catch (e) {}
+              };
+              removePunctSiblings(link.nextSibling);
+
+              const removePrevPunct = (node: Node | null) => {
+                try {
+                  let n = node;
+                  for (let i = 0; i < 3 && n; i++) {
+                    if (n.nodeType === Node.TEXT_NODE) {
+                      const txt = (n.textContent || '');
+                      if (/([\u00A0\uFEFF\uFFFD\u200B\s]*[.,;:!?\u2026]+)\s*$/.test(txt)) {
+                        n.textContent = txt.replace(/([\u00A0\uFEFF\uFFFD\u200B\s]*[.,;:!?\u2026]+)\s*$/, '');
+                      }
+                    }
+                    n = n.previousSibling;
+                  }
+                } catch (e) {}
+              };
+              removePrevPunct(link.previousSibling);
+            } catch {}
           }
           link.title = `Open ${host || 'link'} in new tab`;
           const isGNews = /(^|\.)news\.google\.com$/i.test(url.hostname || '');

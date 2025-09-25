@@ -2,10 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  env: {
-    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-    GEMINI_MODEL: process.env.GEMINI_MODEL,
-  },
+  // Do not expose sensitive secrets here. Server-side code should read process.env.GEMINI_API_KEY directly.
+  // If you must expose a model selection to the client, prefix it with NEXT_PUBLIC_. Avoid embedding API keys.
   headers: async () => {
     return [
       {
