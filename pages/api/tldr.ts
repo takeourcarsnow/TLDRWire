@@ -68,6 +68,13 @@ const parser = new Parser({
 const CACHE = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 1000 * 60 * 3; // 3 minutes
 
+// Short-lived per-feed response cache to avoid refetching the same RSS
+// URLs repeatedly within a small window. This helps prevent transient
+// rate-limiting from external providers (eg. Google News) when our
+// function runs frequently.
+const FEED_CACHE = new Map<string, { ts: number; value: any }>();
+const FEED_CACHE_TTL_MS = 1000 * 60 * 10; // 10 minutes
+
 // Per-request timeout to avoid platform FUNCTION_INVOCATION_TIMEOUTs and give
 // the client a predictable error when upstream calls are slow.
 // Increase to 45s to give the remote LLM more time on slow networks.
@@ -165,11 +172,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       let workerIndex = 0;
 
       const fetchWithRetries = async (u: string) => {
+        // Check per-feed cache first
+        try {
+          const cached = FEED_CACHE.get(u);
+          if (cached && Date.now() - cached.ts < FEED_CACHE_TTL_MS) {
+            requestLog.debug('feed cache hit', { url: u });
+            return { status: 'fulfilled', value: cached.value };
+          }
+        } catch (err) {
+          // ignore cache lookup errors
+        }
         let lastErr: any = null;
         const maxAttempts = 2;
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           try {
             const v = await parser.parseURL(u);
+            // Store successful fetches in the per-feed cache
+            try { FEED_CACHE.set(u, { ts: Date.now(), value: v }); } catch (e) {}
             return { status: 'fulfilled', value: v };
           } catch (e: any) {
             lastErr = e;
