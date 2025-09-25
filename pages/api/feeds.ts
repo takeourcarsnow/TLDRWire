@@ -1,0 +1,149 @@
+import { REGION_MAP, FEED_LANG_MAP, CATEGORY_QUERIES, TOPIC_MAP, GLOBAL_GLS } from './constants';
+
+export interface FeedUrlParams {
+  gl: string;
+  hl: string;
+  ceid: string;
+}
+
+export interface RegionConfig {
+  name: string;
+  gl: string;
+  hl: string;
+  ceid: string;
+  geo: string;
+}
+
+export interface SearchFeedParams extends FeedUrlParams {
+  q: string;
+}
+
+export interface GeoFeedParams extends FeedUrlParams {
+  geo: string;
+}
+
+export interface BuildFeedUrlsParams {
+  region: string;
+  category?: string;
+  query?: string;
+  hours?: number;
+  lang: string;
+}
+
+export function getRegionConfig(regionKey: string, lang: string): RegionConfig {
+  const def = REGION_MAP[regionKey] || REGION_MAP.global;
+  const language = (lang || "en").toLowerCase();
+  const gl = def.gl;
+  const hl = language; // UI language
+  const ceid = `${gl}:${language}`; // country:language
+  const geo = def.geo;
+  return { name: def.name, gl, hl, ceid, geo };
+}
+
+export function buildSearchFeedURL({ q, hl, gl, ceid }: SearchFeedParams): string {
+  const base = "https://news.google.com/rss/search";
+  const params = new URLSearchParams({ q, hl, gl, ceid });
+  return `${base}?${params.toString()}`;
+}
+
+export function buildGeoFeedURL({ geo, hl, gl, ceid }: GeoFeedParams): string {
+  const base = `https://news.google.com/rss/headlines/section/geo/${encodeURIComponent(geo)}`;
+  const params = new URLSearchParams({ hl, gl, ceid });
+  return `${base}?${params.toString()}`;
+}
+
+export function buildTopFeedURL({ hl, gl, ceid }: FeedUrlParams): string {
+  const base = `https://news.google.com/rss`;
+  const params = new URLSearchParams({ hl, gl, ceid });
+  return `${base}?${params.toString()}`;
+}
+
+export function buildTopicFeedURL(topicCode: string, { hl, gl, ceid }: FeedUrlParams): string {
+  const base = `https://news.google.com/rss/topics/${topicCode}`;
+  const params = new URLSearchParams({ hl, gl, ceid });
+  return `${base}?${params.toString()}`;
+}
+
+export function buildCategoryFeedURL(category: string, { hl, gl, ceid }: FeedUrlParams): string {
+  const query = CATEGORY_QUERIES[category];
+  if (!query) {
+    return buildTopFeedURL({ hl, gl, ceid });
+  }
+
+  return buildSearchFeedURL({ q: query, hl, gl, ceid });
+}
+
+export function buildFeedUrls({ region, category, query, hours, lang }: BuildFeedUrlsParams): string[] {
+  const config = getRegionConfig(region, lang);
+  const urls: string[] = [];
+
+  if (query) {
+    urls.push(buildSearchFeedURL({ q: query, ...config }));
+  }
+
+  if (category && TOPIC_MAP[category]) {
+    const topicCode = TOPIC_MAP[category];
+    urls.push(buildTopicFeedURL(topicCode, config));
+  }
+
+  if (!query && !category) {
+    urls.push(buildTopFeedURL(config));
+    if (config.geo !== 'World') {
+      urls.push(buildGeoFeedURL({ geo: config.geo, hl: config.hl, gl: config.gl, ceid: config.ceid }));
+    }
+  }
+
+  return urls;
+}
+
+export function addLtFeedsToBuild(urls: string[], config: RegionConfig, query?: string, category?: string): void {
+  const ltLangs = FEED_LANG_MAP.lithuania || [];
+  for (const ltLang of ltLangs) {
+    const ltConfig = getRegionConfig('lithuania', ltLang);
+    if (query) {
+      urls.push(buildSearchFeedURL({ q: query, ...ltConfig }));
+    } else if (category && TOPIC_MAP[category]) {
+      const topicCode = TOPIC_MAP[category];
+      urls.push(buildTopicFeedURL(topicCode, ltConfig));
+    } else {
+      urls.push(buildTopFeedURL(ltConfig));
+      urls.push(buildGeoFeedURL({ geo: ltConfig.geo, hl: ltConfig.hl, gl: ltConfig.gl, ceid: ltConfig.ceid }));
+    }
+  }
+}
+
+export function addGlobalFeeds(urls: string[], config: RegionConfig, query?: string, category?: string): void {
+  for (const gl of GLOBAL_GLS) {
+    const globalConfig = { ...config, gl };
+    if (query) {
+      urls.push(buildSearchFeedURL({ q: query, ...globalConfig }));
+    } else if (category && TOPIC_MAP[category]) {
+      const topicCode = TOPIC_MAP[category];
+      urls.push(buildTopicFeedURL(topicCode, globalConfig));
+    } else {
+      urls.push(buildTopFeedURL(globalConfig));
+    }
+  }
+}
+
+export function resolveCategory(categoryKey?: string): string {
+  if (!categoryKey || categoryKey === 'top' || categoryKey === 'world') {
+    return 'top';
+  }
+  return CATEGORY_QUERIES[categoryKey] ? categoryKey : 'top';
+}
+
+export function buildAllFeeds({ region, category, query, hours, lang }: BuildFeedUrlsParams): string[] {
+  const config = getRegionConfig(region, lang);
+  const urls = buildFeedUrls({ region, category, query, hours, lang });
+
+  if (region === 'lithuania') {
+    addLtFeedsToBuild(urls, config, query, category);
+  }
+
+  if (!query) {
+    addGlobalFeeds(urls, config, query, category);
+  }
+
+  return Array.from(new Set(urls));
+}

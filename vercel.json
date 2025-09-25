@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "functions": {
+    "pages/api/tldr.js": {
+      "maxDuration": 60
+    },
+    "pages/api/healthz.js": {
+      "maxDuration": 10
+    }
+  },
+  "redirects": [
+    {
+      "source": "/health",
+      "destination": "/api/healthz",
+      "permanent": false
+    }
+  ]
+}

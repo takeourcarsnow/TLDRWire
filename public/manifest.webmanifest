@@ -1,0 +1,31 @@
+{
+  "name": "TLDRWire",
+  "short_name": "TLDRWire",
+  "description": "AI-powered news summarizer providing quick, intelligent rundowns of current events.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0f14",
+  "theme_color": "#4da3ff",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Morning Brief",
+      "short_name": "Morning",
+      "url": "/?preset=morning",
+      "description": "Quick morning global brief"
+    },
+    {
+      "name": "Tech Digest",
+      "short_name": "Tech",
+      "url": "/?preset=tech",
+      "description": "Technology roundup"
+    }
+  ]
+}
