@@ -1,4 +1,4 @@
-import { REGION_MAP, FEED_LANG_MAP, CATEGORY_QUERIES, TOPIC_MAP, GLOBAL_GLS } from './constants';
+import { REGION_MAP, FEED_LANG_MAP, CATEGORY_QUERIES, TOPIC_MAP, GLOBAL_GLS, FALLBACK_FEEDS } from './constants';
 
 export interface FeedUrlParams {
   gl: string;
@@ -146,4 +146,39 @@ export function buildAllFeeds({ region, category, query, hours, lang }: BuildFee
   }
 
   return Array.from(new Set(urls));
+}
+
+// Returns Google News feeds plus a conservative set of fallback publisher RSS feeds.
+// The combined list is de-duplicated and returned in a stable order: google news urls
+// first, then fallbacks for the requested category (if any).
+export function getAllFeedsWithFallbacks(params: BuildFeedUrlsParams, maxFeeds = 16): string[] {
+  const googleUrls = buildAllFeeds(params);
+  const category = params.category ? resolveCategory(params.category) : 'top';
+  const fallbacks = FALLBACK_FEEDS[category] || FALLBACK_FEEDS['top'] || [];
+
+  // Include region-specific fallbacks (e.g., Lithuanian outlets) when relevant
+  let regionFallbacks: string[] = [];
+  try {
+    if ((params.region || '').toLowerCase() === 'lithuania') {
+      regionFallbacks = FALLBACK_FEEDS['lithuania'] || [];
+    }
+  } catch (e) {
+    regionFallbacks = [];
+  }
+
+  // Merge while preserving googleUrls first. Append category fallbacks, then region-specific ones.
+  const merged = [...googleUrls, ...fallbacks, ...regionFallbacks];
+
+  // De-duplicate while preserving order.
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const u of merged) {
+    if (!seen.has(u)) {
+      seen.add(u);
+      out.push(u);
+    }
+    if (out.length >= maxFeeds) break;
+  }
+
+  return out;
 }

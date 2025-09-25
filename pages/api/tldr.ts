@@ -3,7 +3,8 @@
 import Parser from "rss-parser";
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pickClientLocale, type ParsedLocale } from "./locale";
-import { getRegionConfig, buildAllFeeds, type RegionConfig } from "./feeds";
+import { getRegionConfig, buildAllFeeds, getAllFeedsWithFallbacks, resolveCategory, type RegionConfig } from "./feeds";
+import { FALLBACK_FEEDS } from './constants';
 import { timeOK, truncate, domainFromLink, normalizeGoogleNewsLink, calculateCategoryRelevance, dedupeArticles, dedupeSummaryBullets, type Article } from "./utils";
 import { SPORT_TYPES } from './constants';
 import { buildPrompt, generateSummary, GEMINI_MODEL, getModel, type LengthConfig } from "./llm";
@@ -72,8 +73,11 @@ const CACHE_TTL_MS = 1000 * 60 * 3; // 3 minutes
 // URLs repeatedly within a small window. This helps prevent transient
 // rate-limiting from external providers (eg. Google News) when our
 // function runs frequently.
-const FEED_CACHE = new Map<string, { ts: number; value: any }>();
+const FEED_CACHE = new Map<string, { ts: number; value?: any; failed?: boolean; reason?: string }>();
 const FEED_CACHE_TTL_MS = 1000 * 60 * 60; // 60 minutes
+const FEED_FAIL_TTL_MS = 1000 * 60 * 5; // 5 minutes negative cache for failing feeds
+const FEED_FAIL_COUNTS = new Map<string, { count: number; ts: number }>();
+const FEED_FAIL_BLACKLIST_THRESHOLD = 3; // after N failures, blacklist longer
 
 // Per-request timeout to avoid platform FUNCTION_INVOCATION_TIMEOUTs and give
 // the client a predictable error when upstream calls are slow.
@@ -156,7 +160,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const compute = async (): Promise<{ status: number; payload: ApiResponse }> => {
       let payloadErrorForLogs: string | undefined = undefined;
-      const urls = buildAllFeeds({ region, category, query, hours: timeframeHours, lang: language });
+  // Build feed URLs including fallbacks from known publisher RSS feeds.
+  const urls = getAllFeedsWithFallbacks({ region, category, query, hours: timeframeHours, lang: language }, 16);
       requestLog.debug('feed urls built', { urls, sampleUrl: urls[0] });
       const regionCfgForLinks = getRegionConfig(region, language);
 
@@ -175,37 +180,116 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
         urlsToFetch = [...keep, ...rest.slice(0, Math.max(0, MAX_FEEDS - keep.length))];
       }
+      // Deprioritize Google News-style feeds (they are often slower or rate-limited).
+      try {
+        const googleUrls: string[] = [];
+        const otherUrls: string[] = [];
+        for (const u of urlsToFetch) {
+          try { const h = new URL(u).hostname; if (h && h.includes('news.google.com')) { googleUrls.push(u); continue; } } catch {}
+          if (typeof u === 'string' && u.includes('news.google.com')) { googleUrls.push(u); continue; }
+          otherUrls.push(u);
+        }
+        if (googleUrls.length) {
+          requestLog.info('deprioritizing google news feeds', { googleCount: googleUrls.length, total: urlsToFetch.length });
+          urlsToFetch = [...otherUrls, ...googleUrls];
+        }
+      } catch (e) {
+        // ignore any partitioning errors
+      }
+
       const stopFeeds = logger.startTimer('fetch feeds', { urlCount: urlsToFetch.length });
 
   // Fetch feeds with bounded concurrency and multiple retries per-feed.
   // Use a very small concurrency to minimize chance of upstream rate-limiting.
   const concurrency = 2;
 
-  const results: Array<any> = new Array(urlsToFetch.length);
+    const results: Array<any> = new Array(urlsToFetch.length);
   let workerIndex = 0;
+    let stopFetching = false; // flip to true when we hit the soft timeout so workers stop pulling new indexes
 
-      const fetchWithRetries = async (u: string) => {
+    const fetchWithRetries = async (u: string) => {
         // Check per-feed cache first
         try {
           const cached = FEED_CACHE.get(u);
-          if (cached && Date.now() - cached.ts < FEED_CACHE_TTL_MS) {
-            requestLog.debug('feed cache hit', { url: u });
-            return { status: 'fulfilled', value: cached.value };
+          if (cached) {
+            const age = Date.now() - cached.ts;
+            if (cached.failed) {
+              // use a shorter TTL for negative cache entries
+              if (age < FEED_FAIL_TTL_MS) {
+                requestLog.debug('feed negative-cache hit, skipping', { url: u, age });
+                return { status: 'rejected', reason: new Error('recent fetch failed') };
+              }
+              // expired negative cache falls through to retry
+            } else {
+              if (age < FEED_CACHE_TTL_MS) {
+                requestLog.debug('feed cache hit', { url: u });
+                return { status: 'fulfilled', value: cached.value };
+              }
+            }
           }
         } catch (err) {
           // ignore cache lookup errors
         }
         let lastErr: any = null;
         const maxAttempts = 3;
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          try {
-            const v = await parser.parseURL(u);
-            // Store successful fetches in the per-feed cache
-            try { FEED_CACHE.set(u, { ts: Date.now(), value: v }); } catch (e) {}
-            return { status: 'fulfilled', value: v };
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          const isGoogle = (() => {
+            try { return new URL(u).hostname === 'news.google.com'; } catch { return u.includes('news.google.com'); }
+          })();
+            const attemptStart = Date.now();
+            try {
+              if (isGoogle) requestLog.debug('google feed fetch attempt', { url: u, attempt });
+
+              // Use fetch with AbortController and a per-request timeout so we can cancel stuck requests.
+              const fetchWithTimeout = async (url: string, ms: number) => {
+                const controller = new AbortController();
+                const id = setTimeout(() => controller.abort(), ms);
+                try {
+                  const resp = await fetch(url, {
+                    signal: controller.signal,
+                    headers: {
+                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119 Safari/537.36',
+                      'Accept': 'application/rss+xml, application/xml, text/xml, */*;q=0.1'
+                    }
+                  } as any);
+                  clearTimeout(id);
+                  if (!resp.ok) {
+                    const text = await resp.text().catch(() => '');
+                    const err = new Error(`Status code ${resp.status}` + (text ? ` - ${text.slice(0,200)}` : ''));
+                    (err as any).status = resp.status;
+                    throw err;
+                  }
+                  return await resp.text();
+                } catch (e) {
+                  clearTimeout(id);
+                  throw e;
+                }
+              };
+
+              // Fetch raw XML and parse with rss-parser.parseString for better control
+              const raw = await fetchWithTimeout(u, Math.max(8000, Math.floor(12000)));
+              // Detect obvious HTML responses (Google sometimes returns redirects/pages instead of RSS)
+              const rawLower = (raw || '').toLowerCase().slice(0, 2000);
+              if (rawLower.includes('<html') || rawLower.includes('<!doctype') || rawLower.includes('window.location') || rawLower.includes('redirect')) {
+                const msg = `Non-RSS HTML response from ${u}`;
+                const err = new Error(msg);
+                (err as any).raw = raw;
+                throw err;
+              }
+              const v = await parser.parseString(raw);
+              const ms = Date.now() - attemptStart;
+              // Store successful fetches in the per-feed cache
+              try { FEED_CACHE.set(u, { ts: Date.now(), value: v }); } catch (e) {}
+              if (isGoogle) requestLog.debug('google feed fetch success', { url: u, ms, items: (v?.items?.length || 0) });
+              // clear fail counters on success
+              try { FEED_FAIL_COUNTS.delete(u); } catch {}
+              try { FEED_CACHE.set(u, { ts: Date.now(), value: v }); } catch (e) {}
+              return { status: 'fulfilled', value: v };
           } catch (e: any) {
             lastErr = e;
-            requestLog.debug('feed fetch attempt failed', { url: u, attempt, message: String(e?.message || e) });
+            const msg = String(e?.message || e);
+            requestLog.debug('feed fetch attempt failed', { url: u, attempt, message: msg });
+            if (isGoogle) requestLog.debug('google feed fetch attempt failed', { url: u, attempt, message: msg });
             if (attempt < maxAttempts) {
               // exponential backoff with small random jitter
               const base = Math.min(1500, 300 * Math.pow(2, attempt - 1));
@@ -214,13 +298,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
           }
         }
+        // increment fail count
+        try {
+          const prev = FEED_FAIL_COUNTS.get(u) || { count: 0, ts: Date.now() };
+          const now = Date.now();
+          const windowMs = 1000 * 60 * 10; // 10-minute sliding window
+          if (now - prev.ts > windowMs) {
+            prev.count = 1; prev.ts = now;
+          } else {
+            prev.count = prev.count + 1; prev.ts = now;
+          }
+          FEED_FAIL_COUNTS.set(u, prev);
+          const failedEntry: any = { ts: Date.now(), failed: true, reason: String(lastErr?.message || lastErr) };
+          // If we've hit repeated failures, keep a longer negative cache to avoid thrashing
+          if (prev.count >= FEED_FAIL_BLACKLIST_THRESHOLD) {
+            failedEntry.ts = Date.now();
+            // set longer TTL by leaving ts as now and relying on FEED_FAIL_TTL_MS which is longer (5m)
+            requestLog.info('blacklisting failing feed temporarily', { url: u, failCount: prev.count });
+          }
+          try { FEED_CACHE.set(u, failedEntry); } catch {}
+        } catch (e) {}
         return { status: 'rejected', reason: lastErr };
       };
 
       const worker = async () => {
         while (true) {
+          if (stopFetching) break;
           const i = workerIndex++;
           if (i >= urlsToFetch.length) break;
+          if (stopFetching) break;
           const u = urlsToFetch[i];
           try {
             results[i] = await fetchWithRetries(u);
@@ -230,16 +336,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
       };
 
-      // Run workers under the request timeout to bound total time spent
-      await withTimeout(
-        Promise.all(new Array(Math.min(concurrency, urlsToFetch.length)).fill(0).map(() => worker())),
-        Math.max(REQUEST_TIMEOUT_MS - 8000, 8000),
-        () => logger.warn('Feed fetching taking too long, aborting')
-      );
-      const perFeedCounts = (results as any[]).map((r: any) => (r.status === 'fulfilled' ? (r.value?.items?.length || 0) : -1));
-      // Also capture rejection reasons for better observability on Vercel
-      const perFeedErrors = (results as any[]).map((r: any) => (r.status === 'rejected' ? String(r.reason || r.reason?.message || 'unknown') : null));
+      // Run workers but don't let a slow upstream reject the whole request — use a "soft" timeout
+      const workersPromise = Promise.all(new Array(Math.min(concurrency, urlsToFetch.length)).fill(0).map(() => worker()));
+      const feedTimeoutMs = Math.max(REQUEST_TIMEOUT_MS - 8000, 8000);
+      let feedTimedOut = false;
+      await Promise.race([
+        workersPromise,
+        new Promise<void>((resolve) => setTimeout(() => { feedTimedOut = true; stopFetching = true; try { logger.warn('Feed fetching taking too long, aborting'); } catch {} ; resolve(); }, feedTimeoutMs))
+      ]);
+      if (feedTimedOut) {
+        requestLog.warn('feed fetching soft-timeout reached; continuing with partial results', { attempted: urlsToFetch.length, fetched: results.filter(r=>r && r.status === 'fulfilled').length });
+      }
+  const perFeedCounts = (results as any[]).map((r: any) => (r && r.status === 'fulfilled' ? (r.value?.items?.length || 0) : -1));
+  // Also capture rejection reasons for better observability on Vercel
+  const perFeedErrors = (results as any[]).map((r: any) => (r && r.status === 'rejected' ? String(r.reason || r.reason?.message || 'unknown') : null));
       stopFeeds({ perFeedCounts, perFeedErrors });
+      // Debugging: if many google news feeds failed, log concise summary for investigation
+      try {
+        const googleFailures = results.map((r:any, idx:number) => {
+          try { const u = urlsToFetch[idx]; return { url: u, failed: !(r && r.status === 'fulfilled') }; } catch { return null; }
+        }).filter(Boolean) as { url: string; failed: boolean }[];
+        const googleOnly = googleFailures.filter(g => g.url && g.url.includes('news.google.com'));
+        const failedCount = googleOnly.filter(g => g.failed).length;
+        if (googleOnly.length && failedCount >= Math.max(1, Math.floor(googleOnly.length / 2))) {
+          requestLog.warn('many google news fetches failed', { totalGoogle: googleOnly.length, failedGoogle: failedCount, sampleUrls: googleOnly.slice(0,6).map(x=>x.url) });
+        }
+      } catch (e) {
+        // ignore logging errors
+      }
       if (perFeedErrors.some(Boolean)) {
         // Log sample errors (avoid spamming logs with huge arrays)
         requestLog.debug('feed fetch errors', { sampleErrors: perFeedErrors.filter(Boolean).slice(0, 5) });
@@ -247,11 +371,71 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       
       let items: any[] = [];
       for (const r of results) {
-        if (r.status === "fulfilled" && r.value?.items?.length) {
+        if (r && r.status === "fulfilled" && r.value?.items?.length) {
           items.push(...r.value.items);
         }
       }
       requestLog.info('feed items aggregated', { itemCount: items.length });
+
+      // If we couldn't fetch any items from the primary feeds (e.g. Google
+      // News), attempt a second pass using publisher fallback RSS URLs
+      // (BBC/Reuters/... and region-specific sources such as Lithuanian outlets).
+      let usedFallbacks = false;
+      if (items.length === 0) {
+        try {
+          requestLog.info('no items from initial feeds, attempting publisher fallback feeds');
+          const categoryKey = resolveCategory(category);
+          const categoryFallbacks = FALLBACK_FEEDS[categoryKey] || FALLBACK_FEEDS['top'] || [];
+          const regionFallbacks = (region && region.toLowerCase() === 'lithuania') ? (FALLBACK_FEEDS['lithuania'] || []) : [];
+          const fallbackUrls = Array.from(new Set([...categoryFallbacks, ...regionFallbacks]));
+
+          if (fallbackUrls.length) {
+            usedFallbacks = true;
+            requestLog.debug('publisher fallback urls', { count: fallbackUrls.length, urls: fallbackUrls.slice(0, 8) });
+
+            // Prepare results array and run workers (reuse same concurrency)
+            const fbResults: any[] = new Array(fallbackUrls.length);
+            let fbIndex = 0;
+            const fbWorker = async () => {
+              while (true) {
+                const i = fbIndex++;
+                if (i >= fallbackUrls.length) break;
+                const u = fallbackUrls[i];
+                try {
+                  fbResults[i] = await fetchWithRetries(u);
+                } catch (e:any) {
+                  fbResults[i] = { status: 'rejected', reason: e };
+                }
+              }
+            };
+
+            // Run fallback workers with the same "soft" timeout behavior so we can continue
+            const fbWorkersPromise = Promise.all(new Array(Math.min(concurrency, fallbackUrls.length)).fill(0).map(() => fbWorker()));
+            const fbTimeoutMs = Math.max(REQUEST_TIMEOUT_MS - 8000, 8000);
+            let fbTimedOut = false;
+            await Promise.race([
+              fbWorkersPromise,
+              new Promise<void>((resolve) => setTimeout(() => { fbTimedOut = true; try { logger.warn('Fallback feed fetching taking too long, aborting'); } catch {} ; resolve(); }, fbTimeoutMs))
+            ]);
+            if (fbTimedOut) {
+              requestLog.warn('fallback feed fetching soft-timeout reached; continuing with partial fallback results', { attempted: fallbackUrls.length, fetched: fbResults.filter(r=>r && r.status === 'fulfilled').length });
+            }
+
+            const fbCounts = fbResults.map((r:any) => (r && r.status === 'fulfilled' ? (r.value?.items?.length || 0) : -1));
+            const fbErrors = fbResults.map((r:any) => (r && r.status === 'rejected' ? String(r.reason || r.reason?.message || 'unknown') : null));
+            requestLog.info('publisher fallback fetch results', { fbCounts, sampleErrors: fbErrors.filter(Boolean).slice(0,5) });
+
+            for (const r of fbResults) {
+              if (r && r.status === 'fulfilled' && r.value?.items?.length) {
+                items.push(...r.value.items);
+              }
+            }
+            requestLog.info('items after fallback aggregation', { itemCount: items.length });
+          }
+        } catch (fbErr) {
+          requestLog.debug('fallback fetch failed', { message: String(fbErr) });
+        }
+      }
 
       const maxAge = Math.max(1, Math.min(72, Number(timeframeHours) || 24));
       const normalized: Article[] = [];

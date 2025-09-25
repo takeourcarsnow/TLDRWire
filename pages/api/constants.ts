@@ -134,6 +134,51 @@ export const TOPIC_MAP: { [key: string]: string } = {
 // When region is global, fetch across multiple GL markets to reduce US bias
 export const GLOBAL_GLS = ['US', 'GB', 'CA', 'AU', 'DE', 'FR', 'IT', 'ES', 'JP', 'IN', 'BR', 'MX', 'RU', 'CN', 'KR', 'PL', 'NL', 'SE', 'NO', 'FI', 'DK', 'IE', 'NZ', 'ZA', 'SG', 'HK', 'TW', 'TH', 'VN', 'PH', 'ID', 'MY', 'AE', 'SA', 'EG', 'IL', 'TR', 'UA', 'CZ', 'HU', 'RO', 'BG', 'HR', 'SI', 'SK', 'EE', 'LV', 'LT'];
 
+// Fallback public RSS feeds from major publishers. These are used when
+// Google News RSS results are unavailable or failing from the server.
+// Keep the list conservative (stable, well-known URLs). We map by
+// category where possible; each entry is an array of RSS feed URLs.
+export const FALLBACK_FEEDS: { [key: string]: string[] } = {
+  top: [
+    'https://feeds.bbci.co.uk/news/world/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
+    'https://www.theguardian.com/world/rss',
+    'https://www.reuters.com/world/rss.xml'
+  ],
+  world: [
+    'https://feeds.bbci.co.uk/news/world/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
+    'https://www.theguardian.com/world/rss',
+    'https://www.reuters.com/world/rss.xml'
+  ],
+  technology: [
+    'https://feeds.bbci.co.uk/news/technology/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml',
+    'https://www.theguardian.com/technology/rss'
+  ],
+  business: [
+    'https://feeds.bbci.co.uk/news/business/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml',
+    'https://www.theguardian.com/business/rss'
+  ],
+  science: [
+    'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml',
+    'https://www.theguardian.com/science/rss'
+  ],
+  sports: [
+    'https://feeds.bbci.co.uk/sport/rss.xml?edition=uk',
+    'https://www.theguardian.com/uk/sport/rss'
+  ]
+  ,
+  // Lithuania-specific fallback feeds (general/top Lithuanian outlets)
+  lithuania: [
+    'https://www.lrt.lt/rss',
+    'https://www.delfi.lt/rss.xml',
+    'https://www.15min.lt/rss',
+    'https://www.lrytas.lt/rss'
+  ]
+};
+
 // Lightweight sport type detection to diversify sports coverage
 export const SPORT_TYPES: { [key: string]: string[] } = {
   american_football: ['nfl', 'american football', 'ncaaf', 'college football', 'super bowl', 'quarterback', 'touchdown'],
