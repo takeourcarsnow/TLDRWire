@@ -5,9 +5,9 @@ import { pickClientLocale, type ParsedLocale } from './locale';
 import logger from './logger';
 import { getModel, GEMINI_MODEL } from './llm';
 import { dedupeSummaryBullets } from './utils';
-import { fetchFeeds } from './tldr/fetchFeeds';
-import { processArticles } from './tldr/processArticles';
-import { summarizeWithLLM } from './tldr/summarize';
+import { fetchFeeds } from './fetchFeeds';
+import { processArticles } from './processArticles';
+import { summarizeWithLLM } from './summarize';
 
 interface RequestBody {
   region?: string;
@@ -99,8 +99,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       let payloadErrorForLogs: string | undefined = undefined;
       const feeds = await fetchFeeds({ region, category, query, hours: timeframeHours, language, loggerContext: { uiLocale }, maxFeeds: 16 });
 
-      const processed = processArticles({ items: feeds.items, region, category, timeframeHours, language, limit });
-      const { topItems, cleanTopItems, maxAge } = processed;
+  const processed = await processArticles({ feedsResult: feeds, maxArticles: limit, region, category, query, loggerContext: { uiLocale } });
+  const { topItems, cleanTopItems, maxAge } = processed;
 
       if (topItems.length === 0) {
         requestLog.warn('no articles after filtering/dedupe', { urls: feeds.urls, perFeedCounts: feeds.perFeedCounts, perFeedErrors: feeds.perFeedErrors });
@@ -131,7 +131,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
       const MAX_CONTEXT_ITEMS = 8;
       const contextItems = topItems.slice(0, Math.min(MAX_CONTEXT_ITEMS, topItems.length));
-  const contextLines = contextItems.map((a: any, idx) => {
+  const contextLines = contextItems.map((a: any, idx: number) => {
         const dateStr = a.isoDate ? new Date(a.isoDate).toLocaleString(uiLocale, { dateStyle: 'medium', timeStyle: 'short' }) : '';
         const snip = (a.snippet || '').replace(/\s+/g, ' ');
         return `#${idx + 1} ${a.title}\nSource: ${a.source} | Published: ${dateStr}\nLink: ${a.link}\nSummary: ${snip}`;

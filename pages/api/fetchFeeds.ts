@@ -1,7 +1,7 @@
 import Parser from 'rss-parser';
-import logger from '../logger';
-import { getAllFeedsWithFallbacks, resolveCategory } from '../feeds';
-import { FALLBACK_FEEDS } from '../constants';
+import logger from './logger';
+import { getAllFeedsWithFallbacks, resolveCategory } from './feeds';
+import { FALLBACK_FEEDS } from './constants';
   // Region config kept previously for potential link normalization; currently unused.
 
 // Per-feed caches and failure tracking (module-scoped to persist across invocations)
@@ -43,7 +43,6 @@ export async function fetchFeeds(opts: {
   const urls = getAllFeedsWithFallbacks({ region, category, query, hours, lang: language }, maxFeeds);
   requestLog.debug('feed urls built', { urls, sampleUrl: urls[0] });
   // regionCfgForLinks previously used for link normalization; safe to remove until needed
-  // const regionCfgForLinks = getRegionConfig(region, language);
 
   // Limit feeds and deprioritize google news
   let urlsToFetch = urls;

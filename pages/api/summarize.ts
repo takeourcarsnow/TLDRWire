@@ -1,6 +1,6 @@
-import { buildPrompt, generateSummary, GEMINI_MODEL, getModel, type LengthConfig } from '../llm';
-import logger from '../logger';
-import { dedupeSummaryBullets } from '../utils';
+import { buildPrompt, generateSummary, GEMINI_MODEL, getModel, type LengthConfig } from './llm';
+import logger from './logger';
+import { dedupeSummaryBullets } from './utils';
 
 export async function summarizeWithLLM(opts: {
   regionName: string;
@@ -12,7 +12,7 @@ export async function summarizeWithLLM(opts: {
   lengthPreset: string;
   lengthConfig: LengthConfig;
   contextLines: string[];
-}): Promise<{ summary: string; llmError?: string }>{
+}): Promise<{ summary: string; llmError?: string }> {
   const { regionName, catName, maxAge, style, language, uiLocale, lengthPreset, lengthConfig, contextLines } = opts;
   if (!getModel()) throw new Error('GEMINI_API_KEY missing');
   const suggestedBullets = Math.round(Math.min(lengthConfig.bulletsMax, Math.max(lengthConfig.bulletsMin, 6)));
