@@ -73,7 +73,7 @@ const CACHE_TTL_MS = 1000 * 60 * 3; // 3 minutes
 // rate-limiting from external providers (eg. Google News) when our
 // function runs frequently.
 const FEED_CACHE = new Map<string, { ts: number; value: any }>();
-const FEED_CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
+const FEED_CACHE_TTL_MS = 1000 * 60 * 60; // 60 minutes
 
 // Per-request timeout to avoid platform FUNCTION_INVOCATION_TIMEOUTs and give
 // the client a predictable error when upstream calls are slow.
@@ -160,15 +160,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       requestLog.debug('feed urls built', { urls, sampleUrl: urls[0] });
       const regionCfgForLinks = getRegionConfig(region, language);
 
-      const stopFeeds = logger.startTimer('fetch feeds', { urlCount: urls.length });
+      // Allow sampling/trimming of feed list to avoid large bursts
+      let urlsToFetch = urls;
+      const MAX_FEEDS = 16;
+      if (urlsToFetch.length > MAX_FEEDS) {
+        requestLog.info('too many feeds, sampling to reduce upstream load', { originalCount: urlsToFetch.length, max: MAX_FEEDS });
+        // Keep a few initial local/top feeds, then sample the rest
+        const keep = urlsToFetch.slice(0, Math.min(4, urlsToFetch.length));
+        const rest = urlsToFetch.slice(keep.length);
+        // simple shuffle
+        for (let i = rest.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [rest[i], rest[j]] = [rest[j], rest[i]];
+        }
+        urlsToFetch = [...keep, ...rest.slice(0, Math.max(0, MAX_FEEDS - keep.length))];
+      }
+      const stopFeeds = logger.startTimer('fetch feeds', { urlCount: urlsToFetch.length });
 
   // Fetch feeds with bounded concurrency and multiple retries per-feed.
-  // Reduce concurrency to minimize chance of upstream rate-limiting
-  // from a single Vercel function instance.
-  const concurrency = Math.min(6, Math.max(2, Math.floor(urls.length / 8) || 3));
+  // Use a very small concurrency to minimize chance of upstream rate-limiting.
+  const concurrency = 2;
 
-      const results: Array<any> = new Array(urls.length);
-      let workerIndex = 0;
+  const results: Array<any> = new Array(urlsToFetch.length);
+  let workerIndex = 0;
 
       const fetchWithRetries = async (u: string) => {
         // Check per-feed cache first
@@ -206,8 +220,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       const worker = async () => {
         while (true) {
           const i = workerIndex++;
-          if (i >= urls.length) break;
-          const u = urls[i];
+          if (i >= urlsToFetch.length) break;
+          const u = urlsToFetch[i];
           try {
             results[i] = await fetchWithRetries(u);
           } catch (e:any) {
@@ -218,7 +232,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
       // Run workers under the request timeout to bound total time spent
       await withTimeout(
-        Promise.all(new Array(Math.min(concurrency, urls.length)).fill(0).map(() => worker())),
+        Promise.all(new Array(Math.min(concurrency, urlsToFetch.length)).fill(0).map(() => worker())),
         Math.max(REQUEST_TIMEOUT_MS - 8000, 8000),
         () => logger.warn('Feed fetching taking too long, aborting')
       );
