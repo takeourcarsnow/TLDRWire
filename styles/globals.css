@@ -12,6 +12,7 @@
   --shadow: rgba(0,0,0,0.2);
   --radius: 12px;
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --summary-font-size: 15px;
 }
 
 @media (prefers-color-scheme: light) {
@@ -480,7 +481,7 @@ button.secondary:hover:not(:disabled) {
 
 .summary {
   line-height: 1.7;
-  font-size: 15px;
+  font-size: var(--summary-font-size);
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -681,4 +682,38 @@ footer {
 
 .modal .content p { 
   margin: 0.6em 0; 
+}
+
+/* Range (slider) styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 999px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 2px solid var(--accent2);
+  box-shadow: 0 4px 10px var(--shadow);
+  cursor: pointer;
+}
+
+input[type="range"]:focus {
+  box-shadow: 0 0 0 4px rgba(77,163,255,0.12);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 2px solid var(--accent2);
+  box-shadow: 0 4px 10px var(--shadow);
 }

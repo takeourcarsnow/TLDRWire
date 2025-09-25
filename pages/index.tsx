@@ -15,18 +15,32 @@ export default function Home() {
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [compactMode, setCompactMode] = useState(false);
+  const [fontSize, setFontSize] = useState(15);
   const lastRequestRef = useRef<any>(null);
 
   useEffect(() => {
     // Load compact mode from localStorage
     const saved = localStorage.getItem('tldrwire:compact') === 'true';
     setCompactMode(saved);
+    // Load font size
+    const savedSize = Number(localStorage.getItem('tldrwire:fontSize') || '15') || 15;
+    setFontSize(savedSize);
   }, []);
 
   useEffect(() => {
     // Save compact mode to localStorage
     localStorage.setItem('tldrwire:compact', compactMode ? 'true' : 'false');
   }, [compactMode]);
+
+  useEffect(() => {
+    // Persist and apply summary font size
+    localStorage.setItem('tldrwire:fontSize', String(fontSize));
+    try {
+      document.documentElement.style.setProperty('--summary-font-size', `${fontSize}px`);
+    } catch (err) {
+      // ignore in non-browser envs
+    }
+  }, [fontSize]);
 
   useEffect(() => {
     // Health check on mount
@@ -208,6 +222,8 @@ export default function Home() {
             isLoading={isLoading}
             compactMode={compactMode}
             onCompactModeChange={setCompactMode}
+            fontSize={fontSize}
+            onFontSizeChange={setFontSize}
           />
         </section>
 
