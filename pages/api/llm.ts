@@ -110,16 +110,39 @@ export async function generateSummary({ prompt, style }: GenerateSummaryParams):
   }
   const temp = (style === 'headlines-only' || style === 'urgent-brief') ? 0.3 : 0.5;
   const generationConfig = { temperature: temp, topP: 0.9 };
+  // Increase max output tokens to reduce mid-sentence truncation. 1500 is generous but
+  // still bounded; adjust if you need even longer summaries.
   const result = await mdl.generateContent({
     contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: { ...generationConfig, maxOutputTokens: 512 }
+    generationConfig: { ...generationConfig, maxOutputTokens: 1500 }
   });
   try {
     const text = result?.response?.text?.() || "";
-    const trimmed = (text || "").trim();
+    let trimmed = (text || "").trim();
     if (!trimmed) {
       // Surface a clearer error to the caller instead of returning a silent placeholder.
       throw new Error('LLM returned an empty text response. Check GEMINI_API_KEY, model name, and quota/permissions.');
+    }
+    // If the model appears to have been cut off mid-sentence (no sentence-ending punctuation
+    // at the end), try to trim the output to the last full sentence to avoid awkward truncation.
+    // We look for common sentence terminators and cut at the last one if present.
+    const terminators = ['.', '!', '?', '。', '！', '？', '…'];
+    const lastChar = trimmed.charAt(trimmed.length - 1);
+    if (!terminators.includes(lastChar)) {
+      // Find last occurrence of sentence-ending punctuation
+      const lastIdx = Math.max(
+        trimmed.lastIndexOf('.'),
+        trimmed.lastIndexOf('!'),
+        trimmed.lastIndexOf('?'),
+        trimmed.lastIndexOf('。'),
+        trimmed.lastIndexOf('！'),
+        trimmed.lastIndexOf('？'),
+        trimmed.lastIndexOf('…')
+      );
+      if (lastIdx > -1) {
+        // Only trim if there's at least some sentence boundary found; otherwise keep original.
+        trimmed = trimmed.slice(0, lastIdx + 1).trim();
+      }
     }
     return trimmed;
   } catch (err: any) {

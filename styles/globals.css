@@ -717,3 +717,26 @@ input[type="range"]::-moz-range-thumb {
   border: 2px solid var(--accent2);
   box-shadow: 0 4px 10px var(--shadow);
 }
+
+/* Custom scrollbar for summary panels and modals */
+.summary {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(77,163,255,0.22) rgba(255,255,255,0.02); /* thumb, track */
+}
+
+/* Webkit-based browsers */
+.summary::-webkit-scrollbar {
+  width: 10px;
+}
+.summary::-webkit-scrollbar-track {
+  background: transparent;
+}
+.summary::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(77,163,255,0.14), rgba(77,163,255,0.22));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.summary::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(77,163,255,0.20), rgba(77,163,255,0.30));
+}

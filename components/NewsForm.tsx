@@ -8,6 +8,8 @@ interface NewsFormProps {
   onReset: () => void;
   onPresetClick: (preset: string) => void;
   isLoading: boolean;
+  rateLimited?: boolean;
+  rateLimitCountdown?: number;
   compactMode: boolean;
   onCompactModeChange: (compact: boolean) => void;
   fontSize: number;
@@ -21,6 +23,8 @@ export function NewsForm({
   onReset,
   onPresetClick,
   isLoading,
+  rateLimited = false,
+  rateLimitCountdown = 0,
   compactMode,
   onCompactModeChange,
   fontSize,
@@ -268,13 +272,16 @@ export function NewsForm({
         <button 
           type="button" 
           onClick={onGenerate}
-          disabled={isLoading}
+          disabled={isLoading || rateLimited}
+          style={rateLimited ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
         >
           {isLoading ? (
             <>
               <span className="btn-spinner" aria-hidden="true"></span>
               <span>Analyzing latest news…</span>
             </>
+          ) : rateLimited ? (
+            <span>⏳ Wait {rateLimitCountdown}s…</span>
           ) : (
             <span>✨ Generate TLDR</span>
           )}

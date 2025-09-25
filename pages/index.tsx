@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useTheme } from '../hooks/useTheme';
 import { usePreferences, type Preferences } from '../hooks/usePreferences';
 import { useApi } from '../hooks/useApi';
+import HistoryList from '../components/HistoryList';
 import { NewsForm } from '../components/NewsForm';
 import { NewsOutput } from '../components/NewsOutput';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -11,12 +12,86 @@ import { Modal } from '../components/Modal';
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const { preferences, updatePreference, resetPreferences } = usePreferences();
-  const { makeRequest, isLoading, error, data, clearError } = useApi();
+  const { makeRequest, isLoading, error, data, clearError, history, clearHistory, removeHistoryItem } = useApi();
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<any | null>(null);
+  const selectedSummaryRef = useRef<HTMLDivElement | null>(null);
+
+  const renderMarkdownToElement = (el: HTMLDivElement | null, markdown: string | undefined) => {
+    if (!el || !markdown) return;
+    try {
+      const html = (window as any).DOMPurify.sanitize((window as any).marked.parse(markdown));
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+      const children = Array.from(temp.children);
+      el.innerHTML = '';
+      children.forEach((child, idx) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'reveal-up';
+        wrapper.style.animationDelay = `${Math.min(idx * 60, 360)}ms`;
+        wrapper.appendChild(child);
+        el.appendChild(wrapper);
+      });
+
+      // Process links similarly to NewsOutput
+      el.querySelectorAll('a').forEach((link) => {
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener noreferrer');
+        try {
+          const rawHref = link.getAttribute('href') || '';
+          if (rawHref && !/^https?:/i.test(rawHref)) return;
+          const href = rawHref || '#';
+          let url = new URL(href, window.location.href);
+          let host = (url.hostname || '').replace(/^www\./, '');
+          const currentText = (link.textContent || '').trim();
+          const looksLikeUrl = /^https?:\/\//i.test(currentText) || currentText === href;
+          if (!currentText || looksLikeUrl || currentText.length > 42) {
+            link.textContent = host || 'source';
+          }
+          link.title = `Open ${host || 'link'} in new tab`;
+          const isGNews = /(^|\.)news\.google\.com$/i.test(url.hostname || '');
+          if (isGNews) {
+            const raw = url.searchParams.get('url');
+            if (raw) {
+              try {
+                const decoded = decodeURIComponent(raw);
+                const candidate = new URL(decoded);
+                url = candidate;
+                host = (url.hostname || '').replace(/^www\./, '');
+              } catch {}
+            }
+            link.setAttribute('href', url.toString());
+          }
+          if (host) {
+            const faviconUrl = `https://www.google.com/s2/favicons?domain=${url.protocol}//${url.hostname}`;
+            if (!link.previousSibling || !(link.previousSibling as HTMLElement).tagName || ((link.previousSibling as HTMLElement).tagName !== 'IMG')) {
+              const img = document.createElement('img');
+              img.src = faviconUrl;
+              img.alt = `${host} favicon`;
+              img.style.width = '16px';
+              img.style.height = '16px';
+              img.style.verticalAlign = 'middle';
+              img.style.marginRight = '6px';
+              link.parentNode?.insertBefore(img, link);
+            }
+          }
+        } catch {
+          const t = (link.textContent || '').trim();
+          if (t.length > 42) link.textContent = t.slice(0, 40) + '…';
+          link.title = 'Open link in new tab';
+        }
+      });
+    } catch (err) {
+      if (el) el.textContent = markdown || '';
+    }
+  };
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [compactMode, setCompactMode] = useState(false);
   const [fontSize, setFontSize] = useState(15);
   const lastRequestRef = useRef<any>(null);
+  const [lastGenerateTime, setLastGenerateTime] = useState<number>(0);
+  const [rateLimitCountdown, setRateLimitCountdown] = useState<number>(0);
 
   useEffect(() => {
     // Load compact mode from localStorage
@@ -86,9 +161,34 @@ export default function Home() {
     }
   }, []);
 
+  const RATE_LIMIT_SECONDS = 60;
+  // Update countdown every second
+  useEffect(() => {
+    if (rateLimitCountdown > 0) {
+      const timer = setTimeout(() => {
+        setRateLimitCountdown((c) => Math.max(0, c - 1));
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [rateLimitCountdown]);
+
+  useEffect(() => {
+    if (selectedHistoryEntry) {
+      // Render the saved summaryFull (or snippet) into the modal's div
+      const md = selectedHistoryEntry.summaryFull || selectedHistoryEntry.summarySnippet || '';
+      renderMarkdownToElement(selectedSummaryRef.current, md);
+    }
+  }, [selectedHistoryEntry]);
+
   const generateSummary = useCallback(async () => {
+    const now = Date.now();
     if (isLoading) return;
-    
+    if (lastGenerateTime && now - lastGenerateTime < RATE_LIMIT_SECONDS * 1000) {
+      // Already rate limited
+      return;
+    }
+    setLastGenerateTime(now);
+    setRateLimitCountdown(RATE_LIMIT_SECONDS);
     clearError();
     const payload = {
       region: preferences.region,
@@ -100,10 +200,9 @@ export default function Home() {
       length: preferences.length || 'medium',
       query: (preferences.query || '').trim()
     };
-    
     lastRequestRef.current = payload;
     await makeRequest(payload);
-  }, [isLoading, preferences, makeRequest, clearError]);
+  }, [isLoading, preferences, makeRequest, clearError, lastGenerateTime]);
 
   const handlePresetClick = useCallback(async (preset: string) => {
     let updates = {};
@@ -209,6 +308,9 @@ export default function Home() {
       <header>
         <h1>TLDRWire</h1>
         <span className="tag">AI-powered quick rundowns 📰</span>
+        <div style={{ marginLeft: 12 }}>
+          <button className="secondary" onClick={() => setShowHistoryModal(true)}>History</button>
+        </div>
       </header>
 
       <main>
@@ -220,6 +322,8 @@ export default function Home() {
             onReset={resetPreferences}
             onPresetClick={handlePresetClick}
             isLoading={isLoading}
+            rateLimited={rateLimitCountdown > 0}
+            rateLimitCountdown={rateLimitCountdown}
             compactMode={compactMode}
             onCompactModeChange={setCompactMode}
             fontSize={fontSize}
@@ -284,6 +388,80 @@ export default function Home() {
           </a>
         </p>
       </Modal>
+
+      <Modal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        title="Generation history"
+      >
+        <HistoryList
+          history={history}
+          onApply={(payload) => {
+            // apply settings back to preferences
+            Object.entries(payload).forEach(([key, value]) => {
+              updatePreference(key as keyof Preferences, String(value));
+            });
+            setShowHistoryModal(false);
+          }}
+          onDelete={(id) => removeHistoryItem(id)}
+          onClear={() => clearHistory()}
+          onView={(entry) => setSelectedHistoryEntry(entry)}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(selectedHistoryEntry)}
+        onClose={() => setSelectedHistoryEntry(null)}
+        title={selectedHistoryEntry ? `Generated ${new Date(selectedHistoryEntry.timestamp).toLocaleString()}` : 'Entry'}
+      >
+          {selectedHistoryEntry && (
+            <div>
+              <div style={{ marginBottom: 12 }}>
+                <strong>Settings:</strong>
+                <div className="muted" style={{ marginTop: 6 }}>
+                  {selectedHistoryEntry.payload.region} • {selectedHistoryEntry.payload.category} • {selectedHistoryEntry.payload.style} • {selectedHistoryEntry.payload.length}
+                </div>
+              </div>
+
+              <article
+                ref={selectedSummaryRef}
+                className="summary"
+                aria-label="Saved summary"
+                style={{
+                  marginBottom: 12,
+                  // Make modal content match main output width and allow internal scrolling
+                  width: 'min(680px, 78vw)',
+                  maxHeight: '68vh',
+                  overflowY: 'auto',
+                  paddingRight: 8
+                }}
+              />
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="secondary" onClick={() => {
+                  // apply settings
+                  Object.entries(selectedHistoryEntry.payload).forEach(([key, value]) => {
+                    updatePreference(key as keyof Preferences, String(value));
+                  });
+                  setSelectedHistoryEntry(null);
+                  setShowHistoryModal(false);
+                }}>Apply settings</button>
+                <button className="secondary" onClick={() => {
+                  navigator.clipboard?.writeText(selectedHistoryEntry.summaryFull || selectedHistoryEntry.summarySnippet || '');
+                }}>Copy summary</button>
+                <button className="danger" onClick={() => {
+                  removeHistoryItem(selectedHistoryEntry.id);
+                  setSelectedHistoryEntry(null);
+                }}>Delete</button>
+              </div>
+            </div>
+          )}
+      </Modal>
+
+      {/* Render sanitized HTML for selected history entry so links and favicons behave like the main output */}
+      <script
+        dangerouslySetInnerHTML={{ __html: '' }}
+      />
     </>
   );
 }

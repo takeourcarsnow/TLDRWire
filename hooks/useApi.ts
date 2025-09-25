@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 const CONFIG = {
   CACHE_TTL: 5 * 60 * 1000, // 5 minutes
@@ -33,10 +33,49 @@ export interface ApiResponse {
   error?: string;
 }
 
+export interface HistoryEntry {
+  id: number;
+  timestamp: number;
+  payload: ApiRequestPayload;
+  meta?: ApiResponse['meta'];
+  cached?: boolean;
+  summarySnippet?: string;
+  summaryFull?: string;
+  summaryLength?: number;
+}
+
 export function useApi() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ApiResponse | null>(null);
+  const HISTORY_KEY = 'tldrwire:history';
+  const HISTORY_LIMIT = 200;
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  // Load history from localStorage on client
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) setHistory(parsed);
+    } catch {
+      // ignore
+    }
+  }, []);
+  const persistHistory = (entries: HistoryEntry[]) => {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(entries)); } catch {}
+  };
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+    try { localStorage.removeItem(HISTORY_KEY); } catch {}
+  }, []);
+  const removeHistoryItem = useCallback((id: number) => {
+    setHistory((prev) => {
+      const next = prev.filter((p) => p.id !== id);
+      persistHistory(next);
+      return next;
+    });
+  }, []);
   const cache = useRef(new Map());
   const currentController = useRef<AbortController | null>(null);
 
@@ -130,6 +169,26 @@ export function useApi() {
       }
 
       setData(responseData);
+      try {
+        const full = responseData?.summary || '';
+        const entry: HistoryEntry = {
+          id: Date.now(),
+          timestamp: Date.now(),
+          payload,
+          meta: responseData?.meta,
+          cached: Boolean(responseData?.cached),
+          summarySnippet: full.slice(0, 300),
+          summaryFull: full,
+          summaryLength: full.length || 0
+        };
+        setHistory((prev) => {
+          const next = [entry, ...prev].slice(0, HISTORY_LIMIT);
+          persistHistory(next);
+          return next;
+        });
+      } catch {
+        // ignore history write errors
+      }
       setIsLoading(false);
       return responseData;
 
@@ -166,10 +225,14 @@ export function useApi() {
   }, []);
 
   return { 
-    makeRequest, 
-    isLoading, 
-    error, 
-    data, 
-    clearError 
+    makeRequest,
+    isLoading,
+    error,
+    data,
+    clearError,
+    // History API
+    history,
+    clearHistory,
+    removeHistoryItem
   };
 }

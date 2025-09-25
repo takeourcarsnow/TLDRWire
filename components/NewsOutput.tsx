@@ -57,25 +57,20 @@ export function NewsOutput({ isLoading, error, data, lastRequest, compactMode }:
       summaryRef.current.querySelectorAll('a').forEach((link) => {
         link.setAttribute('target', '_blank');
         link.setAttribute('rel', 'noopener noreferrer');
-        
         try {
           const rawHref = link.getAttribute('href') || '';
           if (rawHref && !/^https?:/i.test(rawHref)) {
             return;
           }
-          
           const href = rawHref || '#';
           let url = new URL(href, window.location.href);
-          const host = (url.hostname || '').replace(/^www\./, '');
+          let host = (url.hostname || '').replace(/^www\./, '');
           const currentText = (link.textContent || '').trim();
           const looksLikeUrl = /^https?:\/\//i.test(currentText) || currentText === href;
-          
           if (!currentText || looksLikeUrl || currentText.length > 42) {
             link.textContent = host || 'source';
           }
-          
           link.title = `Open ${host || 'link'} in new tab`;
-
           // Handle Google News links
           const isGNews = /(^|\.)news\.google\.com$/i.test(url.hostname || '');
           if (isGNews) {
@@ -86,11 +81,11 @@ export function NewsOutput({ isLoading, error, data, lastRequest, compactMode }:
                 const decoded = decodeURIComponent(raw);
                 const candidate = new URL(decoded);
                 url = candidate;
-                const afterHost = (url.hostname || '').replace(/^www\./, '');
-                if (afterHost && afterHost !== host) {
+                host = (url.hostname || '').replace(/^www\./, '');
+                if (host && host !== (url.hostname || '').replace(/^www\./, '')) {
                   const txt = (link.textContent || '').trim();
                   if (!txt || txt === host || txt.length > 42) {
-                    link.textContent = afterHost || 'source';
+                    link.textContent = host || 'source';
                   }
                 }
               } catch {
@@ -98,6 +93,20 @@ export function NewsOutput({ isLoading, error, data, lastRequest, compactMode }:
               }
             }
             link.setAttribute('href', url.toString());
+          }
+          // Add favicon/logo
+          if (host) {
+            const faviconUrl = `https://www.google.com/s2/favicons?domain=${url.protocol}//${url.hostname}`;
+            if (!link.previousSibling || !(link.previousSibling as HTMLElement).tagName || ((link.previousSibling as HTMLElement).tagName !== 'IMG')) {
+              const img = document.createElement('img');
+              img.src = faviconUrl;
+              img.alt = `${host} favicon`;
+              img.style.width = '16px';
+              img.style.height = '16px';
+              img.style.verticalAlign = 'middle';
+              img.style.marginRight = '6px';
+              link.parentNode?.insertBefore(img, link);
+            }
           }
         } catch {
           const t = (link.textContent || '').trim();
