@@ -71,7 +71,7 @@ export default function Home() {
                   }
                 }
               }
-            } catch {}
+            } catch { /* ignore link text repair errors */ }
             link.textContent = (host || 'source').trim().replace(/[\uFFFD\uFEFF\u200B]+/g, '');
 
             const trimLeadingPunctFromText = (textNode: Node | null) => {
@@ -84,7 +84,7 @@ export default function Home() {
                   (textNode as any).textContent = t;
                 }
                 (textNode as any).textContent = (textNode as any).textContent.replace(/^[\uFFFD\uFEFF\u200B\u00A0\s]+/, '');
-              } catch (e) {}
+              } catch (e) { /* ignore punctuation trim errors */ }
             };
 
             const trimLeadingPunctFromElementFirstChild = (el: Node | null) => {
@@ -122,7 +122,7 @@ export default function Home() {
                     }
                     n = n.nextSibling;
                   }
-                } catch (e) {}
+                } catch (e) { /* ignore sibling punctuation removal errors */ }
               };
               removePunctSiblings(link.nextSibling);
 
@@ -141,7 +141,7 @@ export default function Home() {
                 } catch (e) {}
               };
               removePrevPunct(link.previousSibling);
-            } catch {}
+            } catch { /* ignore punctuation cleanup errors */ }
           }
           link.title = `Open ${host || 'link'} in new tab`;
           const isGNews = /(^|\.)news\.google\.com$/i.test(url.hostname || '');
@@ -153,7 +153,7 @@ export default function Home() {
                 const candidate = new URL(decoded);
                 url = candidate;
                 host = (url.hostname || '').replace(/^www\./, '');
-              } catch {}
+              } catch { /* ignore google news url decode errors */ }
             }
             link.setAttribute('href', url.toString());
           }
@@ -439,7 +439,7 @@ export default function Home() {
 
       <footer>
         <p>
-          Built with ❤️ using Google's Gemini AI •{' '}
+          Built with ❤️ using Google&apos;s Gemini AI •{' '}
           <a href="#" onClick={(e) => { e.preventDefault(); setShowAboutModal(true); }}>
             About
           </a>{' '}
@@ -456,7 +456,7 @@ export default function Home() {
         title="About TLDRWire"
       >
         <p>
-          TLDRWire fetches headlines from Google News RSS and asks Google's Gemini model to
+          TLDRWire fetches headlines from Google News RSS and asks Google&apos;s Gemini model to
           produce clear, concise summaries. Your API key never leaves the server.
         </p>
         <p>

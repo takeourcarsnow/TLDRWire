@@ -59,11 +59,11 @@ export default function App({ Component, pageProps }: AppProps) {
       {/* Markdown rendering + sanitization */}
       <Script 
         src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js" 
-        strategy="beforeInteractive" 
+        strategy="afterInteractive" 
       />
       <Script 
         src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js" 
-        strategy="beforeInteractive" 
+        strategy="afterInteractive" 
       />
       
       <noscript>

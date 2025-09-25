@@ -131,10 +131,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
       const MAX_CONTEXT_ITEMS = 8;
       const contextItems = topItems.slice(0, Math.min(MAX_CONTEXT_ITEMS, topItems.length));
-      const contextLines = contextItems.map((a: any, i: number) => {
+  const contextLines = contextItems.map((a: any, idx) => {
         const dateStr = a.isoDate ? new Date(a.isoDate).toLocaleString(uiLocale, { dateStyle: 'medium', timeStyle: 'short' }) : '';
         const snip = (a.snippet || '').replace(/\s+/g, ' ');
-        return `#${i + 1} ${a.title}\nSource: ${a.source} | Published: ${dateStr}\nLink: ${a.link}\nSummary: ${snip}`;
+        return `#${idx + 1} ${a.title}\nSource: ${a.source} | Published: ${dateStr}\nLink: ${a.link}\nSummary: ${snip}`;
       });
 
       const lengthPreset = (typeof length === 'string' ? length : 'medium').toLowerCase();

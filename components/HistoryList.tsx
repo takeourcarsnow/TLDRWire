@@ -35,7 +35,7 @@ function HistorySnippet({ markdown }: { markdown: string }) {
           img.style.verticalAlign = 'middle';
           img.style.marginRight = '6px';
           link.parentNode?.insertBefore(img, link);
-        } catch {}
+  } catch { /* ignore per-link processing errors */ }
       });
     } catch {
       el.textContent = markdown;

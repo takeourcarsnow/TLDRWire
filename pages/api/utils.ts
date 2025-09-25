@@ -45,7 +45,7 @@ export function normalizeGoogleNewsLink(link: string, regionCfg?: Partial<FeedUr
       if (!u.searchParams.has('ceid') && regionCfg?.ceid) u.searchParams.set('ceid', regionCfg.ceid);
       return u.toString();
     }
-  } catch {}
+  } catch { /* ignore URL parse error */ }
   return link;
 }
 

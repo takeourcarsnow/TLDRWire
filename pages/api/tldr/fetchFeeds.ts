@@ -1,7 +1,8 @@
 import Parser from 'rss-parser';
 import logger from '../logger';
-import { getAllFeedsWithFallbacks, getRegionConfig, resolveCategory } from '../feeds';
+import { getAllFeedsWithFallbacks, resolveCategory } from '../feeds';
 import { FALLBACK_FEEDS } from '../constants';
+  // Region config kept previously for potential link normalization; currently unused.
 
 // Per-feed caches and failure tracking (module-scoped to persist across invocations)
 const parser = new Parser({
@@ -41,7 +42,8 @@ export async function fetchFeeds(opts: {
 
   const urls = getAllFeedsWithFallbacks({ region, category, query, hours, lang: language }, maxFeeds);
   requestLog.debug('feed urls built', { urls, sampleUrl: urls[0] });
-  const regionCfgForLinks = getRegionConfig(region, language);
+  // regionCfgForLinks previously used for link normalization; safe to remove until needed
+  // const regionCfgForLinks = getRegionConfig(region, language);
 
   // Limit feeds and deprioritize google news
   let urlsToFetch = urls;
@@ -61,7 +63,7 @@ export async function fetchFeeds(opts: {
     const googleUrls: string[] = [];
     const otherUrls: string[] = [];
     for (const u of urlsToFetch) {
-      try { const h = new URL(u).hostname; if (h && h.includes('news.google.com')) { googleUrls.push(u); continue; } } catch {}
+  try { const h = new URL(u).hostname; if (h && h.includes('news.google.com')) { googleUrls.push(u); continue; } } catch { /* ignore malformed URL */ }
       if (typeof u === 'string' && u.includes('news.google.com')) { googleUrls.push(u); continue; }
       otherUrls.push(u);
     }
@@ -69,7 +71,7 @@ export async function fetchFeeds(opts: {
       requestLog.info('deprioritizing google news feeds', { googleCount: googleUrls.length, total: urlsToFetch.length });
       urlsToFetch = [...otherUrls, ...googleUrls];
     }
-  } catch (e) {}
+  } catch (e) { /* ignore grouping errors */ }
 
   const concurrency = 2;
   const results: Array<any> = new Array(urlsToFetch.length);
@@ -93,12 +95,12 @@ export async function fetchFeeds(opts: {
           }
         }
       }
-    } catch (err) {}
+  } catch (err) { /* ignore cache read errors */ }
 
     let lastErr: any = null;
     const maxAttempts = 3;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const isGoogle = (() => { try { return new URL(u).hostname === 'news.google.com'; } catch { return u.includes('news.google.com'); } })();
+  const isGoogle = (() => { try { return new URL(u).hostname === 'news.google.com'; } catch { return u.includes('news.google.com'); } })();
       const attemptStart = Date.now();
       try {
         if (isGoogle) requestLog.debug('google feed fetch attempt', { url: u, attempt });
@@ -138,10 +140,10 @@ export async function fetchFeeds(opts: {
         }
         const v = await parser.parseString(raw);
         const ms = Date.now() - attemptStart;
-        try { FEED_CACHE.set(u, { ts: Date.now(), value: v }); } catch (e) {}
+  try { FEED_CACHE.set(u, { ts: Date.now(), value: v }); } catch (e) { /* ignore cache set */ }
         if (isGoogle) requestLog.debug('google feed fetch success', { url: u, ms, items: (v?.items?.length || 0) });
-        try { FEED_FAIL_COUNTS.delete(u); } catch {}
-        try { FEED_CACHE.set(u, { ts: Date.now(), value: v }); } catch (e) {}
+  try { FEED_FAIL_COUNTS.delete(u); } catch { /* ignore */ }
+  try { FEED_CACHE.set(u, { ts: Date.now(), value: v }); } catch (e) { /* ignore */ }
         return { status: 'fulfilled', value: v };
       } catch (e: any) {
         lastErr = e;
@@ -167,13 +169,14 @@ export async function fetchFeeds(opts: {
         failedEntry.ts = Date.now();
         requestLog.info('blacklisting failing feed temporarily', { url: u, failCount: prev.count });
       }
-      try { FEED_CACHE.set(u, failedEntry); } catch {}
-    } catch (e) {}
+      try { FEED_CACHE.set(u, failedEntry); } catch { /* ignore */ }
+    } catch (e) { /* ignore fail bookkeeping errors */ }
     return { status: 'rejected', reason: lastErr };
   };
 
   const worker = async () => {
-    while (true) {
+    // loop until all feeds fetched or aborted
+    for (;;) {
       if (stopFetching) break;
       const i = workerIndex++;
       if (i >= urlsToFetch.length) break;
@@ -189,7 +192,7 @@ export async function fetchFeeds(opts: {
   let feedTimedOut = false;
   await Promise.race([
     workersPromise,
-    new Promise<void>((resolve) => setTimeout(() => { feedTimedOut = true; stopFetching = true; try { logger.warn('Feed fetching taking too long, aborting'); } catch {} ; resolve(); }, feedTimeoutMs))
+  new Promise<void>((resolve) => setTimeout(() => { feedTimedOut = true; stopFetching = true; try { logger.warn('Feed fetching taking too long, aborting'); } catch { /* ignore */ }  resolve(); }, feedTimeoutMs))
   ]);
   if (feedTimedOut) {
     requestLog.warn('feed fetching soft-timeout reached; continuing with partial results', { attempted: urlsToFetch.length, fetched: results.filter(r=>r && r.status === 'fulfilled').length });
@@ -222,7 +225,7 @@ export async function fetchFeeds(opts: {
         const fbResults: any[] = new Array(fallbackUrls.length);
         let fbIndex = 0;
         const fbWorker = async () => {
-          while (true) {
+          for (;;) {
             const i = fbIndex++;
             if (i >= fallbackUrls.length) break;
             const u = fallbackUrls[i];
@@ -235,7 +238,7 @@ export async function fetchFeeds(opts: {
         let fbTimedOut = false;
         await Promise.race([
           fbWorkersPromise,
-          new Promise<void>((resolve) => setTimeout(() => { fbTimedOut = true; try { logger.warn('Fallback feed fetching taking too long, aborting'); } catch {} ; resolve(); }, fbTimeoutMs))
+          new Promise<void>((resolve) => setTimeout(() => { fbTimedOut = true; try { logger.warn('Fallback feed fetching taking too long, aborting'); } catch { /* ignore */ }  resolve(); }, fbTimeoutMs))
         ]);
         if (fbTimedOut) {
           requestLog.warn('fallback feed fetching soft-timeout reached; continuing with partial fallback results', { attempted: fallbackUrls.length, fetched: fbResults.filter(r=>r && r.status === 'fulfilled').length });

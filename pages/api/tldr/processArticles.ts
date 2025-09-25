@@ -21,7 +21,7 @@ export function processArticles(opts: {
   const maxAge = Math.max(1, Math.min(72, Number(timeframeHours) || 24));
   const normalized: Article[] = [];
   const seen = new Set<string>();
-  const regionCfgForLinks = getRegionConfig(region, language);
+  const regionCfgForLinks = getRegionConfig(region, language); // used for link normalization
 
   for (const it of items) {
     const title = (it.title || '').trim();

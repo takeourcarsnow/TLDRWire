@@ -73,7 +73,10 @@ export function buildCategoryFeedURL(category: string, { hl, gl, ceid }: FeedUrl
   return buildSearchFeedURL({ q: query, hl, gl, ceid });
 }
 
-export function buildFeedUrls({ region, category, query, hours, lang }: BuildFeedUrlsParams): string[] {
+// hours is currently unused but kept in the signature for future window-based feed logic
+export function buildFeedUrls({ region, category, query, hours: _hours, lang }: BuildFeedUrlsParams): string[] {
+  // _hours reserved for future time-window based feed selection logic
+  void _hours;
   const config = getRegionConfig(region, lang);
   const urls: string[] = [];
 
@@ -133,9 +136,11 @@ export function resolveCategory(categoryKey?: string): string {
   return CATEGORY_QUERIES[categoryKey] ? categoryKey : 'top';
 }
 
-export function buildAllFeeds({ region, category, query, hours, lang }: BuildFeedUrlsParams): string[] {
+export function buildAllFeeds({ region, category, query, hours: _hours, lang }: BuildFeedUrlsParams): string[] {
+  // _hours reserved for future logic
+  void _hours;
   const config = getRegionConfig(region, lang);
-  const urls = buildFeedUrls({ region, category, query, hours, lang });
+  const urls = buildFeedUrls({ region, category, query, hours: _hours, lang });
 
   if (region === 'lithuania') {
     addLtFeedsToBuild(urls, config, query, category);

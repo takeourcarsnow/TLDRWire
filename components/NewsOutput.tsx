@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { ApiResponse } from '../hooks/useApi';
 
 interface NewsOutputProps {
@@ -9,24 +9,12 @@ interface NewsOutputProps {
   compactMode: boolean;
 }
 
-// Region to Google country code mapping
-const REGION_GL_MAP: { [key: string]: string } = {
-  global: 'US',
-  lithuania: 'LT',
-  'united-states': 'US',
-  'united-kingdom': 'GB',
-  germany: 'DE',
-  france: 'FR',
-  india: 'IN',
-  japan: 'JP',
-  brazil: 'BR',
-  australia: 'AU'
-};
+// (Region mapping constant removed as it was unused and triggered ESLint no-unused-vars)
 
 export function NewsOutput({ isLoading, error, data, lastRequest, compactMode }: NewsOutputProps) {
   const summaryRef = useRef<HTMLDivElement>(null);
 
-  const renderSummary = (markdown: string) => {
+  const renderSummary = useCallback((markdown: string) => {
     if (!summaryRef.current || !markdown) return;
 
     try {
@@ -102,9 +90,7 @@ export function NewsOutput({ isLoading, error, data, lastRequest, compactMode }:
                   }
                 }
               }
-            } catch (e) {
-              // ignore in case DOM operations fail
-            }
+            } catch (e) { /* ignore DOM adjust errors */ }
             link.textContent = (host || 'source').trim().replace(/[\uFFFD\uFEFF\u200B]+/g, '');
             // Helper: remove leading punctuation and stray replacement chars from a text node
             const trimLeadingPunctFromText = (textNode: Node | null) => {
@@ -200,9 +186,7 @@ export function NewsOutput({ isLoading, error, data, lastRequest, compactMode }:
                     link.textContent = host || 'source';
                   }
                 }
-              } catch {
-                // Keep original Google News link
-              }
+              } catch { /* Keep original Google News link on parse error */ }
             }
             link.setAttribute('href', url.toString());
           }
@@ -232,13 +216,13 @@ export function NewsOutput({ isLoading, error, data, lastRequest, compactMode }:
         summaryRef.current.textContent = markdown;
       }
     }
-  };
+  }, [compactMode]);
 
   useEffect(() => {
     if (data?.summary) {
       renderSummary(data.summary);
     }
-  }, [data?.summary, compactMode]);
+  }, [data?.summary, compactMode, renderSummary]);
 
   const copyToClipboard = async () => {
     const text = summaryRef.current?.innerText || '';
