@@ -4,10 +4,11 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  headerRight?: ReactNode;
   children: ReactNode;
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, headerRight, children }: ModalProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -45,16 +46,24 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       onClick={handleBackdropClick}
     >
       <div className="modal" role="document">
-        <header>
-          <h2>{title}</h2>
-          <button 
-            className="close-btn secondary" 
-            type="button" 
-            onClick={onClose}
-            aria-label="Close modal"
-          >
-            ✖
-          </button>
+        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <h2 style={{ margin: 0 }}>{title}</h2>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* optional header actions placed to the left of the close button */}
+            {headerRight}
+            <button
+              className="close-btn secondary"
+              type="button"
+              onClick={onClose}
+              aria-label="Close modal"
+              style={{ padding: '6px 10px' }}
+            >
+              ✖
+            </button>
+          </div>
         </header>
         <div className="content">
           {children}

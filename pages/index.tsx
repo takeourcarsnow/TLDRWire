@@ -488,6 +488,7 @@ export default function Home() {
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
         title="Generation history"
+        headerRight={<button className="secondary" onClick={() => clearHistory()} title="Clear all">Clear all</button>}
       >
         <HistoryList
           history={history}

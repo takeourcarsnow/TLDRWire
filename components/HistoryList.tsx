@@ -70,12 +70,11 @@ export function HistoryList({ history, onApply, onDelete, onClear, onView }: Pro
           onChange={(e) => setQ(e.target.value)}
           style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)', background: 'var(--panel-bg)' }}
         />
-        <button className="secondary" onClick={onClear} title="Clear all history">Clear all</button>
       </div>
 
       {filtered.length === 0 && <div className="muted">No matching history. Generate a TLDR to save an entry.</div>}
 
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: '52vh', overflowY: 'auto', paddingRight: 8 }}>
         {filtered.map((h) => (
           <li key={h.id} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
             <div style={{ display: 'flex', gap: 12 }}>
