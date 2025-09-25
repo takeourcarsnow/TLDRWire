@@ -54,17 +54,25 @@ export default function Home() {
                 const txt = (prev.textContent || '');
                 const m = txt.match(/\[([^\]]+)\]\($/);
                 if (m) {
-                  const label = m[1];
-                  prev.textContent = txt.slice(0, m.index);
-                  const labelNode = document.createTextNode(label + ' ');
-                  link.parentNode?.insertBefore(labelNode, link);
-                  const next = link.nextSibling;
-                  if (next && next.nodeType === Node.TEXT_NODE) {
-                    const nextTxt = next.textContent || '';
-                    if (/^\)/.test(nextTxt)) {
-                      next.textContent = nextTxt.replace(/^\)+\s*/, '');
+                    // remove the trailing bracketed fragment from the previous text node
+                    prev.textContent = txt.slice(0, m.index);
+                    // Do NOT re-insert the original label text here. Instead ensure a single
+                    // separating space so the favicon/link doesn't glue to preceding text.
+                    try {
+                      const prevTxt = (prev.textContent || '');
+                      if (!/\s$/.test(prevTxt)) {
+                        link.parentNode?.insertBefore(document.createTextNode(' '), link);
+                      } else {
+                        prev.textContent = prevTxt.replace(/\s+$/, ' ');
+                      }
+                    } catch (e) {}
+                    const next = link.nextSibling;
+                    if (next && next.nodeType === Node.TEXT_NODE) {
+                      const nextTxt = next.textContent || '';
+                      if (/^\)/.test(nextTxt)) {
+                        next.textContent = nextTxt.replace(/^\)+\s*/, '');
+                      }
                     }
-                  }
                 } else {
                   if (txt.length > 0 && !/\s$/.test(txt)) {
                     link.parentNode?.insertBefore(document.createTextNode(' '), link);
@@ -159,16 +167,65 @@ export default function Home() {
           }
           if (host) {
             const faviconUrl = `https://www.google.com/s2/favicons?domain=${url.protocol}//${url.hostname}`;
-            if (!link.previousSibling || !(link.previousSibling as HTMLElement).tagName || ((link.previousSibling as HTMLElement).tagName !== 'IMG')) {
-              const img = document.createElement('img');
-              img.src = faviconUrl;
-              img.alt = `${host} favicon`;
-              img.style.width = '16px';
-              img.style.height = '16px';
-              img.style.verticalAlign = 'middle';
-              img.style.marginRight = '6px';
-              link.parentNode?.insertBefore(img, link);
-            }
+            try {
+              const parentEl = link.parentElement as HTMLElement | null;
+              if (parentEl && parentEl.classList && parentEl.classList.contains('tldrwire-source')) {
+                const first = parentEl.firstElementChild as HTMLElement | null;
+                if (first && first.tagName !== 'IMG') {
+                  const img = document.createElement('img');
+                  img.src = faviconUrl;
+                  img.alt = `${host} favicon`;
+                  img.style.width = '16px';
+                  img.style.height = '16px';
+                  img.style.verticalAlign = 'middle';
+                  img.style.marginRight = '6px';
+                  parentEl.insertBefore(img, parentEl.firstChild);
+                }
+              } else {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'tldrwire-source';
+                wrapper.style.display = 'block';
+                wrapper.style.marginTop = '6px';
+                wrapper.style.marginBottom = '2px';
+
+                const img = document.createElement('img');
+                img.src = faviconUrl;
+                img.alt = `${host} favicon`;
+                img.dataset.tldrHost = host;
+                img.style.width = '16px';
+                img.style.height = '16px';
+                img.style.verticalAlign = 'middle';
+                img.style.marginRight = '6px';
+                const applyThemeToFavicon = (image: HTMLImageElement | null) => {
+                  try {
+                    if (!image) return;
+                    const h = (image.dataset.tldrHost || '').toLowerCase();
+                    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+                    if (h.includes('nytimes.com')) {
+                      if (theme === 'dark') {
+                        image.style.filter = 'invert(1)';
+                      } else {
+                        image.style.filter = '';
+                      }
+                    }
+                  } catch (e) {}
+                };
+                applyThemeToFavicon(img);
+                try {
+                  if (!(window as any).__tldrThemeObserverInitialized) {
+                    const obs = new MutationObserver(() => {
+                      document.querySelectorAll<HTMLImageElement>('.tldrwire-source img[data-tldr-host]').forEach((im) => applyThemeToFavicon(im));
+                    });
+                    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+                    (window as any).__tldrThemeObserverInitialized = true;
+                  }
+                } catch (e) {}
+
+                link.parentNode?.insertBefore(wrapper, link);
+                wrapper.appendChild(img);
+                wrapper.appendChild(link);
+              }
+            } catch (e) {}
           }
         } catch {
           const t = (link.textContent || '').trim();

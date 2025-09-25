@@ -68,20 +68,27 @@ export function NewsOutput({ isLoading, error, data, lastRequest, compactMode }:
                 // e.g. "... [The New York Times](" and the link node contains the url/host only.
                 const m = txt.match(/\[([^\]]+)\]\($/);
                 if (m) {
-                  const label = m[1];
-                  // remove the trailing bracketed fragment from the previous text node
-                  prev.textContent = txt.slice(0, m.index);
-                  // Insert the label before the link (it was intended to be link text)
-                  const labelNode = document.createTextNode(label + ' ');
-                  link.parentNode?.insertBefore(labelNode, link);
-                  // Remove any stray closing parenthesis that might follow the link
-                  const next = link.nextSibling;
-                  if (next && next.nodeType === Node.TEXT_NODE) {
-                    const nextTxt = next.textContent || '';
-                    if (/^\)/.test(nextTxt)) {
-                      next.textContent = nextTxt.replace(/^\)+\s*/, '');
+                    // remove the trailing bracketed fragment from the previous text node
+                    prev.textContent = txt.slice(0, m.index);
+                    // Do NOT re-insert the original label text here. Instead ensure a single
+                    // separating space so the favicon/link doesn't glue to preceding text.
+                    try {
+                      const prevTxt = (prev.textContent || '');
+                      if (!/\s$/.test(prevTxt)) {
+                        link.parentNode?.insertBefore(document.createTextNode(' '), link);
+                      } else {
+                        // normalize to a single trailing space
+                        prev.textContent = prevTxt.replace(/\s+$/, ' ');
+                      }
+                    } catch (e) {}
+                    // Remove any stray closing parenthesis that might follow the link
+                    const next = link.nextSibling;
+                    if (next && next.nodeType === Node.TEXT_NODE) {
+                      const nextTxt = next.textContent || '';
+                      if (/^\)/.test(nextTxt)) {
+                        next.textContent = nextTxt.replace(/^\)+\s*/, '');
+                      }
                     }
-                  }
                 } else {
                   // If previous sibling is a text node that doesn't end with whitespace,
                   // insert a separating space to avoid concatenation like "[BBC]bbc.co.uk".
@@ -193,16 +200,71 @@ export function NewsOutput({ isLoading, error, data, lastRequest, compactMode }:
           // Add favicon/logo
           if (host) {
             const faviconUrl = `https://www.google.com/s2/favicons?domain=${url.protocol}//${url.hostname}`;
-            if (!link.previousSibling || !(link.previousSibling as HTMLElement).tagName || ((link.previousSibling as HTMLElement).tagName !== 'IMG')) {
-              const img = document.createElement('img');
-              img.src = faviconUrl;
-              img.alt = `${host} favicon`;
-              img.style.width = '16px';
-              img.style.height = '16px';
-              img.style.verticalAlign = 'middle';
-              img.style.marginRight = '6px';
-              link.parentNode?.insertBefore(img, link);
-            }
+            try {
+              // If the link is already inside our wrapper, skip
+              const parentEl = link.parentElement as HTMLElement | null;
+              if (parentEl && parentEl.classList && parentEl.classList.contains('tldrwire-source')) {
+                // ensure img exists as first child
+                const first = parentEl.firstElementChild as HTMLElement | null;
+                if (first && first.tagName !== 'IMG') {
+                  const img = document.createElement('img');
+                  img.src = faviconUrl;
+                  img.alt = `${host} favicon`;
+                  img.style.width = '16px';
+                  img.style.height = '16px';
+                  img.style.verticalAlign = 'middle';
+                  img.style.marginRight = '6px';
+                  parentEl.insertBefore(img, parentEl.firstChild);
+                }
+              } else {
+                // Create a block wrapper so favicon+link always appear on their own line
+                const wrapper = document.createElement('div');
+                wrapper.className = 'tldrwire-source';
+                wrapper.style.display = 'block';
+                wrapper.style.marginTop = '6px';
+                wrapper.style.marginBottom = '2px';
+
+                const img = document.createElement('img');
+                img.src = faviconUrl;
+                img.alt = `${host} favicon`;
+                img.dataset.tldrHost = host;
+                img.style.width = '16px';
+                img.style.height = '16px';
+                img.style.verticalAlign = 'middle';
+                img.style.marginRight = '6px';
+                // Apply theme-aware inversion for specific hosts (e.g., nytimes.com)
+                const applyThemeToFavicon = (image: HTMLImageElement | null) => {
+                  try {
+                    if (!image) return;
+                    const h = (image.dataset.tldrHost || '').toLowerCase();
+                    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+                    if (h.includes('nytimes.com')) {
+                      if (theme === 'dark') {
+                        image.style.filter = 'invert(1)';
+                      } else {
+                        image.style.filter = '';
+                      }
+                    }
+                  } catch (e) {}
+                };
+                applyThemeToFavicon(img);
+                // Install a single global observer once to react to theme changes
+                try {
+                  if (!(window as any).__tldrThemeObserverInitialized) {
+                    const obs = new MutationObserver(() => {
+                      document.querySelectorAll<HTMLImageElement>('.tldrwire-source img[data-tldr-host]').forEach((im) => applyThemeToFavicon(im));
+                    });
+                    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+                    (window as any).__tldrThemeObserverInitialized = true;
+                  }
+                } catch (e) {}
+
+                // Insert wrapper before the link and move the link into it
+                link.parentNode?.insertBefore(wrapper, link);
+                wrapper.appendChild(img);
+                wrapper.appendChild(link);
+              }
+            } catch (e) { /* ignore DOM errors */ }
           }
         } catch {
           const t = (link.textContent || '').trim();
