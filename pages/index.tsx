@@ -239,25 +239,16 @@ export default function Home() {
   };
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [compactMode, setCompactMode] = useState(false);
   const [fontSize, setFontSize] = useState(15);
   const lastRequestRef = useRef<any>(null);
   const [lastGenerateTime, setLastGenerateTime] = useState<number>(0);
   const [rateLimitCountdown, setRateLimitCountdown] = useState<number>(0);
 
   useEffect(() => {
-    // Load compact mode from localStorage
-    const saved = localStorage.getItem('tldrwire:compact') === 'true';
-    setCompactMode(saved);
     // Load font size
     const savedSize = Number(localStorage.getItem('tldrwire:fontSize') || '15') || 15;
     setFontSize(savedSize);
   }, []);
-
-  useEffect(() => {
-    // Save compact mode to localStorage
-    localStorage.setItem('tldrwire:compact', compactMode ? 'true' : 'false');
-  }, [compactMode]);
 
   useEffect(() => {
     // Persist and apply summary font size
@@ -476,8 +467,6 @@ export default function Home() {
             isLoading={isLoading}
             rateLimited={rateLimitCountdown > 0}
             rateLimitCountdown={rateLimitCountdown}
-            compactMode={compactMode}
-            onCompactModeChange={setCompactMode}
             fontSize={fontSize}
             onFontSizeChange={setFontSize}
           />
@@ -489,7 +478,6 @@ export default function Home() {
             error={error}
             data={data}
             lastRequest={lastRequestRef.current}
-            compactMode={compactMode}
           />
         </section>
       </main>

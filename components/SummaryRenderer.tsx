@@ -3,12 +3,11 @@ import React, { useEffect, useRef, useCallback } from 'react';
 
 interface Props {
   summary?: string | null;
-  compactMode: boolean;
   isLoading: boolean;
   summaryRef: React.RefObject<HTMLDivElement>;
 }
 
-export default function SummaryRenderer({ summary, compactMode, isLoading, summaryRef }: Props) {
+export default function SummaryRenderer({ summary, isLoading, summaryRef }: Props) {
   const internalRef = useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
@@ -31,11 +30,6 @@ export default function SummaryRenderer({ summary, compactMode, isLoading, summa
         usedRef.current!.appendChild(wrapper);
       });
 
-      if (compactMode) {
-        usedRef.current.classList.add('compact');
-      } else {
-        usedRef.current.classList.remove('compact');
-      }
 
       usedRef.current.querySelectorAll<HTMLAnchorElement>('a').forEach((link: HTMLAnchorElement) => {
         link.setAttribute('target', '_blank');
@@ -142,7 +136,7 @@ export default function SummaryRenderer({ summary, compactMode, isLoading, summa
       console.error('Error rendering markdown:', error);
       if (usedRef.current) usedRef.current.textContent = summary;
     }
-  }, [summary, compactMode, summaryRef]);
+  }, [summary, summaryRef]);
 
   return (
     <article

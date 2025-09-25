@@ -14,8 +14,6 @@ interface NewsFormProps {
   isLoading: boolean;
   rateLimited?: boolean;
   rateLimitCountdown?: number;
-  compactMode: boolean;
-  onCompactModeChange: (compact: boolean) => void;
   fontSize: number;
   onFontSizeChange: (size: number) => void;
 }
@@ -25,7 +23,7 @@ export function NewsForm(props: NewsFormProps) {
     <>
       <NewsFormSelectors preferences={props.preferences} onPreferenceChange={props.onPreferenceChange} />
       <NewsFormSliders preferences={props.preferences} onPreferenceChange={props.onPreferenceChange} fontSize={props.fontSize} onFontSizeChange={props.onFontSizeChange} />
-      <NewsFormDisplay preferences={props.preferences} compactMode={props.compactMode} onCompactModeChange={props.onCompactModeChange} onPreferenceChange={props.onPreferenceChange} />
+  <NewsFormDisplay preferences={props.preferences} onPreferenceChange={props.onPreferenceChange} />
       <NewsFormActions onGenerate={props.onGenerate} onReset={props.onReset} onPresetClick={props.onPresetClick} isLoading={props.isLoading} rateLimited={props.rateLimited} rateLimitCountdown={props.rateLimitCountdown} />
     </>
   );

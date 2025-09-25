@@ -185,6 +185,52 @@ main {
   margin-bottom: 16px;
 }
 
+/* Balanced slider layout for the main controls */
+
+/* slider-row: use a stacked layout (full-width controls) for balance */
+.slider-row {
+  display: block;
+  width: 100%;
+}
+
+.slider-group {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.slider-group > label {
+  font-weight: 600;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* Align the slider value to the right for visual balance. The markup uses a flex container for the control row. */
+.slider-group .muted {
+  min-width: 44px;
+  text-align: right;
+  font-size: 0.95rem;
+}
+
+/* Make slider control rows use flex so slider track and value align predictably */
+.slider-control-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.slider-control-row input[type="range"] {
+  flex: 1 1 auto; /* slider expands to available space */
+}
+
+.slider-control-row .muted {
+  flex: 0 0 84px; /* wider fixed width so longer labels (e.g. "very long") fit on one line */
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 label { 
   font-size: 0.875rem; 
   color: var(--muted); 
@@ -239,7 +285,7 @@ select:hover, input:hover {
 }
 
 @media (max-width: 640px) {
-  .row, .row-3 {
+  .row, .row-3, .slider-row {
     grid-template-columns: 1fr;
   }
 }
@@ -250,6 +296,24 @@ select:hover, input:hover {
   margin-top: 20px; 
   flex-wrap: wrap;
   justify-content: center;
+}
+
+/* Ensure the primary action is visually prominent and wider */
+.actions > button {
+  min-width: 240px;
+  max-width: 100%;
+}
+
+button.primary {
+  min-width: 0; /* allow container to control width */
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 15px;
+  box-shadow: 0 10px 30px rgba(77,163,255,0.12);
+}
+
+@media (max-width: 640px) {
+  .actions > button, button.primary { width: 100%; min-width: 0; }
 }
 
 button {
@@ -486,13 +550,7 @@ button.secondary:hover:not(:disabled) {
   word-break: break-word;
 }
 
-.summary.compact {
-  line-height: 1.5;
-  font-size: 14px;
-}
-
-.summary.compact p { margin: 0.6em 0; }
-.summary.compact li { margin: 0.35em 0; }
+/* compact reading mode removed; density controlled via font size slider */
 
 .summary h1, .summary h2, .summary h3 { 
   margin: 1.5em 0 0.75em; 
@@ -624,13 +682,12 @@ footer {
   footer {
     display: none;
   }
-  
-  .summary {
-    color: black;
-  }
-  
+}
+
+/* Print-specific link styles */
+@media print {
   .summary a {
-    color: blue;
+    color: black;
     text-decoration: underline;
   }
 }

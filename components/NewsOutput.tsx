@@ -10,10 +10,9 @@ interface NewsOutputProps {
   error: string | null;
   data: ApiResponse | null;
   lastRequest: any;
-  compactMode: boolean;
 }
 
-export function NewsOutput({ isLoading, error, data, lastRequest, compactMode }: NewsOutputProps) {
+export function NewsOutput({ isLoading, error, data, lastRequest }: NewsOutputProps) {
   const summaryRef = useRef<HTMLDivElement>(null);
 
   const copyToClipboard = async () => {
@@ -96,7 +95,7 @@ export function NewsOutput({ isLoading, error, data, lastRequest, compactMode }:
 
       <NewsControls isHidden={isLoading || !!error} onCopy={copyToClipboard} onShare={shareContent} onExport={exportAsText} onPrint={printSummary} />
 
-      <SummaryRenderer summary={data?.summary || null} compactMode={compactMode} isLoading={isLoading} summaryRef={summaryRef} />
+  <SummaryRenderer summary={data?.summary || null} isLoading={isLoading} summaryRef={summaryRef} />
     </>
   );
 }

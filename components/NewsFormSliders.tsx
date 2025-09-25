@@ -43,7 +43,7 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
           <label htmlFor="timeframe" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: '1.1em' }}>⏰</span> Timeframe (hours)
           </label>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 4 }}>
+              <div className="slider-control-row" style={{ marginTop: 4 }}>
             <input
               aria-label="Timeframe hours slider"
               type="range"
@@ -53,14 +53,14 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
               onChange={handleTimeframeChange}
               style={{ flex: 1 }}
             />
-            <div className="muted" style={{ minWidth: 40, textAlign: 'right' }}>{preferences.timeframe}</div>
+            <div className="muted">{preferences.timeframe}</div>
           </div>
         </div>
         <div className="slider-group">
           <label htmlFor="limit" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: '1.1em' }}>📊</span> Articles to Consider
           </label>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 4 }}>
+              <div className="slider-control-row" style={{ marginTop: 4 }}>
             <input
               aria-label="Articles to consider slider"
               type="range"
@@ -70,14 +70,14 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
               onChange={handleLimitChange}
               style={{ flex: 1 }}
             />
-            <div className="muted" style={{ minWidth: 40, textAlign: 'right' }}>{preferences.limit}</div>
+            <div className="muted">{preferences.limit}</div>
           </div>
         </div>
         <div className="slider-group">
           <label htmlFor="length" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: '1.1em' }}>📏</span> TLDR Length
           </label>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 4 }}>
+              <div className="slider-control-row" style={{ marginTop: 4 }}>
             <input
               aria-label="TLDR length slider"
               type="range"
@@ -88,7 +88,7 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
               onChange={handleLengthSliderChange}
               style={{ flex: 1 }}
             />
-            <div className="muted" style={{ minWidth: 80, textAlign: 'right' }}>{preferences.length.replace('-', ' ')}</div>
+            <div className="muted">{preferences.length.replace('-', ' ')}</div>
           </div>
         </div>
       </div>
@@ -96,17 +96,19 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
       <div className="form-group">
         <div style={{ display: 'grid', gap: 8 }}>
           <label htmlFor="fontSize">📏 Font size</label>
-          <input
-            id="fontSize"
-            type="range"
-            min={12}
-            max={20}
-            step={1}
-            value={fontSize}
-            onChange={(e) => onFontSizeChange(Number(e.target.value))}
-            aria-label="Summary font size"
-          />
-          <div className="muted" style={{ fontSize: '0.9rem' }}>{fontSize}px</div>
+          <div className="slider-control-row">
+            <input
+              id="fontSize"
+              type="range"
+              min={12}
+              max={20}
+              step={1}
+              value={fontSize}
+              onChange={(e) => onFontSizeChange(Number(e.target.value))}
+              aria-label="Summary font size"
+            />
+            <div className="muted">{fontSize}px</div>
+          </div>
         </div>
       </div>
     </div>

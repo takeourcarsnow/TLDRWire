@@ -13,12 +13,14 @@ export default function NewsFormActions({ onGenerate, onReset, onPresetClick, is
   return (
     <>
       <div className="actions">
-        <button
-          type="button"
-          onClick={onGenerate}
-          disabled={isLoading || rateLimited}
-          style={rateLimited ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
-        >
+        <div className="btn-group" style={{ flex: 1 }}>
+          <button
+            type="button"
+            onClick={onGenerate}
+            className="primary"
+            disabled={isLoading || rateLimited}
+            style={rateLimited ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+          >
           {isLoading ? (
             <>
               <span className="btn-spinner" aria-hidden="true"></span>
@@ -29,7 +31,8 @@ export default function NewsFormActions({ onGenerate, onReset, onPresetClick, is
           ) : (
             <span>✨ Generate TLDR</span>
           )}
-        </button>
+          </button>
+        </div>
       </div>
 
       <div className="btn-group" style={{ marginTop: '12px', gap: '8px', justifyContent: 'space-between' }}>
