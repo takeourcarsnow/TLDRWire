@@ -73,7 +73,7 @@ const CACHE_TTL_MS = 1000 * 60 * 3; // 3 minutes
 // rate-limiting from external providers (eg. Google News) when our
 // function runs frequently.
 const FEED_CACHE = new Map<string, { ts: number; value: any }>();
-const FEED_CACHE_TTL_MS = 1000 * 60 * 10; // 10 minutes
+const FEED_CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
 
 // Per-request timeout to avoid platform FUNCTION_INVOCATION_TIMEOUTs and give
 // the client a predictable error when upstream calls are slow.
@@ -162,11 +162,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
       const stopFeeds = logger.startTimer('fetch feeds', { urlCount: urls.length });
 
-      // Fetch feeds with bounded concurrency and a single retry per-feed.
-      // This reduces the chance of remote rate-limiting or transient
-      // network failures when many feeds are requested at once from the
-      // same Vercel function instance.
-      const concurrency = Math.min(8, Math.max(3, Math.floor(urls.length / 6))); // sensible default based on url count
+  // Fetch feeds with bounded concurrency and multiple retries per-feed.
+  // Reduce concurrency to minimize chance of upstream rate-limiting
+  // from a single Vercel function instance.
+  const concurrency = Math.min(6, Math.max(2, Math.floor(urls.length / 8) || 3));
 
       const results: Array<any> = new Array(urls.length);
       let workerIndex = 0;
@@ -183,7 +182,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           // ignore cache lookup errors
         }
         let lastErr: any = null;
-        const maxAttempts = 2;
+        const maxAttempts = 3;
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           try {
             const v = await parser.parseURL(u);
@@ -194,8 +193,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             lastErr = e;
             requestLog.debug('feed fetch attempt failed', { url: u, attempt, message: String(e?.message || e) });
             if (attempt < maxAttempts) {
-              // small backoff before retrying
-              await new Promise((r) => setTimeout(r, 500 * attempt));
+              // exponential backoff with small random jitter
+              const base = Math.min(1500, 300 * Math.pow(2, attempt - 1));
+              const jitter = Math.floor(Math.random() * 300);
+              await new Promise((r) => setTimeout(r, base + jitter));
             }
           }
         }
@@ -435,10 +436,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       requestLog.info('articles scored & deduped', { filtered: filteredArticles.length, unique: uniqueArticles.length, take });
 
       if (topItems.length === 0) {
-        const details = { urls, perFeedCounts };
+        const details = { urls, perFeedCounts, perFeedErrors };
         requestLog.warn('no articles after filtering/dedupe', details);
-        const payload404: ApiResponse = { ok: false, error: "No recent items found for that selection.", details: JSON.stringify(details) };
-        return { status: 404, payload: payload404 };
+        // Return a friendly fallback summary instead of a 404 so the UI
+        // can display informative content rather than throwing.
+        const fallbackLines = urls.slice(0, 20).map((u, i) => `- ${u}`);
+        const summary = `TL;DR: Could not reliably fetch recent items for that selection. Showing attempted feed URLs instead (first 20):\n\n${fallbackLines.join('\n')}`;
+        const payloadFallback: ApiResponse = {
+          ok: true,
+          meta: {
+            region: regionCfgForLinks?.name || region,
+            category: (category || 'Top'),
+            style,
+            timeframeHours: maxAge,
+            language,
+            locale: uiLocale,
+            usedArticles: 0,
+            model: GEMINI_MODEL,
+            length: (typeof length === 'string' ? length : 'medium')
+          },
+          summary
+        };
+        // Cache this fallback briefly to avoid repeating failing fetches back-to-back
+        CACHE.set(cacheKey, { ts: Date.now(), payload: payloadFallback });
+        return { status: 200, payload: payloadFallback };
       }
 
       const regionCfg = getRegionConfig(region, language);
