@@ -23,11 +23,25 @@ export default function SummaryRenderer({ summary, isLoading, summaryRef }: Prop
       usedRef.current.innerHTML = '';
 
       children.forEach((child, idx) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'reveal-up';
-        wrapper.style.animationDelay = `${Math.min(idx * 60, 360)}ms`;
-        wrapper.appendChild(child);
-        usedRef.current!.appendChild(wrapper);
+        if (child.tagName === 'UL') {
+          // Clone the ul and remove the last li
+          const ulClone = child.cloneNode(true) as HTMLElement;
+          const lis = ulClone.querySelectorAll('li');
+          if (lis.length > 0) {
+            lis[lis.length - 1].remove();
+          }
+          const wrapper = document.createElement('div');
+          wrapper.className = 'reveal-up';
+          wrapper.style.animationDelay = `${Math.min(idx * 60, 360)}ms`;
+          wrapper.appendChild(ulClone);
+          usedRef.current!.appendChild(wrapper);
+        } else {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'reveal-up';
+          wrapper.style.animationDelay = `${Math.min(idx * 60, 360)}ms`;
+          wrapper.appendChild(child);
+          usedRef.current!.appendChild(wrapper);
+        }
       });
 
 
