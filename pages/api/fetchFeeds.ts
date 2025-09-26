@@ -25,11 +25,26 @@ export async function fetchFeeds(opts: {
 
   const urls = getAllFeedsWithFallbacks({ region, category, query, hours, lang: language }, maxFeeds);
   requestLog.debug('feed urls built', { urls, sampleUrl: urls[0] });
+  requestLog.info('feeds to consider', { count: urls.length, sample: urls.slice(0, 6) });
   // regionCfgForLinks previously used for link normalization; safe to remove until needed
 
   // Limit feeds and deprioritize google news
   let urlsToFetch = urls;
   const MAX_FEEDS = maxFeeds;
+  // If Lithuania, ensure some Delfi fallback feeds are included at the front so we fetch them
+  try {
+    if ((region || '').toLowerCase() === 'lithuania') {
+      const ltFallbacks = FALLBACK_FEEDS['lithuania'] || [];
+      const delfiFallbacks = ltFallbacks.filter(u => typeof u === 'string' && u.includes('delfi'));
+      // prepend up to two Delfi fallbacks if they aren't already present
+      for (const u of delfiFallbacks.slice(0, 2).reverse()) {
+        if (!urlsToFetch.includes(u)) {
+          urlsToFetch = [u, ...urlsToFetch];
+        }
+      }
+      if (delfiFallbacks.length) requestLog.info('prepended delfi fallback feeds for lithuania', { delfiFallbacks: delfiFallbacks.slice(0,2) });
+    }
+  } catch (e) { /* ignore */ }
   if (urlsToFetch.length > MAX_FEEDS) {
     requestLog.info('too many feeds, sampling to reduce upstream load', { originalCount: urlsToFetch.length, max: MAX_FEEDS });
     const keep = urlsToFetch.slice(0, Math.min(4, urlsToFetch.length));
@@ -53,6 +68,8 @@ export async function fetchFeeds(opts: {
       requestLog.info('deprioritizing google news feeds', { googleCount: googleUrls.length, total: urlsToFetch.length });
       urlsToFetch = [...otherUrls, ...googleUrls];
     }
+    // Log final fetch order for visibility
+    requestLog.info('final fetch order', { count: urlsToFetch.length, order: urlsToFetch.slice(0, 40) });
   } catch (e) { /* ignore grouping errors */ }
 
   const concurrency = 2;
@@ -96,6 +113,30 @@ export async function fetchFeeds(opts: {
     }
   }
   requestLog.info('feed items aggregated', { itemCount: items.length });
+
+  // Detailed per-feed diagnostics for terminal visibility: which URL -> how many items / error
+  try {
+    const perFeedSummary = urlsToFetch.map((u, i) => {
+      let hostname = '';
+      try { hostname = new URL(u).hostname; } catch { hostname = u; }
+      return { url: u, hostname, count: perFeedCounts[i], error: perFeedErrors[i] };
+    });
+    requestLog.info('per-feed summary', { perFeedSummary: perFeedSummary.slice(0, 50) });
+
+    // Count item sources by hostname or source string to see which publishers produced articles
+    const hostCounts: Record<string, number> = {};
+    for (const it of items) {
+      let host = '';
+      try { host = new URL(it.link).hostname || String(it.source || ''); } catch { host = String(it.source || ''); }
+      host = (host || '').toLowerCase();
+      if (!host) host = 'unknown';
+      hostCounts[host] = (hostCounts[host] || 0) + 1;
+    }
+    const topHosts = Object.entries(hostCounts).sort((a,b) => b[1] - a[1]).slice(0, 12).map(([host,count]) => ({ host, count }));
+    requestLog.info('top item sources', { topHosts });
+  } catch (e) {
+    requestLog.debug('failed to compute per-feed diagnostics', { message: String(e) });
+  }
 
   let usedFallbacks = false;
   if (items.length === 0) {

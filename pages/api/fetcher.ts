@@ -26,6 +26,10 @@ export async function fetchWithRetries(u: string, requestLog: any) {
     const isGoogle = (() => { try { return new URL(u).hostname === 'news.google.com'; } catch { return u.includes('news.google.com'); } })();
     const attemptStart = Date.now();
     try {
+      // Log fetch start for visibility (hostname, attempt)
+      let hostname = '';
+      try { hostname = new URL(u).hostname; } catch { hostname = u; }
+      requestLog.info('fetching feed', { url: u, hostname, attempt });
       if (isGoogle) requestLog.debug('google feed fetch attempt', { url: u, attempt });
 
       const fetchWithTimeout = async (url: string, ms: number) => {
@@ -64,6 +68,7 @@ export async function fetchWithRetries(u: string, requestLog: any) {
       const v = await parser.parseString(raw);
       const ms = Date.now() - attemptStart;
       try { FEED_CACHE.set(u, { ts: Date.now(), value: v }); } catch (e) { /* ignore cache set */ }
+      requestLog.info('feed fetch success', { url: u, hostname, ms, items: (v?.items?.length || 0) });
       if (isGoogle) requestLog.debug('google feed fetch success', { url: u, ms, items: (v?.items?.length || 0) });
       try { FEED_FAIL_COUNTS.delete(u); } catch { /* ignore */ }
       try { FEED_CACHE.set(u, { ts: Date.now(), value: v }); } catch (e) { /* ignore */ }
@@ -71,7 +76,9 @@ export async function fetchWithRetries(u: string, requestLog: any) {
     } catch (e: any) {
       lastErr = e;
       const msg = String(e?.message || e);
-      requestLog.debug('feed fetch attempt failed', { url: u, attempt, message: msg });
+      // Log failure with level warn so it's visible in terminal; keep debug for google-specific
+      requestLog.warn('feed fetch attempt failed', { url: u, hostname: (new URL(u).hostname || u).toString?.(), attempt, message: msg });
+      requestLog.debug('feed fetch attempt failed-debug', { url: u, attempt, message: msg, error: e?.stack || String(e) });
       if (isGoogle) requestLog.debug('google feed fetch attempt failed', { url: u, attempt, message: msg });
       if (attempt < maxAttempts) {
         const base = Math.min(1500, 300 * Math.pow(2, attempt - 1));

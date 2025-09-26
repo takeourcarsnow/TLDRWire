@@ -99,8 +99,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       let payloadErrorForLogs: string | undefined = undefined;
       const feeds = await fetchFeeds({ region, category, query, hours: timeframeHours, language, loggerContext: { uiLocale }, maxFeeds: 16 });
 
-  const processed = await processArticles({ feedsResult: feeds, maxArticles: limit, region, category, query, loggerContext: { uiLocale } });
+    // Pass the requested timeframe (in hours) to processArticles so it filters by the
+    // user's desired window. processArticles will cap this to the default maximum (7 days).
+    const processed = await processArticles({ feedsResult: feeds, maxArticles: limit, region, category, query, loggerContext: { uiLocale }, maxAgeHours: timeframeHours });
   const { topItems, cleanTopItems, maxAge } = processed;
+  // processArticles returns maxAge in milliseconds (used for filtering). Convert to hours
+  // for use in prompts and API metadata so the UI shows a human-friendly hours value.
+  const maxAgeHours = Math.max(1, Math.round(Number(maxAge || 0) / (1000 * 60 * 60)));
 
       if (topItems.length === 0) {
         requestLog.warn('no articles after filtering/dedupe', { urls: feeds.urls, perFeedCounts: feeds.perFeedCounts, perFeedErrors: feeds.perFeedErrors });
@@ -112,7 +117,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             region: region,
             category: (category || 'Top'),
             style,
-            timeframeHours: maxAge,
+            timeframeHours: maxAgeHours,
             language,
             locale: uiLocale,
             usedArticles: 0,
@@ -145,7 +150,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         'very-long': { tldrSentences: '6–8 sentences', bulletsMin: 10, bulletsMax: 16 }
       }[lengthPreset] || { tldrSentences: '1–2 sentences', bulletsMin: 6, bulletsMax: 9 };
 
-      const { summary, llmError } = await summarizeWithLLM({ regionName, catName, maxAge, style, language, uiLocale, lengthPreset, lengthConfig, contextLines });
+  const { summary, llmError } = await summarizeWithLLM({ regionName, catName, maxAge: maxAgeHours, style, language, uiLocale, lengthPreset, lengthConfig, contextLines });
       if (llmError) payloadErrorForLogs = llmError;
 
       const payload: ApiResponse = {
@@ -154,7 +159,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           region: regionName,
           category: catName,
           style,
-          timeframeHours: maxAge,
+          timeframeHours: maxAgeHours,
           language,
           locale: uiLocale,
           usedArticles: cleanTopItems.length,

@@ -14,8 +14,9 @@ export async function processArticles(opts: {
   category?: string;
   query?: string;
   loggerContext?: any;
+  maxAgeHours?: number;
 }): Promise<ProcessArticlesResult> {
-  const { feedsResult, maxArticles = 20, preferLatest = false, region, category, query, loggerContext } = opts;
+  const { feedsResult, maxArticles = 20, preferLatest = false, region, category, query, loggerContext, maxAgeHours } = opts;
   const log = logger.child({ route: '/api/tldr/processArticles', region, category, maxArticles, query, ...(loggerContext || {}) });
 
   const rawItems: any[] = (feedsResult?.items || []).map((it: any) => {
@@ -40,11 +41,108 @@ export async function processArticles(opts: {
   // Sort by pub date desc or ascend depending on preferLatest
   normalized.sort((a,b) => (preferLatest ? a.pubDate - b.pubDate : b.pubDate - a.pubDate));
 
-  const maxAge = 1000 * 60 * 60 * 24 * 7; // default cap 7 days
+  const DEFAULT_CAP_MS = 1000 * 60 * 60 * 24 * 7; // default cap 7 days
+  let maxAge = DEFAULT_CAP_MS;
+  try {
+    if (typeof maxAgeHours === 'number' && !isNaN(maxAgeHours)) {
+      // Ensure at least 1 hour and round to integer hours
+      const hrs = Math.max(1, Math.round(Number(maxAgeHours)));
+      const requestedMs = hrs * 1000 * 60 * 60;
+      // Don't allow requested window to exceed the default cap
+      maxAge = Math.min(DEFAULT_CAP_MS, requestedMs);
+    }
+  } catch (e) {
+    maxAge = DEFAULT_CAP_MS;
+  }
   const now = Date.now();
   const withinWindow = normalized.filter(it => (now - (it.pubDate || now)) <= maxAge);
+  // If region is Lithuania, enforce a source-mix rule: don't let delfi.lt dominate.
+  // At most floor(maxArticles / 3) items may be from delfi.lt. Prefer other LT outlets
+  // such as lrt.lt, lrytas.lt, 15min.lt when available.
+  let topItems = withinWindow.slice(0, maxArticles);
+  try {
+    if ((region || '').toString().toLowerCase() === 'lithuania' && withinWindow.length > 0) {
+      const maxDelfi = Math.floor(maxArticles / 3);
+      const preferredLtHosts = ['lrt.lt', 'lrytas.lt', '15min.lt'];
 
-  const topItems = withinWindow.slice(0, maxArticles);
+  const preferredLt: any[] = [];
+  const delfi: any[] = [];
+  const others: any[] = [];
+
+      for (const it of withinWindow) {
+        let host = '';
+        try { host = new URL(it.link).hostname || ''; } catch { host = String(it.source || '').toLowerCase(); }
+        host = (host || '').toLowerCase();
+
+        // More permissive Delfi detection: check host, link and source for 'delfi' or 'delfi.lt'
+        const linkLower = String(it.link || '').toLowerCase();
+        const sourceLower = String(it.source || '').toLowerCase();
+        const isDelfi = host.includes('delfi') || linkLower.includes('delfi.lt') || sourceLower.includes('delfi');
+        const isPreferredLt = preferredLtHosts.some(h => host.includes(h) || String(it.source || '').toLowerCase().includes(h));
+
+        if (isDelfi) delfi.push(it);
+        else if (isPreferredLt) preferredLt.push(it);
+        else others.push(it);
+      }
+
+      const selected: any[] = [];
+
+      // Diagnostic logging: counts so you can see what's available before selection
+      try {
+        const sampleHosts = withinWindow.slice(0, 30).map(it => {
+          try { return { link: it.link, host: new URL(it.link).hostname }; } catch { return { link: it.link, host: String(it.source || '') }; }
+        });
+        log.info('lithuania source pools before selection', { total: withinWindow.length, preferredLt: preferredLt.length, delfi: delfi.length, others: others.length, sampleHosts: sampleHosts.slice(0, 12) });
+      } catch (e) {
+        log.debug('failed to log lithuania pools', { message: String(e) });
+      }
+
+      // Reserve a small number of slots for Delfi so we always include a couple when available.
+      // Reserve up to 2 but never exceed the overall delfi cap.
+      const reserveForDelfi = Math.min(2, maxDelfi, delfi.length);
+      const nonDelfiLimit = Math.max(0, maxArticles - reserveForDelfi);
+
+      // 1) take preferred Lithuanian non-delfi up to the non-delfi limit
+      for (const it of preferredLt) {
+        if (selected.length >= nonDelfiLimit) break;
+        selected.push(it);
+      }
+
+      // 2) take other non-delfi sources (global or local) up to the non-delfi limit
+      for (const it of others) {
+        if (selected.length >= nonDelfiLimit) break;
+        selected.push(it);
+      }
+
+      // 3) add Delfi items respecting the overall cap (maxDelfi)
+      let addedDelfi = 0;
+      for (const it of delfi) {
+        if (selected.length >= maxArticles) break;
+        if (addedDelfi >= maxDelfi) break;
+        selected.push(it);
+        addedDelfi++;
+      }
+
+      // 4) if we still have slots, fill from remaining pools while respecting the delfi cap
+      if (selected.length < maxArticles) {
+        const remaining = [...preferredLt, ...others, ...delfi].filter(it => !selected.includes(it));
+        for (const it of remaining) {
+          if (selected.length >= maxArticles) break;
+          const host = (() => { try { return new URL(it.link).hostname || ''; } catch { return String(it.source || '').toLowerCase(); } })().toLowerCase();
+          const isD = host.includes('delfi.') || String(it.source || '').toLowerCase().includes('delfi');
+          const currentDelfiCount = selected.filter(s => { try { return (new URL(s.link).hostname || '').toLowerCase().includes('delfi.'); } catch { return String(s.source || '').toLowerCase().includes('delfi'); } }).length;
+          if (isD && currentDelfiCount >= maxDelfi) continue;
+          selected.push(it);
+        }
+      }
+
+      topItems = selected.slice(0, maxArticles);
+    }
+  } catch (e) {
+    // on any error fall back to default selection
+    log && log.debug && log.debug('lithuania source-mix enforcement failed', { message: String(e) });
+    topItems = withinWindow.slice(0, maxArticles);
+  }
   const cleanTopItems = topItems.map((it:any) => ({ title: it.title, url: it.link, publishedAt: it.pubDate, source: it.source }));
 
   log.info('processed articles', { rawCount: rawItems.length, deduped: normalized.length, selected: topItems.length });

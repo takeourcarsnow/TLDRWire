@@ -1,6 +1,8 @@
 // Minimal structured logger with levels and timing helpers.
 // Configure via env: LOG_LEVEL=debug|info|warn|error|silent (default: info)
 
+import util from 'util';
+
 interface Levels {
   debug: number;
   info: number;
@@ -33,10 +35,14 @@ function ts(): string {
 }
 
 function fmt(level: string, msg: string, meta?: LogMeta): string {
-  const base = `[${ts()}] ${level.toUpperCase()}: ${msg}`;
+  const time = ts();
+  const padLevel = level.toUpperCase().padEnd(5, ' ');
+  const base = `[${time}] ${padLevel} ${msg}`;
   if (!meta) return base;
   try {
-    return `${base} ${JSON.stringify(meta)}`;
+    // pretty-print meta with util.inspect for readability in terminals
+    const pretty = util.inspect(meta, { colors: false, depth: 4, compact: false });
+    return `${base}\n${pretty}`;
   } catch {
     return base;
   }
@@ -51,7 +57,22 @@ function logAt(levelName: string, minLevel: number) {
         if (b.GEMINI_API_KEY) b.GEMINI_API_KEY = '[redacted]';
         meta = { ...meta, body: b };
       }
-      console.log(fmt(levelName, msg, meta));
+      // Add color to the level for terminal clarity
+      const colors: { [k: string]: string } = {
+        debug: '\u001b[36m', // cyan
+        info: '\u001b[32m',  // green
+        warn: '\u001b[33m',  // yellow
+        error: '\u001b[31m'  // red
+      };
+      const reset = '\u001b[0m';
+      const color = (colors[levelName] || '');
+      const out = fmt(levelName, msg, meta);
+      // ensure multi-line messages keep color only on the level/timestamp line
+      const lines = out.split('\n');
+      if (color) {
+        lines[0] = `${color}${lines[0]}${reset}`;
+      }
+      console.log(lines.join('\n'));
     }
   };
 }
