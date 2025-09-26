@@ -47,7 +47,7 @@ export default function NewsFormActions({ onGenerate, onReset, onPresetClick, is
         <button className="secondary" type="button" onClick={() => onPresetClick('morning')}>🌅 Morning Brief</button>
         <button className="secondary" type="button" onClick={() => onPresetClick('tech')}>💻 Tech Digest</button>
         <button className="secondary" type="button" onClick={() => onPresetClick('markets')}>📈 Market Pulse</button>
-        <button className="secondary" type="button" onClick={() => onPresetClick('lt-local')}>🇱🇹 LT Local</button>
+  <button className="secondary" type="button" onClick={() => onPresetClick('lt-local')}>📍 Local News</button>
       </div>
 
       <div className="note">

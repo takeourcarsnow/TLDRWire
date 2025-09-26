@@ -96,7 +96,8 @@ body {
 
 /* Theme toggle */
 .theme-toggle {
-  position: fixed;
+  /* Positioned within the header so it scrolls away with the page instead of being fixed */
+  position: absolute;
   top: 20px;
   right: 20px;
   background: var(--panel);

@@ -4,11 +4,11 @@ interface Props {
   isHidden: boolean;
   onCopy: () => Promise<void> | void;
   onShare: () => Promise<void> | void;
-  onExport: () => void;
+  onHistory: () => void;
   onPrint: () => void;
 }
 
-export default function NewsControls({ isHidden, onCopy, onShare, onExport, onPrint }: Props) {
+export default function NewsControls({ isHidden, onCopy, onShare, onHistory, onPrint }: Props) {
   if (isHidden) return null;
 
   return (
@@ -20,8 +20,8 @@ export default function NewsControls({ isHidden, onCopy, onShare, onExport, onPr
         <button className="secondary" type="button" title="Share summary" onClick={onShare}>
           🔗 Share
         </button>
-        <button className="secondary" type="button" title="Export as text" onClick={onExport}>
-          💾 Export
+        <button className="secondary" type="button" title="History" onClick={onHistory}>
+          🕘 History
         </button>
         <button className="secondary" type="button" title="Print summary" onClick={onPrint}>
           🖨️ Print

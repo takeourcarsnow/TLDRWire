@@ -384,11 +384,26 @@ export default function Home() {
           query: 'stocks OR bonds OR inflation OR rate'
         };
         break;
-      case 'lt-local':
+      case 'lt-local': {
+        // Choose a region based on the user's browser locale. Default to 'global' if unknown.
+        let regionGuess = 'global';
+        let langGuess = preferences.language || 'en';
+        try {
+          const navLang = navigator.language || (navigator as any).userLanguage || '';
+          const primary = (navLang || '').split('-')[0].toLowerCase();
+          if (primary === 'lt') { regionGuess = 'lithuania'; langGuess = 'lt'; }
+          else if (primary === 'fr') { regionGuess = 'france'; langGuess = 'fr'; }
+          else if (primary === 'de') { regionGuess = 'germany'; langGuess = 'de'; }
+          else if (primary === 'es') { regionGuess = 'spain'; langGuess = 'es'; }
+          else if (primary === 'it') { regionGuess = 'italy'; langGuess = 'it'; }
+          else { regionGuess = 'global'; }
+        } catch (e) {
+          regionGuess = 'global';
+        }
         updates = {
-          region: 'lithuania',
+          region: regionGuess,
           category: 'top',
-          language: 'lt',
+          language: langGuess,
           style: 'neutral',
           length: 'medium',
           timeframe: '24',
@@ -396,6 +411,7 @@ export default function Home() {
           query: ''
         };
         break;
+      }
     }
 
     // Apply updates
@@ -446,14 +462,13 @@ export default function Home() {
         />
       </Head>
 
-      <ThemeToggle theme={theme} onToggle={toggleTheme} />
-
       <header>
         <h1>TLDRWire</h1>
         <span className="tag">AI-powered quick rundowns 📰</span>
         <div style={{ marginLeft: 12 }}>
-          <button className="secondary" onClick={() => setShowHistoryModal(true)}>History</button>
+          {/* History is now available in the output controls */}
         </div>
+        <ThemeToggle theme={theme} onToggle={toggleTheme} />
       </header>
 
       <main>
@@ -478,6 +493,7 @@ export default function Home() {
             error={error}
             data={data}
             lastRequest={lastRequestRef.current}
+            onHistory={() => setShowHistoryModal(true)}
           />
         </section>
       </main>
