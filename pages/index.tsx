@@ -238,7 +238,6 @@ export default function Home() {
     }
   };
   const [showAboutModal, setShowAboutModal] = useState(false);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [fontSize, setFontSize] = useState(15);
   const lastRequestRef = useRef<any>(null);
   const [lastGenerateTime, setLastGenerateTime] = useState<number>(0);
@@ -468,13 +467,12 @@ export default function Home() {
       }
       if (e.key === 'Escape') {
         if (showAboutModal) setShowAboutModal(false);
-        if (showFeedbackModal) setShowFeedbackModal(false);
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [generateSummary, showAboutModal, showFeedbackModal]);
+  }, [generateSummary, showAboutModal]);
 
   return (
     <>
@@ -529,8 +527,8 @@ export default function Home() {
             About
           </a>{' '}
           •{' '}
-          <a href="#" onClick={(e) => { e.preventDefault(); setShowFeedbackModal(true); }}>
-            Feedback
+          <a href="https://nefas.tv" target="_blank" rel="noopener noreferrer">
+            Author
           </a>
         </p>
       </footer>
@@ -552,22 +550,7 @@ export default function Home() {
         </p>
       </Modal>
 
-      <Modal
-        isOpen={showFeedbackModal}
-        onClose={() => setShowFeedbackModal(false)}
-        title="Send Feedback"
-      >
-        <p>Spotted an issue or have an idea? Open an issue on GitHub or email us.</p>
-        <p>
-          <a
-            href="https://github.com/takeourcarsnow/qweasd/issues"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Open GitHub Issue
-          </a>
-        </p>
-      </Modal>
+      
 
       <Modal
         isOpen={showHistoryModal}
