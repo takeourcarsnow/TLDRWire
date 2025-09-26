@@ -33,7 +33,19 @@ export interface BuildFeedUrlsParams {
 export function getRegionConfig(regionKey: string, lang: string): RegionConfig {
   const def = REGION_MAP[regionKey] || REGION_MAP.global;
   const language = (lang || "en").toLowerCase();
-  const gl = def.gl;
+  let gl = def.gl;
+  // For Google News RSS, if language is not English, try to use a matching gl
+  if (language === 'de') gl = 'DE';
+  else if (language === 'fr') gl = 'FR';
+  else if (language === 'es') gl = 'ES';
+  else if (language === 'it') gl = 'IT';
+  else if (language === 'pt') gl = 'BR'; // or PT
+  else if (language === 'ja') gl = 'JP';
+  else if (language === 'ko') gl = 'KR';
+  else if (language === 'zh') gl = 'CN';
+  else if (language === 'ru') gl = 'RU';
+  else if (language === 'pl') gl = 'PL';
+  else gl = def.gl;
   const hl = language; // UI language
   const ceid = `${gl}:${language}`; // country:language
   const geo = def.geo;
@@ -154,25 +166,26 @@ export function buildAllFeeds({ region, category, query, hours: _hours, lang }: 
 }
 
 // Returns Google News feeds plus a conservative set of fallback publisher RSS feeds.
-// The combined list is de-duplicated and returned in a stable order: google news urls
-// first, then fallbacks for the requested category (if any).
+// The combined list is de-duplicated and returned in a stable order: fallbacks
+// first, then google news urls.
 export function getAllFeedsWithFallbacks(params: BuildFeedUrlsParams, maxFeeds = 16): string[] {
   const googleUrls = buildAllFeeds(params);
   const category = params.category ? resolveCategory(params.category) : 'top';
   const fallbacks = FALLBACK_FEEDS[category] || FALLBACK_FEEDS['top'] || [];
 
-  // Include region-specific fallbacks (e.g., Lithuanian outlets) when relevant
+  // Include region-specific fallbacks (e.g., Lithuanian, Indian, US outlets) when relevant
   let regionFallbacks: string[] = [];
   try {
-    if ((params.region || '').toLowerCase() === 'lithuania') {
-      regionFallbacks = FALLBACK_FEEDS['lithuania'] || [];
+    const regionKey = (params.region || '').toLowerCase();
+    if (regionKey && FALLBACK_FEEDS[regionKey]) {
+      regionFallbacks = FALLBACK_FEEDS[regionKey];
     }
   } catch (e) {
     regionFallbacks = [];
   }
 
-  // Merge while preserving googleUrls first. Append category fallbacks, then region-specific ones.
-  const merged = [...googleUrls, ...fallbacks, ...regionFallbacks];
+  // Merge while preserving fallbacks first. Append category fallbacks, then region-specific ones, then google.
+  const merged = [...fallbacks, ...regionFallbacks, ...googleUrls];
 
   // De-duplicate while preserving order.
   const seen = new Set<string>();

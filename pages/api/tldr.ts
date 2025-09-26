@@ -97,7 +97,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const compute = async (): Promise<{ status: number; payload: ApiResponse }> => {
       let payloadErrorForLogs: string | undefined = undefined;
-      const feeds = await fetchFeeds({ region, category, query, hours: timeframeHours, language, loggerContext: { uiLocale }, maxFeeds: 16 });
+  // Hint to fetchFeeds how many items we ultimately need so it can stop early once
+  // enough articles are gathered. This reduces upstream load and latency.
+  const feeds = await fetchFeeds({ region, category, query, hours: timeframeHours, language, loggerContext: { uiLocale }, maxFeeds: 16, desiredItems: Math.max(8, limit) });
 
     // Pass the requested timeframe (in hours) to processArticles so it filters by the
     // user's desired window. processArticles will cap this to the default maximum (7 days).
@@ -153,6 +155,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const { summary, llmError } = await summarizeWithLLM({ regionName, catName, maxAge: maxAgeHours, style, language, uiLocale, lengthPreset, lengthConfig, contextLines });
       if (llmError) payloadErrorForLogs = llmError;
 
+      // Append source attribution to the summary
+      let finalSummary = dedupeSummaryBullets(summary);
+      // Compute sources from the final articles used
+      const hostCounts: Record<string, number> = {};
+      for (const a of cleanTopItems) {
+        let host = '';
+        try { host = new URL(a.url).hostname; } catch { host = 'unknown'; }
+        host = host.toLowerCase().replace(/^www\./, ''); // normalize
+        hostCounts[host] = (hostCounts[host] || 0) + 1;
+      }
+      const topSources = Object.entries(hostCounts).sort((a,b) => b[1] - a[1]).slice(0, 5).map(([host,count]) => `${host} (${count})`).join(', ');
+      if (topSources) {
+        finalSummary += `\n\nSources: ${topSources}`;
+      }
+
       const payload: ApiResponse = {
         ok: true,
         meta: {
@@ -166,11 +183,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           model: GEMINI_MODEL,
           length: lengthPreset
         },
-        summary: dedupeSummaryBullets(summary)
+        summary: finalSummary
       };
       if (payloadErrorForLogs) (payload as any).llmError = payloadErrorForLogs;
       CACHE.set(cacheKey, { ts: Date.now(), payload });
       requestLog.info('response ready', { usedArticles: cleanTopItems.length, model: GEMINI_MODEL, cached: false });
+      requestLog.info('final articles used for summary', { count: cleanTopItems.length });
       return { status: 200, payload };
     };
 
