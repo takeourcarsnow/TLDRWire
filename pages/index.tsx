@@ -373,6 +373,18 @@ export default function Home() {
       renderMarkdownToElement(selectedSummaryRef.current, md);
     }
   }, [selectedHistoryEntry]);
+  
+  // Compute a friendly, descriptive tab title. Prefer an explicit query if present,
+  // otherwise include region/category hints and a short tagline.
+  const pageTitle = (() => {
+    const q = (preferences.query || '').trim();
+    if (q.length > 0) return `${q} — TLDRWire`;
+    const region = (preferences.region || '').toString();
+    const category = (preferences.category || '').toString();
+    if (region && region !== 'global') return `TLDRWire — ${region} news`;
+    if (category && category !== 'top') return `TLDRWire — ${category}`;
+    return 'TLDRWire — AI-powered news summaries';
+  })();
 
   const generateSummary = useCallback(async (overridePayload?: any) => {
     const now = Date.now();
@@ -547,7 +559,7 @@ export default function Home() {
   return (
     <>
       <Head>
-  <title>TLDRWire</title>
+  <title>{pageTitle}</title>
         <meta
           name="description"
           content="AI-powered news summarizer providing quick, intelligent rundowns of current events across regions and categories."
