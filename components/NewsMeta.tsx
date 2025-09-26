@@ -8,15 +8,22 @@ interface Props {
 export default function NewsMeta({ data }: Props) {
   if (!data?.meta) return null;
 
+  const sanitize = (s: any) => {
+    try {
+      return String(s || '').replace(/\uFFFD/g, '').trim();
+    } catch (e) { return String(s || ''); }
+  };
+
+  const lang = sanitize(data.meta.language) || '';
   const items = [
-    { icon: '📍', label: 'Region', value: data.meta.region },
-    { icon: '�️', label: 'Language', value: data.meta.language },
-    { icon: '�📂', label: 'Category', value: data.meta.category },
-    { icon: '✍️', label: 'Style', value: data.meta.style },
-    { icon: '⏰', label: 'Window', value: `${data.meta.timeframeHours}h` },
-    { icon: '📊', label: 'Articles', value: data.meta.usedArticles },
-    data.meta.length ? { icon: '📏', label: 'Length', value: data.meta.length } : null,
-    { icon: '🤖', label: 'Model', value: data.meta.model }
+    { icon: '📍', label: 'Region', value: sanitize(data.meta.region) },
+    { icon: '🌐', label: 'Language', value: lang },
+    { icon: '📂', label: 'Category', value: sanitize(data.meta.category) },
+    { icon: '✍️', label: 'Style', value: sanitize(data.meta.style) },
+    { icon: '⏰', label: 'Window', value: `${sanitize(data.meta.timeframeHours)}h` },
+    { icon: '📊', label: 'Articles', value: sanitize(data.meta.usedArticles) },
+    data.meta.length ? { icon: '📏', label: 'Length', value: sanitize(data.meta.length) } : null,
+    // model intentionally hidden from meta topbar
   ].filter(Boolean);
 
   return (

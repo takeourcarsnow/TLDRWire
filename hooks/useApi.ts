@@ -25,6 +25,8 @@ export interface ApiResponse {
     category: string;
     style: string;
     timeframeHours: number;
+      language?: string;
+      locale?: string;
     usedArticles: number;
     length: string;
     model: string;
