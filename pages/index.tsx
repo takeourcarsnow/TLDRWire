@@ -304,15 +304,67 @@ export default function Home() {
   }, []);
 
   const RATE_LIMIT_SECONDS = 60;
+  const RATE_LIMIT_KEY = 'tldrwire:rateLimitExpires';
   // Update countdown every second
   useEffect(() => {
     if (rateLimitCountdown > 0) {
       const timer = setTimeout(() => {
-        setRateLimitCountdown((c) => Math.max(0, c - 1));
+        setRateLimitCountdown((c) => {
+          const next = Math.max(0, c - 1);
+          try {
+            if (next === 0) {
+              localStorage.removeItem(RATE_LIMIT_KEY);
+            }
+          } catch (e) {}
+          return next;
+        });
       }, 1000);
       return () => clearTimeout(timer);
     }
   }, [rateLimitCountdown]);
+
+  // Restore rate limit state from localStorage on mount and sync across tabs
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RATE_LIMIT_KEY);
+      if (raw) {
+        const expires = Number(raw) || 0;
+        const now = Date.now();
+        if (expires > now) {
+          const remaining = Math.ceil((expires - now) / 1000);
+          setRateLimitCountdown(remaining);
+          // set lastGenerateTime to the original generation time so generateSummary honor check
+          setLastGenerateTime(expires - RATE_LIMIT_SECONDS * 1000);
+        } else {
+          localStorage.removeItem(RATE_LIMIT_KEY);
+        }
+      }
+    } catch (e) {}
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== RATE_LIMIT_KEY) return;
+      try {
+        if (!e.newValue) {
+          setRateLimitCountdown(0);
+          setLastGenerateTime(0);
+          return;
+        }
+        const expires = Number(e.newValue) || 0;
+        const now = Date.now();
+        if (expires > now) {
+          const remaining = Math.ceil((expires - now) / 1000);
+          setRateLimitCountdown(remaining);
+          setLastGenerateTime(expires - RATE_LIMIT_SECONDS * 1000);
+        } else {
+          setRateLimitCountdown(0);
+          setLastGenerateTime(0);
+        }
+      } catch (err) {}
+    };
+
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   useEffect(() => {
     if (selectedHistoryEntry) {
@@ -331,6 +383,10 @@ export default function Home() {
     }
     setLastGenerateTime(now);
     setRateLimitCountdown(RATE_LIMIT_SECONDS);
+    try {
+      const expires = now + RATE_LIMIT_SECONDS * 1000;
+      localStorage.setItem(RATE_LIMIT_KEY, String(expires));
+    } catch (e) {}
     clearError();
 
     const payload = overridePayload || {

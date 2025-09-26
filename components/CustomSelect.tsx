@@ -66,28 +66,35 @@ export default function CustomSelect({ id, value, options, onChange, className }
 
   const selected = options.find(o => o.value === value) || options[0];
 
+  const listId = id ? `${id}-list` : `custom-select-list-${Math.random().toString(36).slice(2,8)}`;
+  const activeId = `${listId}-option-${highlight}`;
+
   return (
-    <div ref={rootRef} className={`custom-select ${className || ''}`} onKeyDown={onKeyDown} tabIndex={0} aria-haspopup="listbox">
+    <div ref={rootRef} className={`custom-select ${className || ''}`} onKeyDown={onKeyDown} tabIndex={0} aria-haspopup="listbox" aria-expanded={open} aria-controls={listId} aria-activedescendant={open ? activeId : undefined}>
       <button type="button" aria-expanded={open} aria-controls={id ? `${id}-list` : undefined} className="custom-select-button" onClick={toggle}>
         {selected?.icon ? <TwEmoji text={selected.icon} /> : null}
         <span className="custom-select-label">{selected?.label}</span>
         <span className="custom-select-caret">▾</span>
       </button>
       {open && (
-        <ul id={id ? `${id}-list` : undefined} role="listbox" ref={listRef} className="custom-select-list">
-          {options.map((opt, i) => (
-            <li
-              key={opt.value}
-              role="option"
-              aria-selected={opt.value === value}
-              className={`custom-select-option ${i === highlight ? 'highlight' : ''}`}
-              onMouseEnter={() => setHighlight(i)}
-              onClick={() => handleOptionClick(i)}
-            >
-              {opt.icon ? <TwEmoji text={opt.icon} /> : null}
-              <span className="custom-select-option-label">{opt.label}</span>
-            </li>
-          ))}
+        <ul id={listId} role="listbox" ref={listRef} className="custom-select-list">
+          {options.map((opt, i) => {
+            const optionId = `${listId}-option-${i}`;
+            return (
+              <li
+                key={opt.value}
+                id={optionId}
+                role="option"
+                aria-selected={opt.value === value}
+                className={`custom-select-option ${i === highlight ? 'highlight' : ''}`}
+                onMouseEnter={() => setHighlight(i)}
+                onClick={() => handleOptionClick(i)}
+              >
+                {opt.icon ? <TwEmoji text={opt.icon} /> : null}
+                <span className="custom-select-option-label">{opt.label}</span>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

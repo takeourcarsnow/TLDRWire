@@ -1,9 +1,10 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { ApiResponse } from '../hooks/useApi';
 import SummaryRenderer from './SummaryRenderer';
 import NewsMeta from './NewsMeta';
 import NewsStatus from './NewsStatus';
 import NewsControls from './NewsControls';
+import Toast from './Toast';
 
 interface NewsOutputProps {
   isLoading: boolean;
@@ -15,11 +16,12 @@ interface NewsOutputProps {
 
 export function NewsOutput({ isLoading, error, data, lastRequest, onHistory }: NewsOutputProps) {
   const summaryRef = useRef<HTMLDivElement>(null);
+  const [toast, setToast] = useState<{ message: string; type?: any } | null>(null);
 
   const copyToClipboard = async () => {
     const text = summaryRef.current?.innerText || '';
     if (!text.trim()) {
-      alert('No summary to copy');
+      setToast({ message: 'No summary to copy', type: 'warning' });
       return;
     }
 
@@ -27,14 +29,14 @@ export function NewsOutput({ isLoading, error, data, lastRequest, onHistory }: N
       await navigator.clipboard.writeText(text);
     } catch (error) {
       console.error('Copy failed:', error);
-      alert('Copy failed - try selecting text manually');
+      setToast({ message: 'Copy failed — try selecting text manually', type: 'danger' });
     }
   };
 
   const shareContent = async () => {
     const text = summaryRef.current?.innerText || '';
     if (!text.trim()) {
-      alert('No summary to share');
+      setToast({ message: 'No summary to share', type: 'warning' });
       return;
     }
 
@@ -49,12 +51,12 @@ export function NewsOutput({ isLoading, error, data, lastRequest, onHistory }: N
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard!');
+        setToast({ message: 'Link copied to clipboard!', type: 'success' });
       }
     } catch (error: any) {
       if (error?.name !== 'AbortError') {
         console.error('Share failed:', error);
-        alert('Sharing failed');
+        setToast({ message: 'Sharing failed', type: 'danger' });
       }
     }
   };
@@ -62,7 +64,7 @@ export function NewsOutput({ isLoading, error, data, lastRequest, onHistory }: N
   const exportAsText = () => {
     const text = summaryRef.current?.innerText || '';
     if (!text.trim()) {
-      alert('No summary to export');
+      setToast({ message: 'No summary to export', type: 'warning' });
       return;
     }
 
@@ -89,6 +91,11 @@ export function NewsOutput({ isLoading, error, data, lastRequest, onHistory }: N
 
   return (
     <>
+      {toast && (
+        <div style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 3000 }}>
+          <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+        </div>
+      )}
       <NewsMeta data={data} />
       <div id="status" role="alert" aria-live="assertive">
         <NewsStatus isLoading={isLoading} error={error} dataCached={!!data?.cached} />
