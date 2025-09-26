@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface Props {
   onGenerate: () => Promise<void>;
@@ -10,6 +10,10 @@ interface Props {
 }
 
 export default function NewsFormActions({ onGenerate, onReset, onPresetClick, isLoading, rateLimited = false, rateLimitCountdown = 0 }: Props) {
+  const [open, setOpen] = useState(false);
+  const toggle = () => setOpen((s) => !s);
+  const panelId = 'disclaimer-panel';
+
   return (
     <>
       <div className="actions">
@@ -50,11 +54,18 @@ export default function NewsFormActions({ onGenerate, onReset, onPresetClick, is
   <button className="secondary" type="button" onClick={() => onPresetClick('lt-local')}>📍 Local News</button>
       </div>
 
-      <div className="note">
-        Summaries are generated automatically from a variety of public news sources to provide concise, easy-to-scan overviews.
-        Please treat them as a starting point and verify details before acting on them.
-        <br />
-        <small>We process requests server-side for reliability and performance.</small>
+      {/* Slide-out disclosure: hidden by default, appears on hover or when toggled */}
+      <div className="note-wrap">
+        <button className="note-toggle" aria-expanded={open} aria-controls={panelId} onClick={toggle}>{open ? 'Hide' : 'More info'}</button>
+        <div id={panelId} className={`note ${open ? 'slide-open' : 'slide-closed'}`} role="region" aria-hidden={!open}>
+          <div className="note-inner">
+            <strong>Note</strong>
+            <p>
+              Summaries are generated automatically from a variety of public news sources to provide concise, easy-to-scan overviews. Please treat them as a starting point and verify details before acting on them.
+            </p>
+            <p className="muted"><small>We process requests server-side for reliability and performance.</small></p>
+          </div>
+        </div>
       </div>
     </>
   );

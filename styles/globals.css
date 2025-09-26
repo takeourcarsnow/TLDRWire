@@ -15,6 +15,55 @@
   --summary-font-size: 15px;
 }
 
+/* Slide-out disclaimer styles */
+.note-wrap {
+  position: relative;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.note-toggle {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #9fb8d6;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  display: inline-block;
+  margin: 8px auto;
+}
+.note {
+  /* Inline collapsible panel that pushes content instead of overlapping */
+  position: static;
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: #d7eaf8;
+  padding: 0; /* inner padding handled by .note-inner */
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(2,6,23,0.06);
+  overflow: hidden;
+  transition: max-height 200ms ease, opacity 160ms ease, padding 160ms ease;
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.note.slide-open {
+  max-height: 420px; /* room for content */
+  opacity: 1;
+  pointer-events: auto;
+}
+.note-inner { padding: 16px; text-align: center; }
+.note-inner p { margin: 8px 0; font-size: 13px; line-height: 1.4; text-align: center; }
+.note-inner .muted { color: rgba(255,255,255,0.6); font-size: 12px; text-align: center; }
+
+/* Remove hover reveal to avoid accidental overlap on touch devices; rely on the toggle button */
+
+
 @media (prefers-color-scheme: light) {
   :root {
     --bg: #f7fafc;
