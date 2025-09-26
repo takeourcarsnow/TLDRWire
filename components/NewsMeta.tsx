@@ -10,7 +10,8 @@ export default function NewsMeta({ data }: Props) {
 
   const items = [
     { icon: '📍', label: 'Region', value: data.meta.region },
-    { icon: '📂', label: 'Category', value: data.meta.category },
+    { icon: '�️', label: 'Language', value: data.meta.language },
+    { icon: '�📂', label: 'Category', value: data.meta.category },
     { icon: '✍️', label: 'Style', value: data.meta.style },
     { icon: '⏰', label: 'Window', value: `${data.meta.timeframeHours}h` },
     { icon: '📊', label: 'Articles', value: data.meta.usedArticles },

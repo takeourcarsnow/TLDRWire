@@ -138,6 +138,64 @@ export async function processArticles(opts: {
 
       topItems = selected.slice(0, maxArticles);
     }
+    else {
+      // General host-diversity enforcement for other regions:
+      // Build buckets of items per host (preserve withinWindow order which is date-sorted)
+      const hostBuckets: Record<string, any[]> = {};
+      for (const it of withinWindow) {
+        let host = '';
+        try { host = new URL(it.link).hostname || ''; } catch { host = String(it.source || '').toLowerCase(); }
+        host = (host || 'unknown').toLowerCase();
+        if (!hostBuckets[host]) hostBuckets[host] = [];
+        hostBuckets[host].push(it);
+      }
+
+      const hosts = Object.keys(hostBuckets);
+      // If there's only one host available, fallback to the naive slice
+      if (hosts.length <= 1) {
+        topItems = withinWindow.slice(0, maxArticles);
+      } else {
+        // Cap per-host items to enforce diversity: at least 1, at most 3 or 40% of requested
+        const maxPerHost = Math.max(1, Math.min(3, Math.floor(maxArticles * 0.4)));
+
+        try {
+          const hostCounts: Record<string, number> = {};
+          hosts.forEach(h => hostCounts[h] = hostBuckets[h].length);
+          log.info('host pools before diversity selection', { total: withinWindow.length, hosts: hosts.length, hostCounts });
+        } catch (e) { /* ignore logging errors */ }
+
+        const selected: any[] = [];
+
+        // Round-robin selection: pick newest available from each host while respecting per-host cap
+        let progress = true;
+        while (selected.length < maxArticles && progress) {
+          progress = false;
+          for (const h of hosts) {
+            if (selected.length >= maxArticles) break;
+            const bucket = hostBuckets[h];
+            if (!bucket || bucket.length === 0) continue;
+            const countForHost = selected.filter(s => {
+              try { return (new URL(s.link).hostname || '').toLowerCase() === h; } catch { return String(s.source || '').toLowerCase() === h; }
+            }).length;
+            if (countForHost >= maxPerHost) continue;
+            // take the next item from this host
+            selected.push(bucket.shift() as any);
+            progress = true;
+          }
+        }
+
+        // If we still have slots, fill from remaining items regardless of host cap
+        if (selected.length < maxArticles) {
+          const remaining = hosts.flatMap(h => hostBuckets[h] || []);
+          for (const it of remaining) {
+            if (selected.length >= maxArticles) break;
+            selected.push(it);
+          }
+        }
+
+        topItems = selected.slice(0, maxArticles);
+      }
+    }
   } catch (e) {
     // on any error fall back to default selection
     log && log.debug && log.debug('lithuania source-mix enforcement failed', { message: String(e) });

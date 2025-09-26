@@ -323,7 +323,7 @@ export default function Home() {
     }
   }, [selectedHistoryEntry]);
 
-  const generateSummary = useCallback(async () => {
+  const generateSummary = useCallback(async (overridePayload?: any) => {
     const now = Date.now();
     if (isLoading) return;
     if (lastGenerateTime && now - lastGenerateTime < RATE_LIMIT_SECONDS * 1000) {
@@ -333,7 +333,8 @@ export default function Home() {
     setLastGenerateTime(now);
     setRateLimitCountdown(RATE_LIMIT_SECONDS);
     clearError();
-    const payload = {
+
+    const payload = overridePayload || {
       region: preferences.region,
       category: preferences.category,
       style: preferences.style,
@@ -385,21 +386,34 @@ export default function Home() {
         };
         break;
       case 'lt-local': {
-        // Choose a region based on the user's browser locale. Default to 'global' if unknown.
+        // Try server-side geo lookup first (IP-based). If it fails, fall back to browser locale.
         let regionGuess = 'global';
         let langGuess = preferences.language || 'en';
         try {
-          const navLang = navigator.language || (navigator as any).userLanguage || '';
-          const primary = (navLang || '').split('-')[0].toLowerCase();
-          if (primary === 'lt') { regionGuess = 'lithuania'; langGuess = 'lt'; }
-          else if (primary === 'fr') { regionGuess = 'france'; langGuess = 'fr'; }
-          else if (primary === 'de') { regionGuess = 'germany'; langGuess = 'de'; }
-          else if (primary === 'es') { regionGuess = 'spain'; langGuess = 'es'; }
-          else if (primary === 'it') { regionGuess = 'italy'; langGuess = 'it'; }
-          else { regionGuess = 'global'; }
+          const resp = await fetch('/api/geo');
+          if (resp.ok) {
+            const j = await resp.json();
+            if (j && j.regionKey) regionGuess = j.regionKey;
+            if (j && j.language) langGuess = j.language;
+          } else {
+            throw new Error('geo fetch failed');
+          }
         } catch (e) {
-          regionGuess = 'global';
+          try {
+            const navLang = navigator.language || (navigator as any).userLanguage || '';
+            const primary = (navLang || '').split('-')[0].toLowerCase();
+            if (primary === 'lt') { regionGuess = 'lithuania'; langGuess = 'lt'; }
+            else if (primary === 'fr') { regionGuess = 'france'; langGuess = 'fr'; }
+            else if (primary === 'de') { regionGuess = 'germany'; langGuess = 'de'; }
+            else if (primary === 'es') { regionGuess = 'spain'; langGuess = 'es'; }
+            else if (primary === 'it') { regionGuess = 'italy'; langGuess = 'it'; }
+            else { regionGuess = 'global'; }
+          } catch (ex) {
+            regionGuess = 'global';
+            langGuess = preferences.language || 'en';
+          }
         }
+
         updates = {
           region: regionGuess,
           category: 'top',
@@ -414,19 +428,29 @@ export default function Home() {
       }
     }
 
-    // Apply updates
+    // Apply updates to preferences so the UI reflects the preset
     Object.entries(updates).forEach(([key, value]) => {
       updatePreference(key as keyof Preferences, value as string);
     });
 
-    // Generate summary after a short delay to allow state updates
-    setTimeout(async () => {
+    // Immediately generate using the preset payload (do not rely on state update timing)
+    const payload = {
+      region: (updates as any).region || preferences.region,
+      category: (updates as any).category || preferences.category,
+      style: (updates as any).style || preferences.style,
+      language: (updates as any).language || preferences.language,
+      timeframeHours: Number((updates as any).timeframe || preferences.timeframe) || 24,
+      limit: Number((updates as any).limit || preferences.limit) || 20,
+      length: (updates as any).length || preferences.length || 'medium',
+      query: ((updates as any).query || preferences.query || '').trim()
+    };
+    (async () => {
       try {
-        await generateSummary();
+        await generateSummary(payload);
       } catch (err: any) {
         console.warn('generateSummary failed', err);
       }
-    }, 100);
+    })();
   }, [updatePreference, generateSummary]);
 
   // Keyboard shortcuts
