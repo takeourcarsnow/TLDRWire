@@ -1,5 +1,6 @@
 import React from 'react';
 import { ApiResponse } from '../hooks/useApi';
+import TwEmoji from './TwEmoji';
 
 interface Props {
   data: ApiResponse | null;
@@ -16,8 +17,8 @@ export default function NewsMeta({ data }: Props) {
 
   const lang = sanitize(data.meta.language) || '';
   const items = [
-    { icon: '📍', label: 'Region', value: sanitize(data.meta.region) },
-    { icon: '🌐', label: 'Language', value: lang },
+    { icon: <TwEmoji text={'📍'} />, label: 'Region', value: sanitize(data.meta.region) },
+    { icon: <TwEmoji text={'🌐'} />, label: 'Language', value: lang },
     { icon: '📂', label: 'Category', value: sanitize(data.meta.category) },
     { icon: '✍️', label: 'Style', value: sanitize(data.meta.style) },
     { icon: '⏰', label: 'Window', value: `${sanitize(data.meta.timeframeHours)}h` },

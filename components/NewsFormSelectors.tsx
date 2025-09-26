@@ -1,4 +1,6 @@
 import React from 'react';
+import TwEmoji from './TwEmoji';
+import CustomSelect from './CustomSelect';
 import { Preferences } from '../hooks/usePreferences';
 
 interface Props {
@@ -7,44 +9,43 @@ interface Props {
 }
 
 export default function NewsFormSelectors({ preferences, onPreferenceChange }: Props) {
+  const regionOptions = [
+    { value: 'global', label: 'Global', icon: '🌍' },
+    { value: 'lithuania', label: 'Lithuania', icon: '🇱🇹' },
+    { value: 'united-states', label: 'United States', icon: '🇺🇸' },
+    { value: 'united-kingdom', label: 'United Kingdom', icon: '🇬🇧' },
+    { value: 'germany', label: 'Germany', icon: '🇩🇪' },
+    { value: 'france', label: 'France', icon: '🇫🇷' },
+    { value: 'india', label: 'India', icon: '🇮🇳' },
+    { value: 'japan', label: 'Japan', icon: '🇯🇵' },
+    { value: 'brazil', label: 'Brazil', icon: '🇧🇷' },
+    { value: 'australia', label: 'Australia', icon: '🇦🇺' },
+  ];
+
+  const languageOptions = [
+    { value: 'en', label: 'English', icon: '🇺🇸' },
+    { value: 'lt', label: 'Lithuanian', icon: '🇱🇹' },
+    { value: 'de', label: 'German', icon: '🇩🇪' },
+    { value: 'fr', label: 'French', icon: '🇫🇷' },
+    { value: 'pt', label: 'Portuguese', icon: '🇵🇹' },
+    { value: 'ja', label: 'Japanese', icon: '🇯🇵' },
+    { value: 'hi', label: 'Hindi', icon: '🇮🇳' },
+  ];
   return (
     <>
       <div className="form-group">
         <div className="row">
           <div>
-            <label htmlFor="region">📍 Region</label>
-            <select
-              id="region"
-              value={preferences.region}
-              onChange={(e) => onPreferenceChange('region', e.target.value)}
-            >
-              <option value="global">🌍 Global</option>
-              <option value="lithuania">🇱🇹 Lithuania</option>
-              <option value="united-states">🇺🇸 United States</option>
-              <option value="united-kingdom">🇬🇧 United Kingdom</option>
-              <option value="germany">🇩🇪 Germany</option>
-              <option value="france">🇫🇷 France</option>
-              <option value="india">🇮🇳 India</option>
-              <option value="japan">🇯🇵 Japan</option>
-              <option value="brazil">🇧🇷 Brazil</option>
-              <option value="australia">🇦🇺 Australia</option>
-            </select>
+            <label htmlFor="region"><TwEmoji text={'📍'} /> Region</label>
+            <div className="select-with-flag">
+              <CustomSelect id="region" value={preferences.region} options={regionOptions} onChange={(v) => onPreferenceChange('region', v)} />
+            </div>
           </div>
           <div>
-            <label htmlFor="language">🌐 Language</label>
-            <select
-              id="language"
-              value={preferences.language}
-              onChange={(e) => onPreferenceChange('language', e.target.value)}
-            >
-              <option value="en">🇺🇸 English</option>
-              <option value="lt">🇱🇹 Lithuanian</option>
-              <option value="de">🇩🇪 German</option>
-              <option value="fr">🇫🇷 French</option>
-              <option value="pt">🇵🇹 Portuguese</option>
-              <option value="ja">🇯🇵 Japanese</option>
-              <option value="hi">🇮🇳 Hindi</option>
-            </select>
+            <label htmlFor="language"><TwEmoji text={'🌐'} /> Language</label>
+            <div className="select-with-flag">
+              <CustomSelect id="language" value={preferences.language} options={languageOptions} onChange={(v) => onPreferenceChange('language', v)} />
+            </div>
           </div>
         </div>
       </div>
