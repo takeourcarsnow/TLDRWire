@@ -51,10 +51,10 @@ export default function NewsFormActions({ onGenerate, onReset, onPresetClick, is
       </div>
 
       <div className="note">
-        📡 Data sourced from Google News RSS across multiple publishers.
-        Your Gemini API key stays secure on the server.
+        Summaries are generated automatically from a variety of public news sources to provide concise, easy-to-scan overviews.
+        Please treat them as a starting point and verify details before acting on them.
         <br />
-        <small>💡 Tip: Use <kbd>Ctrl/Cmd + Enter</kbd> to generate quickly!</small>
+        <small>We process requests server-side for reliability and performance.</small>
       </div>
     </>
   );
