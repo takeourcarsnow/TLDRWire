@@ -6,6 +6,12 @@
 const CACHE_NAME = 'tldrwire-v1.2.2';
 const API_CACHE_NAME = 'tldrwire-api-v1.0.1';
 
+// Feature-flag to enable background tasks in the service worker. Keep this
+// false by default so there is no unexpected background CPU/network work on
+// hosted deployments. Set to true only if you intentionally want background
+// periodic syncs or push handling in production and understand the tradeoffs.
+const ENABLE_BACKGROUND_TASKS = false;
+
 // Static assets to cache
 const STATIC_ASSETS = [
   '/',
@@ -26,6 +32,28 @@ const CACHE_STRATEGIES = {
  */
 self.addEventListener('install', (event) => {
   console.log('📦 Service Worker installing...');
+
+  // If we're running on localhost (development) don't persistently install
+  // the service worker. Some dev servers (Next.js) rely on direct dev-server
+  // connections for HMR; keeping a SW active on localhost often causes the
+  // hot-update.json 404 / full-reload loop. Try to unregister ourselves in
+  // that case so dev workflow is not interrupted.
+  try {
+    const host = self.location && self.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      console.log('⚠️ Service Worker running on localhost — will self-unregister to avoid dev HMR conflicts');
+      event.waitUntil((async () => {
+        try {
+          await self.skipWaiting();
+          // Attempt to unregister; registration may be available during activate
+          if (self.registration) {
+            await self.registration.unregister();
+          }
+        } catch (e) {}
+      })());
+      return;
+    }
+  } catch (e) {}
   
   // Cache assets one-by-one so a single failing fetch (eg. 401) doesn't
   // reject the whole install via addAll. This also allows skipping
@@ -98,6 +126,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  // Do not intercept Next.js dev HMR or static _next requests. In development
+  // the HMR client expects to talk directly to the dev server for
+  // hot-update.json and other runtime assets; if a service worker intercepts
+  // these it can cause persistent 404s and full Fast Refresh reloads.
+  if (url.pathname.startsWith('/_next/')) {
+    return; // let the browser/dev-server handle these requests directly
+  }
 
   // Skip non-GET requests
   if (request.method !== 'GET') {
@@ -242,12 +278,14 @@ async function handleStaleWhileRevalidate(request) {
 /**
  * Handle background sync for offline functionality
  */
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'background-sync') {
-    console.log('🔄 Background sync triggered');
-    event.waitUntil(doBackgroundSync());
-  }
-});
+if (ENABLE_BACKGROUND_TASKS) {
+  self.addEventListener('sync', (event) => {
+    if (event.tag === 'background-sync') {
+      console.log('🔄 Background sync triggered');
+      event.waitUntil(doBackgroundSync());
+    }
+  });
+}
 
 /**
  * Perform background synchronization
@@ -264,51 +302,57 @@ async function doBackgroundSync() {
 /**
  * Handle push notifications (for future use)
  */
-self.addEventListener('push', (event) => {
-  console.log('📬 Push notification received');
-  
-  const options = {
-  body: 'New TLDRWire summary available!',
-    icon: '/icon-192.png',
-    badge: '/badge-72.png',
-    actions: [
-      {
-        action: 'view',
-        title: 'View Summary'
-      },
-      {
-        action: 'dismiss',
-        title: 'Dismiss'
-      }
-    ]
-  };
-  
-  event.waitUntil(
-  self.registration.showNotification('TLDRWire', options)
-  );
-});
+if (ENABLE_BACKGROUND_TASKS) {
+  self.addEventListener('push', (event) => {
+    console.log('📬 Push notification received');
+    
+    const options = {
+      body: 'New TLDRWire summary available!',
+      icon: '/icon-192.png',
+      badge: '/badge-72.png',
+      actions: [
+        {
+          action: 'view',
+          title: 'View Summary'
+        },
+        {
+          action: 'dismiss',
+          title: 'Dismiss'
+        }
+      ]
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification('TLDRWire', options)
+    );
+  });
+}
 
 /**
  * Handle notification clicks
  */
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  
-  if (event.action === 'view') {
-    event.waitUntil(
-      self.clients.openWindow('/')
-    );
-  }
-});
+if (ENABLE_BACKGROUND_TASKS) {
+  self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    
+    if (event.action === 'view') {
+      event.waitUntil(
+        self.clients.openWindow('/')
+      );
+    }
+  });
+}
 
 /**
  * Periodic background sync (if supported)
  */
-self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'news-update') {
-    event.waitUntil(updateNewsCache());
-  }
-});
+if (ENABLE_BACKGROUND_TASKS) {
+  self.addEventListener('periodicsync', (event) => {
+    if (event.tag === 'news-update') {
+      event.waitUntil(updateNewsCache());
+    }
+  });
+}
 
 /**
  * Update news cache in background
@@ -329,7 +373,10 @@ async function cleanupApiCache() {
   const apiCache = await caches.open(API_CACHE_NAME);
   const keys = await apiCache.keys();
   const now = Date.now();
-  const maxAge = 30 * 60 * 1000; // 30 minutes
+  // Increase maxAge to reduce frequent revalidation of API cache entries. 6 hours keeps
+  // cached API responses available longer for offline/network-fail scenarios and reduces
+  // churn from periodic cleanup.
+  const maxAge = 6 * 60 * 60 * 1000; // 6 hours
   
   for (const request of keys) {
     const response = await apiCache.match(request);
@@ -344,7 +391,9 @@ async function cleanupApiCache() {
   }
 }
 
-// Cleanup old cache entries every hour
-setInterval(cleanupApiCache, 60 * 60 * 1000);
+// Previously we ran cleanup on an interval which can keep the service worker alive and
+// cause periodic work even when no clients are connected. Instead, perform a single
+// cleanup during activation (above) and rely on normal cache lifecycle for long-term
+// maintenance. This avoids keeping the SW running on an hourly timer.
 
 console.log('🚀 Service Worker loaded successfully');

@@ -9,7 +9,10 @@ export default function App({ Component, pageProps }: AppProps) {
     // Production-only diagnostic: fetch the manifest and log status/headers.
     // Helps debug 401/403 issues on hosted deployments (Vercel).
     try {
-      if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+      // Only run the manifest diagnostic in production when explicitly enabled
+      // via NEXT_PUBLIC_ENABLE_MANIFEST_DIAGNOSTIC. This avoids extra fetches
+      // from every page load on hosted deployments unless the owner opts in.
+      if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_ENABLE_MANIFEST_DIAGNOSTIC === 'true') {
         (async () => {
           try {
             const res = await fetch('/manifest.webmanifest', { credentials: 'omit' });
@@ -40,6 +43,19 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <>
       <Head>
+        {/*
+          In development, if the app previously registered a service worker it can
+          intercept dev HMR requests and API calls causing repeated network traffic
+          and full reloads. If SW is disabled (default) unregister any existing SWs
+          as early as possible using an inline script so it doesn't block HMR.
+        */}
+        {process.env.NODE_ENV !== 'production' && process.env.NEXT_PUBLIC_ENABLE_SW !== 'true' && (
+          // Register a small no-op dev service worker to replace any previously
+          // installed worker that might be intercepting HMR. The dev SW is a
+          // passthrough and explicitly ignores /_next/ so it won't interfere
+          // with Next.js hot-update.json requests.
+          <Script id="register-dev-sw" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: `(function(){try{if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(r=>{r.forEach(reg=>{try{reg.unregister();}catch(e){}})}).catch(()=>{}).finally(function(){try{navigator.serviceWorker.register('/dev-sw.js').catch(()=>{});}catch(e){}});} }catch(e){} })();` }} />
+        )}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="dark light" />
         <meta name="theme-color" content="#4da3ff" />

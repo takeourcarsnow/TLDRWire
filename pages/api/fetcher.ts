@@ -21,9 +21,9 @@ export async function fetchWithRetries(u: string, requestLog: any, opts?: { sign
   } catch (err) { /* ignore cache read errors */ }
 
   let lastErr: any = null;
-  // reduce retries for flaky google news endpoints
+  // reduce retries for flaky google news endpoints and limit CPU spent on retries
   const isGoogleQuick = (() => { try { return new URL(u).hostname === 'news.google.com'; } catch { return u.includes('news.google.com'); } })();
-  const maxAttempts = isGoogleQuick ? 2 : 3;
+  const maxAttempts = isGoogleQuick ? 1 : 2; // fewer retries
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const isGoogle = isGoogleQuick;
     const attemptStart = Date.now();
@@ -34,8 +34,8 @@ export async function fetchWithRetries(u: string, requestLog: any, opts?: { sign
       requestLog.info('fetching feed', { url: u, hostname, attempt });
       if (isGoogle) requestLog.debug('google feed fetch attempt', { url: u, attempt });
 
-      // Allow callers to pass a hint via headers or URL param in future; for now use shorter timeout for google feeds
-      const perRequestTimeout = isGoogle ? 10000 : 12000;
+  // Use shorter per-request timeouts to avoid long blocking waits.
+  const perRequestTimeout = isGoogle ? 8000 : 10000; // 8s for google, 10s otherwise
       const fetchWithTimeout = async (url: string, ms: number, externalSignal?: AbortSignal) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), ms);

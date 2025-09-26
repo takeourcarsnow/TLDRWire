@@ -260,33 +260,59 @@ export default function Home() {
   }, [fontSize]);
 
   useEffect(() => {
-    // Health check on mount
-    fetch('/api/healthz')
-      .then(res => res.json())
-      .then(health => {
-        if (!health.hasKey) {
-          console.warn('Server missing GEMINI_API_KEY. Add it to .env and restart.');
-        }
-      })
-      .catch(error => {
-        console.warn('Health check failed:', error);
-      });
+    // Health check on mount - only run in non-localhost environments to avoid
+    // repeated dev traffic (HMR / dev tools often re-request assets).
+    try {
+      const host = window.location.hostname;
+      const isLocalhost = host === 'localhost' || host === '127.0.0.1' || host === '';
+      if (!isLocalhost && (process.env.NEXT_PUBLIC_ENABLE_HEALTHZ === 'true')) {
+        fetch('/api/healthz')
+          .then(res => res.json())
+          .then(health => {
+            if (!health.hasKey) {
+              console.warn('Server missing GEMINI_API_KEY. Add it to .env and restart.');
+            }
+          })
+          .catch(error => {
+            console.warn('Health check failed:', error);
+          });
+      }
+    } catch (e) {
+      // ignore in non-browser contexts
+    }
   }, []);
 
   useEffect(() => {
-    // Service worker registration
+    // Service worker registration (disabled by default to avoid background SW activity).
+    // To enable, set NEXT_PUBLIC_ENABLE_SW=true in your environment.
+    if (process.env.NEXT_PUBLIC_ENABLE_SW !== 'true') {
+      // Intentionally do not register the SW to avoid background work on idle sites.
+      console.log('Service Worker registration skipped (NEXT_PUBLIC_ENABLE_SW not set).');
+      // If a service worker was registered previously (from earlier deploys), unregister it
+      // so it stops intercepting requests (this helps remove repeated background fetches).
+      try {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(regs => {
+            regs.forEach(r => {
+              try { r.unregister(); } catch (e) {}
+            });
+          }).catch(() => {});
+        }
+      } catch (e) {}
+      return;
+    }
     if ('serviceWorker' in navigator) {
       // Avoid duplicate registration/logs in development (React StrictMode mounts twice).
       (async () => {
         try {
           const existing = await navigator.serviceWorker.getRegistration('/sw.js');
           if (existing) {
-            console.log('✅ Service Worker already registered');
+            console.log('\u2705 Service Worker already registered');
             return;
           }
           try {
             await navigator.serviceWorker.register('/sw.js');
-            console.log('✅ Service Worker registered successfully');
+            console.log('\u2705 Service Worker registered successfully');
           } catch (error) {
             console.warn('Service Worker registration failed:', error);
           }
@@ -294,7 +320,7 @@ export default function Home() {
           // Fallback: attempt registration if getRegistration fails for some reason
           try {
             await navigator.serviceWorker.register('/sw.js');
-            console.log('✅ Service Worker registered successfully');
+            console.log('\u2705 Service Worker registered successfully');
           } catch (error) {
             console.warn('Service Worker registration failed:', error);
           }
@@ -302,10 +328,8 @@ export default function Home() {
       })();
     }
   }, []);
-
   const RATE_LIMIT_SECONDS = 60;
   const RATE_LIMIT_KEY = 'tldrwire:rateLimitExpires';
-  // Update countdown every second
   useEffect(() => {
     if (rateLimitCountdown > 0) {
       const timer = setTimeout(() => {

@@ -87,9 +87,9 @@ export async function fetchFeeds(opts: {
     requestLog.info('final fetch order', { count: urlsToFetch.length, order: urlsToFetch.slice(0, 40) });
   } catch (e) { /* ignore grouping errors */ }
 
-  // Higher concurrency helps when many non-google publisher feeds are available.
-  // Keep it modest to avoid hammering origins in dev; can be tuned via env later.
-  const concurrency = Math.min(4, urlsToFetch.length);
+  // Reduce concurrency to lower simultaneous network/CPU work per request.
+  // Lowering from 4 to 2 reduces parallel parsing load on the serverless instance.
+  const concurrency = Math.min(2, urlsToFetch.length);
   const results: Array<any> = new Array(urlsToFetch.length);
   let workerIndex = 0;
   let stopFetching = false;
@@ -144,10 +144,10 @@ export async function fetchFeeds(opts: {
   };
 
   const workersPromise = Promise.all(new Array(Math.min(concurrency, urlsToFetch.length)).fill(0).map(() => worker()));
-  // Overall request timeout for feed fetching stage (ms). Lowered to abort earlier when
-  // many upstream feeds are slow; still leaves the summarization stage time.
-  const REQUEST_TIMEOUT_MS = 30000;
-  const feedTimeoutMs = Math.max(REQUEST_TIMEOUT_MS - 8000, 8000);
+  // Overall request timeout for the feed fetching stage (ms). Shorten to reduce time
+  // spent waiting on many slow upstream feeds.
+  const REQUEST_TIMEOUT_MS = 20000; // 20s overall for feed stage
+  const feedTimeoutMs = Math.max(REQUEST_TIMEOUT_MS - 5000, 5000);
   let feedTimedOut = false;
   await Promise.race([
     workersPromise,

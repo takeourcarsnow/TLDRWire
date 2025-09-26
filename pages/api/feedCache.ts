@@ -2,7 +2,8 @@ import Parser from 'rss-parser';
 
 // Shared parser and in-memory caches for feeds
 export const parser = new Parser({
-  timeout: 12000,
+  // Shorter parser timeout to avoid blocking CPU on slow remote responses.
+  timeout: 8000,
   requestOptions: {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119 Safari/537.36'
