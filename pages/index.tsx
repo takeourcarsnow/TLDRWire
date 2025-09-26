@@ -348,6 +348,19 @@ export default function Home() {
   }, [isLoading, preferences, makeRequest, clearError, lastGenerateTime]);
 
   const handlePresetClick = useCallback(async (preset: string) => {
+    // Pull the specific preference fields we rely on so we can list them
+    // explicitly in the dependency array (satisfies react-hooks/exhaustive-deps).
+    const {
+      region: prefRegion,
+      category: prefCategory,
+      style: prefStyle,
+      language: prefLanguage,
+      timeframe: prefTimeframe,
+      limit: prefLimit,
+      length: prefLength,
+      query: prefQuery,
+    } = preferences;
+
     let updates = {};
     
     switch (preset) {
@@ -443,6 +456,7 @@ export default function Home() {
       length: (updates as any).length || preferences.length || 'medium',
       query: ((updates as any).query || preferences.query || '').trim()
     };
+
     (async () => {
       try {
         await generateSummary(payload);
@@ -450,7 +464,7 @@ export default function Home() {
         console.warn('generateSummary failed', err);
       }
     })();
-  }, [updatePreference, generateSummary]);
+  }, [updatePreference, generateSummary, preferences]);
 
   // Keyboard shortcuts
   useEffect(() => {
