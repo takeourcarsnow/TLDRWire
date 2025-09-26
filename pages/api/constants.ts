@@ -41,6 +41,7 @@ export const CATEGORY_QUERIES: { [key: string]: string } = {
   science: 'science OR research',
   sports: 'sports OR football OR soccer OR basketball',
   entertainment: '"entertainment news" OR "celebrity" OR "movie" OR "film" OR "music" OR "TV show" OR "series" OR "concert" OR "album" OR "cinema" OR "actor" OR "actress"',
+  culture: 'culture OR arts OR "visual art" OR literature OR books OR exhibition OR gallery OR theater OR theatre OR opera OR ballet OR museum OR heritage OR columnist OR critic OR review OR cultural',
   health: 'health OR medicine OR wellness',
   politics: 'politics OR government OR election OR elections OR vote OR parliament OR congress OR senate OR coalition OR cabinet OR policy OR law OR referendum OR campaign',
   climate: 'climate OR environment OR emissions OR sustainability OR warming',
@@ -114,6 +115,10 @@ export const CATEGORY_FILTERS: { [key: string]: string[] } = {
     'space', 'nasa', 'esa', 'spacex', 'rocket', 'launch', 'satellite', 'mars', 'moon', 'lunar',
     'orbit', 'astronomy', 'telescope'
   ],
+  culture: [
+    'culture', 'arts', 'art', 'literature', 'book', 'books', 'gallery', 'museum', 'exhibition',
+    'theatre', 'theater', 'opera', 'ballet', 'critic', 'review', 'heritage', 'cultural'
+  ],
   security: [
     'security', 'defense', 'defence', 'military', 'conflict', 'war', 'nato', 'army', 'strike',
     'ceasefire', 'sanctions'
@@ -128,6 +133,7 @@ export const TOPIC_MAP: { [key: string]: string } = {
   science: 'SCIENCE',
   sports: 'SPORTS',
   entertainment: 'ENTERTAINMENT',
+  culture: 'ENTERTAINMENT',
   health: 'HEALTH'
 };
 
@@ -178,6 +184,12 @@ export const FALLBACK_FEEDS: { [key: string]: string[] } = {
     'https://www.theguardian.com/uk/sport/rss'
   ]
   ,
+  // Culture-specific fallback feeds (arts, culture, reviews)
+  culture: [
+    'https://www.theguardian.com/culture/rss',
+    'https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml',
+    'https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml'
+  ],
   // Lithuania-specific fallback feeds (general/top Lithuanian outlets)
   lithuania: [
     'https://www.lrt.lt/rss',

@@ -66,6 +66,7 @@ export default function NewsFormSelectors({ preferences, onPreferenceChange }: P
               <option value="science">🔬 Science</option>
               <option value="sports">⚽ Sports</option>
               <option value="entertainment">🎬 Entertainment</option>
+              <option value="culture">🎭 Culture & Arts</option>
               <option value="health">🏥 Health</option>
               <option value="politics">🏛️ Politics</option>
               <option value="climate">🌱 Climate</option>
