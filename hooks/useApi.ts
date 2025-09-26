@@ -81,7 +81,12 @@ export function useApi() {
   const cache = useRef(new Map());
   const currentController = useRef<AbortController | null>(null);
 
-  const getCacheKey = (payload: ApiRequestPayload) => JSON.stringify(payload);
+  const getCacheKey = (payload: ApiRequestPayload) => {
+    if (typeof payload !== 'object' || payload === null) {
+      throw new Error('Invalid payload for cache key');
+    }
+    return JSON.stringify(payload);
+  };
 
   const clearError = useCallback(() => {
     setError(null);

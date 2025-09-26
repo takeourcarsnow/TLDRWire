@@ -498,7 +498,7 @@ export default function Home() {
           <NewsForm
             preferences={preferences}
             onPreferenceChange={updatePreference}
-            onGenerate={generateSummary}
+            onGenerate={() => generateSummary()}
             onReset={resetPreferences}
             onPresetClick={handlePresetClick}
             isLoading={isLoading}
@@ -539,14 +539,7 @@ export default function Home() {
         title="About TLDRWire"
       >
         <p>
-          TLDRWire fetches headlines from Google News RSS and asks Google&apos;s Gemini model to
-          produce clear, concise summaries. Your API key never leaves the server.
-        </p>
-        <p>
-          Tips:
-          <br />• Use presets for faster results
-          <br />• Refine with a keyword filter
-          <br />• Try different styles and lengths
+          TLDRWire delivers quick, readable summaries of today’s headlines from multiple publishers so you can stay informed fast. Choose region, topic, and length to get briefings tailored to what matters to you.
         </p>
       </Modal>
 

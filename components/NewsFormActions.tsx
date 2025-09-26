@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface Props {
-  onGenerate: () => void;
+  onGenerate: () => Promise<void>;
   onReset: () => void;
   onPresetClick: (preset: string) => void;
   isLoading: boolean;

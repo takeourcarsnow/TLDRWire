@@ -8,7 +8,7 @@ import NewsFormActions from './NewsFormActions';
 interface NewsFormProps {
   preferences: Preferences;
   onPreferenceChange: (key: keyof Preferences, value: string) => void;
-  onGenerate: () => void;
+  onGenerate: () => Promise<void>;
   onReset: () => void;
   onPresetClick: (preset: string) => void;
   isLoading: boolean;
