@@ -65,6 +65,21 @@ const IP_THROTTLE_MS = 5 * 1000; // 5 seconds
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
+    // Fast-fail for obvious non-browser/bot traffic to reduce noisy function
+    // invocations and logs. This runs before expensive work. We still allow
+    // local/dev calls (NODE_ENV !== 'production') to make testing easier.
+    try {
+      const ua = (req.headers['user-agent'] || '').toString().toLowerCase();
+      const xreq = (req.headers['x-requested-with'] || '').toString();
+      const isLikelyBot = /bot|crawler|spider|python|aiohttp|curl|monitor|uptime|lambda/i.test(ua);
+      if (process.env.NODE_ENV === 'production' && (isLikelyBot || !xreq)) {
+        // Minimal log so we can audit later if needed
+        logger.warn('fast-rejecting non-browser request', { ua, ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown' });
+        return res.status(403).json({ ok: false, error: 'API access restricted' });
+      }
+    } catch (e) {
+      // ignore filter errors and continue
+    }
     if (req.method !== 'POST') {
       res.setHeader('Allow', 'POST');
       return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
@@ -119,6 +134,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown') as string;
       const ua = (req.headers['user-agent'] || '<no-ua>') as string;
       requestLog.info('request received', { ip, userAgent: ua });
+
+      // Helpful temporary debugging: if the request looks like a bot or lacks
+      // typical browser headers (Origin/Referer or X-Requested-With), log a
+      // truncated snapshot of headers and body so we can inspect Vercel logs.
+      // This is conservative and intentionally truncates the body to avoid
+      // logging large payloads or secrets.
+      try {
+        const origin = (req.headers['origin'] || req.headers['referer'] || '').toString();
+        const xreq = (req.headers['x-requested-with'] || '').toString();
+        const uaLc = ua.toLowerCase();
+        const looksLikeBot = /bot|crawler|spider|python|aiohttp|fetch/i.test(uaLc) || !origin || (!xreq && process.env.NODE_ENV === 'production');
+        if (looksLikeBot) {
+          // Build a compact headers map with common keys
+          const hdrs: Record<string,string> = {};
+          ['user-agent','x-forwarded-for','origin','referer','host','accept','content-type','x-requested-with'].forEach((k) => {
+            try { const v = req.headers[k as keyof typeof req.headers]; if (v) hdrs[k] = Array.isArray(v) ? v[0] : String(v); } catch (e) {}
+          });
+          const rawBody = (() => {
+            try { const b = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {}); return b.slice(0, 1024); } catch (e) { return '<body-read-error>'; }
+          })();
+          requestLog.warn('suspicious request (bot-like or missing browser headers)', { ip, ua: uaLc, origin, xRequestedWith: xreq, headers: hdrs, bodySnippet: rawBody });
+        }
+      } catch (e) { /* ignore any logging errors */ }
     } catch (e) {
       requestLog.info('request received');
     }

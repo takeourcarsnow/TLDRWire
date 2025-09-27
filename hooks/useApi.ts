@@ -79,6 +79,8 @@ export function useApi() {
     });
   }, []);
   const cache = useRef(new Map());
+  // Track in-flight requests to avoid sending duplicate identical POSTs
+  const inflightRequests = useRef(new Map<string, Promise<ApiResponse>>());
   const currentController = useRef<AbortController | null>(null);
 
   const getCacheKey = (payload: ApiRequestPayload) => {
@@ -99,7 +101,7 @@ export function useApi() {
   ) => {
     const timeoutMs = options.timeoutMs || CONFIG.API_TIMEOUT;
     const cacheKey = getCacheKey(payload);
-    
+
     // Check cache
     const cached = cache.current.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CONFIG.CACHE_TTL) {
@@ -107,109 +109,120 @@ export function useApi() {
       return { ...cached.data, cached: true };
     }
 
+    // If an identical request is already in-flight, return its promise instead of
+    // issuing a new network request.
+    if (inflightRequests.current.has(cacheKey)) {
+      try {
+        const existing = inflightRequests.current.get(cacheKey)!;
+        const result = await existing;
+        setData(result);
+        return result;
+      } catch (e) {
+        inflightRequests.current.delete(cacheKey);
+        // continue to issue a fresh request
+      }
+    }
+
     setIsLoading(true);
     setError(null);
 
     // Cancel previous request if one is in-flight
     if (currentController.current) {
-      try {
-        currentController.current.abort();
-      } catch (_) {}
+      try { currentController.current.abort(); } catch (_) {}
     }
 
-    // Create new controller
     const controller = new AbortController();
     currentController.current = controller;
-    
+
     let timedOut = false;
     const timeoutId = setTimeout(() => {
       timedOut = true;
-      controller.abort();
+      try { controller.abort(); } catch (e) {}
     }, timeoutMs);
 
-    try {
-      const response = await fetch('/api/tldr', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        const text = await response.text();
-        const msg = `Invalid response format. ${text.slice(0, 200)}`;
-        setError(msg);
-        return { ok: false, error: msg } as ApiResponse;
-      }
-
-      const responseData = await response.json();
-      
-      if (!response.ok) {
-        // Log full response for diagnostics (server may include details JSON)
-        console.warn('API returned non-OK HTTP status', response.status, responseData);
-        const baseErr = responseData?.error || `HTTP ${response.status}: ${response.statusText}`;
-        const details = responseData?.details ? ` Details: ${responseData.details}` : '';
-        const msg = baseErr + details;
-        setError(msg);
-        return { ok: false, error: msg } as ApiResponse;
-      }
-
-      if (!responseData.ok) {
-        console.warn('API returned ok=false payload', responseData);
-        const baseErr = responseData?.error || 'Request failed';
-        const details = responseData?.details ? ` Details: ${responseData.details}` : '';
-        const msg = baseErr + details;
-        setError(msg);
-        return { ok: false, error: msg } as ApiResponse;
-      }
-
-      // Cache the response
-      cache.current.set(cacheKey, { 
-        data: responseData, 
-        timestamp: Date.now() 
-      });
-      
-      // Clean up cache if too large
-      if (cache.current.size > 50) {
-        const oldestKey = cache.current.keys().next().value;
-        cache.current.delete(oldestKey);
-      }
-
-      setData(responseData);
+    // Create the network promise and store it so concurrent callers reuse it
+    const networkPromise: Promise<ApiResponse> = (async () => {
       try {
-        const full = responseData?.summary || '';
-        const entry: HistoryEntry = {
-          id: Date.now(),
-          timestamp: Date.now(),
-          payload,
-          meta: responseData?.meta,
-          cached: Boolean(responseData?.cached),
-          summarySnippet: full.slice(0, 300),
-          summaryFull: full,
-          summaryLength: full.length || 0
-        };
-        setHistory((prev) => {
-          const next = [entry, ...prev].slice(0, HISTORY_LIMIT);
-          persistHistory(next);
-          return next;
+        const response = await fetch('/api/tldr', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
         });
-      } catch {
-        // ignore history write errors
+
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          const text = await response.text();
+          const msg = `Invalid response format. ${text.slice(0, 200)}`;
+          setError(msg);
+          return { ok: false, error: msg } as ApiResponse;
+        }
+
+        const responseData = await response.json();
+
+        if (!response.ok) {
+          console.warn('API returned non-OK HTTP status', response.status, responseData);
+          const baseErr = responseData?.error || `HTTP ${response.status}: ${response.statusText}`;
+          const details = responseData?.details ? ` Details: ${responseData.details}` : '';
+          const msg = baseErr + details;
+          setError(msg);
+          return { ok: false, error: msg } as ApiResponse;
+        }
+
+        if (!responseData.ok) {
+          console.warn('API returned ok=false payload', responseData);
+          const baseErr = responseData?.error || 'Request failed';
+          const details = responseData?.details ? ` Details: ${responseData.details}` : '';
+          const msg = baseErr + details;
+          setError(msg);
+          return { ok: false, error: msg } as ApiResponse;
+        }
+
+        // Cache the response
+        cache.current.set(cacheKey, { data: responseData, timestamp: Date.now() });
+        if (cache.current.size > 50) {
+          const oldestKey = cache.current.keys().next().value;
+          cache.current.delete(oldestKey);
+        }
+
+        setData(responseData);
+        try {
+          const full = responseData?.summary || '';
+          const entry: HistoryEntry = {
+            id: Date.now(),
+            timestamp: Date.now(),
+            payload,
+            meta: responseData?.meta,
+            cached: Boolean(responseData?.cached),
+            summarySnippet: full.slice(0, 300),
+            summaryFull: full,
+            summaryLength: full.length || 0
+          };
+          setHistory((prev) => {
+            const next = [entry, ...prev].slice(0, HISTORY_LIMIT);
+            persistHistory(next);
+            return next;
+          });
+        } catch {}
+
+        return responseData;
+      } finally {
+        clearTimeout(timeoutId);
       }
-      setIsLoading(false);
-      return responseData;
+    })();
 
+    inflightRequests.current.set(cacheKey, networkPromise);
+
+    try {
+      const result = await networkPromise;
+      setIsLoading(false);
+      return result;
     } catch (err: any) {
-      clearTimeout(timeoutId);
       setIsLoading(false);
-
-      if (err.name === 'AbortError') {
+      if (err && err.name === 'AbortError') {
         if (timedOut) {
           const timeoutError = 'Request timed out';
           setError(timeoutError);
@@ -222,18 +235,20 @@ export function useApi() {
 
       const errMsg = String(err?.message || err?.toString?.() || '');
       const errMsgLc = errMsg.toLowerCase();
-      
       if (
         retryCount < CONFIG.MAX_RETRIES &&
         (errMsgLc.includes('network') || errMsgLc.includes('fetch') || errMsgLc.includes('timed out'))
       ) {
         console.warn(`Retry attempt ${retryCount + 1}/${CONFIG.MAX_RETRIES}`);
         await new Promise((resolve) => setTimeout(resolve, 1000 * (retryCount + 1)));
+        inflightRequests.current.delete(cacheKey);
         return makeRequest(payload, retryCount + 1, options);
       }
 
       setError(errMsg);
       return { ok: false, error: errMsg } as ApiResponse;
+    } finally {
+      inflightRequests.current.delete(cacheKey);
     }
   }, []);
 
