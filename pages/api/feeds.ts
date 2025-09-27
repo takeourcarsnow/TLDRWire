@@ -53,27 +53,25 @@ export function getRegionConfig(regionKey: string, lang: string): RegionConfig {
 }
 
 export function buildSearchFeedURL({ q, hl, gl, ceid }: SearchFeedParams): string {
-  const base = "https://news.google.com/rss/search";
-  const params = new URLSearchParams({ q, hl, gl, ceid });
-  return `${base}?${params.toString()}`;
+  // Google News search RSS intentionally disabled because Google News RSS
+  // has proven fragile and often triggers aborts/timeouts. We prefer
+  // publisher RSS fallbacks. Return empty string to avoid including these URLs.
+  return '';
 }
 
 export function buildGeoFeedURL({ geo, hl, gl, ceid }: GeoFeedParams): string {
-  const base = `https://news.google.com/rss/headlines/section/geo/${encodeURIComponent(geo)}`;
-  const params = new URLSearchParams({ hl, gl, ceid });
-  return `${base}?${params.toString()}`;
+  // Disabled: Google News geo feed
+  return '';
 }
 
 export function buildTopFeedURL({ hl, gl, ceid }: FeedUrlParams): string {
-  const base = `https://news.google.com/rss`;
-  const params = new URLSearchParams({ hl, gl, ceid });
-  return `${base}?${params.toString()}`;
+  // Disabled: Google News top feed
+  return '';
 }
 
 export function buildTopicFeedURL(topicCode: string, { hl, gl, ceid }: FeedUrlParams): string {
-  const base = `https://news.google.com/rss/topics/${topicCode}`;
-  const params = new URLSearchParams({ hl, gl, ceid });
-  return `${base}?${params.toString()}`;
+  // Disabled: Google News topic feed
+  return '';
 }
 
 export function buildCategoryFeedURL(category: string, { hl, gl, ceid }: FeedUrlParams): string {

@@ -37,15 +37,7 @@ export function domainFromLink(link?: string): string {
 }
 
 export function normalizeGoogleNewsLink(link: string, regionCfg?: Partial<FeedUrlParams>): string {
-  try {
-    const u = new URL(link);
-    if (u.hostname?.includes('news.google.com')) {
-      if (!u.searchParams.has('hl') && regionCfg?.hl) u.searchParams.set('hl', regionCfg.hl);
-      if (!u.searchParams.has('gl') && regionCfg?.gl) u.searchParams.set('gl', regionCfg.gl);
-      if (!u.searchParams.has('ceid') && regionCfg?.ceid) u.searchParams.set('ceid', regionCfg.ceid);
-      return u.toString();
-    }
-  } catch { /* ignore URL parse error */ }
+  // Google News links are not used in this deployment. Return the original link unchanged.
   return link;
 }
 

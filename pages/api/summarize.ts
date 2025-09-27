@@ -35,6 +35,13 @@ export async function summarizeWithLLM(opts: {
     } catch (err: any) {
       const msg = err?.message || String(err);
       payloadErrorForLogs = msg;
+      // If this looks like a quota / Too Many Requests error, don't retry —
+      // retries will only waste more quota and cause extra function invocations.
+      const isQuota = /quota|too many requests|429/i.test(msg);
+      if (isQuota) {
+        logger.warn('LLM quota error detected; aborting retries', { attempt, message: msg });
+        break;
+      }
       // If this was the last attempt, we'll break out and perform fallback below.
       if (attempt >= maxAttempts) {
         logger.error('LLM generation failed after retries', { attempt, maxAttempts, message: msg });

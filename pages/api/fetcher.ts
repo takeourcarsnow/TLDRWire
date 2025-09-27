@@ -22,20 +22,18 @@ export async function fetchWithRetries(u: string, requestLog: any, opts?: { sign
 
   let lastErr: any = null;
   // reduce retries for flaky google news endpoints and limit CPU spent on retries
-  const isGoogleQuick = (() => { try { return new URL(u).hostname === 'news.google.com'; } catch { return u.includes('news.google.com'); } })();
-  const maxAttempts = isGoogleQuick ? 1 : 2; // fewer retries
+    const maxAttempts = 2; // Uniform retry policy for all feeds; Google News feeds are removed upstream.
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const isGoogle = isGoogleQuick;
     const attemptStart = Date.now();
     try {
       // Log fetch start for visibility (hostname, attempt)
       let hostname = '';
       try { hostname = new URL(u).hostname; } catch { hostname = u; }
       requestLog.info('fetching feed', { url: u, hostname, attempt });
-      if (isGoogle) requestLog.debug('google feed fetch attempt', { url: u, attempt });
+      requestLog.debug('feed fetch attempt', { url: u, attempt });
 
   // Use shorter per-request timeouts to avoid long blocking waits.
-  const perRequestTimeout = isGoogle ? 8000 : 10000; // 8s for google, 10s otherwise
+  const perRequestTimeout = 10000; // 10s per-request
       const fetchWithTimeout = async (url: string, ms: number, externalSignal?: AbortSignal) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), ms);
@@ -84,7 +82,7 @@ export async function fetchWithRetries(u: string, requestLog: any, opts?: { sign
       const ms = Date.now() - attemptStart;
       try { FEED_CACHE.set(u, { ts: Date.now(), value: v }); } catch (e) { /* ignore cache set */ }
       requestLog.info('feed fetch success', { url: u, hostname, ms, items: (v?.items?.length || 0) });
-      if (isGoogle) requestLog.debug('google feed fetch success', { url: u, ms, items: (v?.items?.length || 0) });
+    requestLog.debug('feed fetch success-debug', { url: u, ms, items: (v?.items?.length || 0) });
       try { FEED_FAIL_COUNTS.delete(u); } catch { /* ignore */ }
       try { FEED_CACHE.set(u, { ts: Date.now(), value: v }); } catch (e) { /* ignore */ }
       return { status: 'fulfilled', value: v };
@@ -94,7 +92,7 @@ export async function fetchWithRetries(u: string, requestLog: any, opts?: { sign
       // Log failure with level warn so it's visible in terminal; keep debug for google-specific
       requestLog.warn('feed fetch attempt failed', { url: u, hostname: (new URL(u).hostname || u).toString?.(), attempt, message: msg });
       requestLog.debug('feed fetch attempt failed-debug', { url: u, attempt, message: msg, error: e?.stack || String(e) });
-      if (isGoogle) requestLog.debug('google feed fetch attempt failed', { url: u, attempt, message: msg });
+  requestLog.debug('feed fetch attempt failed-debug', { url: u, attempt, message: msg });
       if (e.name === 'AbortError' || msg.toLowerCase().includes('abort')) {
         // Don't retry on abort
         break;

@@ -143,7 +143,9 @@ export function useApi() {
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
         const text = await response.text();
-        throw new Error(`Invalid response format. ${text.slice(0, 200)}`);
+        const msg = `Invalid response format. ${text.slice(0, 200)}`;
+        setError(msg);
+        return { ok: false, error: msg } as ApiResponse;
       }
 
       const responseData = await response.json();
@@ -153,14 +155,18 @@ export function useApi() {
         console.warn('API returned non-OK HTTP status', response.status, responseData);
         const baseErr = responseData?.error || `HTTP ${response.status}: ${response.statusText}`;
         const details = responseData?.details ? ` Details: ${responseData.details}` : '';
-        throw new Error(baseErr + details);
+        const msg = baseErr + details;
+        setError(msg);
+        return { ok: false, error: msg } as ApiResponse;
       }
-      
+
       if (!responseData.ok) {
         console.warn('API returned ok=false payload', responseData);
         const baseErr = responseData?.error || 'Request failed';
         const details = responseData?.details ? ` Details: ${responseData.details}` : '';
-        throw new Error(baseErr + details);
+        const msg = baseErr + details;
+        setError(msg);
+        return { ok: false, error: msg } as ApiResponse;
       }
 
       // Cache the response
@@ -207,11 +213,11 @@ export function useApi() {
         if (timedOut) {
           const timeoutError = 'Request timed out';
           setError(timeoutError);
-          throw new Error(timeoutError);
+          return { ok: false, error: timeoutError } as ApiResponse;
         }
         const cancelError = 'Request was cancelled';
         setError(cancelError);
-        throw new Error(cancelError);
+        return { ok: false, error: cancelError } as ApiResponse;
       }
 
       const errMsg = String(err?.message || err?.toString?.() || '');
@@ -227,7 +233,7 @@ export function useApi() {
       }
 
       setError(errMsg);
-      throw err;
+      return { ok: false, error: errMsg } as ApiResponse;
     }
   }, []);
 

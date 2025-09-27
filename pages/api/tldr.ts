@@ -35,6 +35,7 @@ interface ApiResponse {
     locale: string;
     usedArticles: number;
     model: string;
+    fallback?: boolean;
     length: string;
   };
   summary?: string;
@@ -51,6 +52,11 @@ const CACHE = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 1000 * 60 * 15; // 15 minutes
 
 const INFLIGHT = new Map<string, Promise<{ status: number; payload: ApiResponse }>>();
+// Simple in-memory negative-cache to avoid repeated LLM calls when quota is hit.
+// Keyed by a stable string; value is expire timestamp (ms).
+const LLM_NEGATIVE_CACHE = new Map<string, number>();
+const LLM_NEGATIVE_CACHE_MS = Number(process.env.LLM_NEGATIVE_CACHE_MS || String(1000 * 60 * 20)); // default 20 minutes
+
 // Lightweight per-IP throttle to avoid accidental or malicious tight loops.
 // Keyed by client IP (or X-Forwarded-For header when present). Window is small to avoid
 // interfering with normal UX but helps reduce rapid repeated invocations.
@@ -155,7 +161,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     const compute = async (): Promise<{ status: number; payload: ApiResponse }> => {
-      let payloadErrorForLogs: string | undefined = undefined;
   // Hint to fetchFeeds how many items we ultimately need so it can stop early once
   // enough articles are gathered. This reduces upstream load and latency.
   const feeds = await fetchFeeds({ region, category, query, hours: timeframeHours, language, loggerContext: { uiLocale }, maxFeeds: 16, desiredItems: Math.max(8, limit) });
@@ -195,7 +200,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       const regionName = regionCfg.name;
       const catName = (category || 'Top').replace(/^\w/, (c) => c.toUpperCase());
 
-      const MAX_CONTEXT_ITEMS = 8;
+  const MAX_CONTEXT_ITEMS = 8;
       const contextItems = topItems.slice(0, Math.min(MAX_CONTEXT_ITEMS, topItems.length));
   const contextLines = contextItems.map((a: any, idx: number) => {
     const dateStr = a.isoDate ? new Date(a.isoDate).toLocaleString(uiLocale, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
@@ -211,8 +216,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         'very-long': { tldrSentences: '6–8 sentences', bulletsMin: 10, bulletsMax: 16 }
       }[lengthPreset] || { tldrSentences: '1–2 sentences', bulletsMin: 6, bulletsMax: 9 };
 
-  const { summary, llmError } = await summarizeWithLLM({ regionName, catName, maxAge: maxAgeHours, style, language, uiLocale, lengthPreset, lengthConfig, contextLines });
-      if (llmError) payloadErrorForLogs = llmError;
+      // If LLM usage is temporarily disabled via env or negative-cache (quota hit),
+      // skip the call and return a fast extractive fallback to avoid consuming quota.
+      const llmCacheKey = 'gemini_quota';
+      const now = Date.now();
+      const negativeExpire = LLM_NEGATIVE_CACHE.get(llmCacheKey) || 0;
+      let summary: string = '';
+      let payloadErrorForLogs: string | undefined;
+      let usedLLM = true;
+      if (process.env.SERVER_DISABLE_LLM === 'true' || negativeExpire > now) {
+        // Build a conservative extractive fallback from top context lines
+        usedLLM = false;
+        const fallbackLines = (contextLines || []).slice(0, Math.max(3, Math.min(Math.round(Math.min(lengthConfig.bulletsMax, Math.max(lengthConfig.bulletsMin, 6))), 6))).map((l) => `- ${l.split('\n')[0]}`);
+        summary = `TL;DR: LLM unavailable or temporarily disabled. Showing top headlines instead:\n\n${fallbackLines.join('\n\n')}`;
+      } else {
+        const res = await summarizeWithLLM({ regionName, catName, maxAge: maxAgeHours, style, language, uiLocale, lengthPreset, lengthConfig, contextLines });
+        summary = res.summary;
+        if (res.llmError) payloadErrorForLogs = res.llmError;
+      }
 
       // Append source attribution to the summary
       let finalSummary = dedupeSummaryBullets(summary);
@@ -239,12 +260,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           language,
           locale: uiLocale,
           usedArticles: cleanTopItems.length,
-          model: GEMINI_MODEL,
+          model: usedLLM ? GEMINI_MODEL : 'fallback',
+          fallback: !usedLLM,
           length: lengthPreset
         },
         summary: finalSummary
       };
-      if (payloadErrorForLogs) (payload as any).llmError = payloadErrorForLogs;
+      if (payloadErrorForLogs) {
+        (payload as any).llmError = payloadErrorForLogs;
+        // If the LLM error looks like a quota issue, set negative-cache so subsequent
+        // requests in the near term don't call the LLM and instead use an extractive fallback.
+        try {
+          if (/quota|too many requests|429/i.test(payloadErrorForLogs)) {
+            LLM_NEGATIVE_CACHE.set('gemini_quota', Date.now() + LLM_NEGATIVE_CACHE_MS);
+            requestLog.warn('LLM quota detected; negative-cache enabled', { ttlMs: LLM_NEGATIVE_CACHE_MS });
+          }
+        } catch (e) { /* ignore cache errors */ }
+      }
       CACHE.set(cacheKey, { ts: Date.now(), payload });
       requestLog.info('response ready', { usedArticles: cleanTopItems.length, model: GEMINI_MODEL, cached: false });
       requestLog.info('final articles used for summary', { count: cleanTopItems.length });

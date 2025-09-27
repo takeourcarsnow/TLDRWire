@@ -61,25 +61,33 @@ export async function fetchFeeds(opts: {
   }
 
   try {
-    const googleUrls: string[] = [];
+  const googleUrls: string[] = [];
     const regionFallbackUrls: string[] = [];
     const otherUrls: string[] = [];
     const regionKey = (region || '').toLowerCase();
     const regionFallbacks = regionKey && FALLBACK_FEEDS[regionKey] ? FALLBACK_FEEDS[regionKey] : [];
 
     for (const u of urlsToFetch) {
-      try { const h = new URL(u).hostname; if (h && h.includes('news.google.com')) { googleUrls.push(u); continue; } } catch { /* ignore malformed URL */ }
-      if (typeof u === 'string' && u.includes('news.google.com')) { googleUrls.push(u); continue; }
+      try {
+        const h = new URL(u).hostname;
+        if (h && h.includes('news.google.com')) {
+          // Skip Google News entirely (removed)
+          requestLog.info('skipping google news feed (removed)', { url: u });
+          continue;
+        }
+      } catch {
+        /* ignore malformed URL */
+      }
+      if (typeof u === 'string' && u.includes('news.google.com')) {
+        requestLog.info('skipping google news feed (removed)', { url: u });
+        continue;
+      }
       if (regionFallbacks.includes(u)) { regionFallbackUrls.push(u); continue; }
       otherUrls.push(u);
     }
-    if (googleUrls.length) {
-      // Always deprioritize Google News as they are slow and buggy
-      requestLog.info('deprioritizing google news feeds', { googleCount: googleUrls.length, total: urlsToFetch.length });
-      urlsToFetch = [...regionFallbackUrls, ...otherUrls, ...googleUrls];
-    } else {
-      urlsToFetch = [...regionFallbackUrls, ...otherUrls];
-    }
+
+    // Google News URLs were removed; use region fallbacks and otherUrls only
+    urlsToFetch = [...regionFallbackUrls, ...otherUrls];
     if (regionFallbackUrls.length) {
       requestLog.info('prioritized region-specific fallback feeds', { regionFallbackCount: regionFallbackUrls.length, region });
     }
