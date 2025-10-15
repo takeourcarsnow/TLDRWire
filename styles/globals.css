@@ -145,33 +145,44 @@ body {
 
 /* Theme toggle */
 .theme-toggle {
-  /* Positioned within the header so it scrolls away with the page instead of being fixed */
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: var(--panel);
-  border: 1px solid var(--border);
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10000;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius);
   padding: 8px;
   cursor: pointer;
-  z-index: 1000;
-  transition: var(--transition);
+  transition: none;
   font-size: 18px;
+  box-shadow: none;
 }
 
-.theme-toggle:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px var(--shadow);
+.theme-toggle:hover,
+.theme-toggle:active,
+.theme-toggle:focus {
+  transform: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  filter: none !important;
 }
 
 header {
   padding: 32px 16px 24px;
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  gap: 16px; 
-  flex-wrap: wrap;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   position: relative;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 header h1 { 
@@ -194,40 +205,18 @@ header .tag {
 main {
   max-width: 1200px; 
   margin: 0 auto; 
-  padding: 0 16px 40px;
-  display: grid; 
-  grid-template-columns: minmax(300px, 350px) 1fr; 
-  gap: 24px;
-  align-items: start;
-}
-
-@media (max-width: 980px) {
-  main { 
-    grid-template-columns: 1fr; 
-    gap: 16px;
-  }
+  padding: 0 16px 80px; /* Add bottom padding for navbar */
+  min-height: calc(100vh - 120px); /* Minimum height instead of fixed */
 }
 
 .panel {
-  background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent 80%), var(--panel);
-  border: 1px solid var(--border); 
-  border-radius: var(--radius); 
   padding: 20px;
-  box-shadow: 0 8px 32px var(--shadow);
-  backdrop-filter: blur(8px);
   position: relative;
   overflow: visible;
 }
 
 .panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  opacity: 0.5;
+  display: none;
 }
 
 /* Form improvements */
@@ -418,6 +407,26 @@ button.secondary {
 button.secondary:hover:not(:disabled) {
   background: rgba(255,255,255,0.05);
   box-shadow: 0 4px 12px var(--shadow);
+}
+
+.icon-button {
+  min-width: 0 !important;
+  padding: 6px !important;
+  width: auto !important;
+  flex: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  transition: none !important;
+}
+
+.icon-button:hover:not(:disabled),
+.icon-button:active,
+.icon-button:focus {
+  transform: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border: none !important;
 }
 
 .btn-group {
@@ -793,6 +802,79 @@ footer {
   font-size: 0.875rem; 
   border-top: 1px solid var(--border);
   margin-top: 40px;
+}
+
+/* Bottom Navbar */
+.bottom-navbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0;
+  z-index: 1000;
+  box-shadow: 0 -4px 12px var(--shadow);
+}
+
+.nav-tab {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: var(--transition);
+  font-size: 12px;
+  min-width: 60px;
+}
+
+.nav-tab.active {
+  color: var(--accent);
+  background: rgba(77,163,255,0.1);
+}
+
+.nav-tab:hover {
+  color: var(--accent);
+  background: rgba(77,163,255,0.05);
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* Panel headers */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+/* Settings sections */
+.settings-section {
+  margin-bottom: 24px;
+}
+
+.settings-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  color: var(--text);
+  font-weight: 600;
 }
 
 .note { 

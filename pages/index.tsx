@@ -8,14 +8,18 @@ import { NewsForm } from '../components/NewsForm';
 import { NewsOutput } from '../components/NewsOutput';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Modal } from '../components/Modal';
+import { SwipeableContainer } from '../components/SwipeableContainer';
+import { BottomNavbar } from '../components/BottomNavbar';
+import { HistoryPanel } from '../components/HistoryPanel';
+import { SettingsPanel } from '../components/SettingsPanel';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const { preferences, updatePreference, resetPreferences } = usePreferences();
   const { makeRequest, isLoading, error, data, clearError, history, clearHistory, removeHistoryItem } = useApi();
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<any | null>(null);
   const selectedSummaryRef = useRef<HTMLDivElement | null>(null);
+  const [activeTab, setActiveTab] = useState(0);
 
   const renderMarkdownToElement = (el: HTMLDivElement | null, markdown: string | undefined) => {
     if (!el || !markdown) return;
@@ -556,19 +560,17 @@ export default function Home() {
         (async () => {
           try {
             await generateSummary();
+            setActiveTab(1);
           } catch (err) {
             console.warn('generateSummary failed via keyboard', err);
           }
         })();
       }
-      if (e.key === 'Escape') {
-        if (showAboutModal) setShowAboutModal(false);
-      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [generateSummary, showAboutModal]);
+  }, [generateSummary]);
 
   return (
     <>
@@ -580,87 +582,74 @@ export default function Home() {
         />
       </Head>
 
+      <ThemeToggle theme={theme} onToggle={toggleTheme} />
+
       <header>
-        <h1>TLDRWire</h1>
-        <span className="tag">AI-powered quick rundowns 📰</span>
-        <div style={{ marginLeft: 12 }}>
-          {/* History is now available in the output controls */}
+        <div className="header-content">
+          <h1>TLDRWire</h1>
+          <span className="tag">AI-powered quick rundowns 📰</span>
+          <div style={{ marginLeft: 12 }}>
+            {/* History is now available in the output controls */}
+          </div>
         </div>
-        <ThemeToggle theme={theme} onToggle={toggleTheme} />
       </header>
 
       <main>
-        <section className="panel">
-          <NewsForm
-            preferences={preferences}
-            onPreferenceChange={updatePreference}
-            onGenerate={() => generateSummary()}
-            onReset={resetPreferences}
-            onPresetClick={handlePresetClick}
-            isLoading={isLoading}
-            rateLimited={rateLimitCountdown > 0}
-            rateLimitCountdown={rateLimitCountdown}
-            fontSize={fontSize}
-            onFontSizeChange={setFontSize}
-          />
-        </section>
+        <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab}>
+          <section className="panel">
+            <NewsForm
+              preferences={preferences}
+              onPreferenceChange={updatePreference}
+              onGenerate={async () => { await generateSummary(); setActiveTab(1); }}
+              onReset={resetPreferences}
+              onPresetClick={handlePresetClick}
+              isLoading={isLoading}
+              rateLimited={rateLimitCountdown > 0}
+              rateLimitCountdown={rateLimitCountdown}
+              fontSize={fontSize}
+              onFontSizeChange={setFontSize}
+            />
+          </section>
 
-        <section className="panel output">
-          <NewsOutput
-            isLoading={isLoading}
-            error={error}
-            data={data}
-            lastRequest={lastRequestRef.current}
-            onHistory={() => setShowHistoryModal(true)}
+          <section className="panel output">
+            <NewsOutput
+              isLoading={isLoading}
+              error={error}
+              data={data}
+              lastRequest={lastRequestRef.current}
+              onHistory={() => setActiveTab(2)} // Switch to history tab
+            />
+          </section>
+
+          <HistoryPanel
+            history={history}
+            onApply={(payload) => {
+              Object.entries(payload).forEach(([key, value]) => {
+                updatePreference(key as keyof Preferences, String(value));
+              });
+              setActiveTab(0); // Switch to home tab
+            }}
+            onDelete={removeHistoryItem}
+            onClear={clearHistory}
+            updatePreference={updatePreference}
+            renderMarkdownToElement={renderMarkdownToElement}
           />
-        </section>
+        </SwipeableContainer>
       </main>
+
+      <BottomNavbar activeIndex={activeTab} onTabChange={setActiveTab} />
 
       <footer>
         <p>
           Built with ❤️ using Google&apos;s Gemini AI •{' '}
-          <a href="#" onClick={(e) => { e.preventDefault(); setShowAboutModal(true); }}>
-            About
-          </a>{' '}
-          •{' '}
           <a href="https://nefas.tv" target="_blank" rel="noopener noreferrer">
             Author
           </a>
         </p>
       </footer>
 
-      <Modal
-        isOpen={showAboutModal}
-        onClose={() => setShowAboutModal(false)}
-        title="About TLDRWire"
-      >
-        <p>
-          TLDRWire delivers quick, readable summaries of today’s headlines from multiple publishers so you can stay informed fast. Choose region, topic, and length to get briefings tailored to what matters to you.
-        </p>
-      </Modal>
 
-      
 
-      <Modal
-        isOpen={showHistoryModal}
-        onClose={() => setShowHistoryModal(false)}
-        title="Generation history"
-        headerRight={<button className="secondary" onClick={() => clearHistory()} title="Clear all">Clear all</button>}
-      >
-        <HistoryList
-          history={history}
-          onApply={(payload) => {
-            // apply settings back to preferences
-            Object.entries(payload).forEach(([key, value]) => {
-              updatePreference(key as keyof Preferences, String(value));
-            });
-            setShowHistoryModal(false);
-          }}
-          onDelete={(id) => removeHistoryItem(id)}
-          onClear={() => clearHistory()}
-          onView={(entry) => setSelectedHistoryEntry(entry)}
-        />
-      </Modal>
 
       <Modal
         isOpen={Boolean(selectedHistoryEntry)}
@@ -697,7 +686,7 @@ export default function Home() {
                     updatePreference(key as keyof Preferences, String(value));
                   });
                   setSelectedHistoryEntry(null);
-                  setShowHistoryModal(false);
+                  setActiveTab(0); // Switch to home tab
                 }}>Apply settings</button>
                 <button className="secondary" onClick={() => {
                   navigator.clipboard?.writeText(selectedHistoryEntry.summaryFull || selectedHistoryEntry.summarySnippet || '');
