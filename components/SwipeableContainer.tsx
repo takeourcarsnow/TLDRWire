@@ -24,12 +24,14 @@ export function SwipeableContainer({ children, activeIndex, onSlideChange }: Swi
     <Swiper
       spaceBetween={0}
       slidesPerView={1}
+      autoHeight={true}
       onSlideChange={(swiper) => onSlideChange(swiper.activeIndex)}
       onSwiper={(swiper) => (swiperRef.current = swiper)}
-      style={{ height: '100%' }}
+      /* Let slides size to their content. Avoid forcing full-height which
+         creates large empty space when content is short. */
     >
       {children.map((child, index) => (
-        <SwiperSlide key={index} style={{ height: '100%' }}>
+        <SwiperSlide key={index}>
           {child}
         </SwiperSlide>
       ))}

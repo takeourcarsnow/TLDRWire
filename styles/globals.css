@@ -156,7 +156,9 @@ main {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 16px 80px; /* Add bottom padding for navbar */
-  min-height: calc(100vh - 120px); /* Minimum height instead of fixed */
+  /* Allow page flow to determine height so sections don't stretch to full
+     viewport height when content is short. Removing the forced min-height
+     prevents large empty areas and avoids extra scrolling on short pages. */
 }
 
 .panel {
@@ -529,7 +531,8 @@ button.danger {
 }
 
 .output {
-  min-height: 300px;
+  /* Keep a small visual minimum but allow the panel to collapse when empty */
+  min-height: 0; /* removed fixed 300px so output only takes needed space */
   position: relative;
 }
 
@@ -1145,13 +1148,12 @@ footer {
      constraining it to a viewport height which causes an extra inner
      scrollbar. Keeping a simple column flow makes better use of screen
      space on mobile and desktop. */
-  display: flex;
-  flex-direction: column;
+  display: block; /* use normal document flow so height equals content */
   gap: 12px;
 }
 
 .history-search-wrapper {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .history-search-input-wrapper {
@@ -1191,7 +1193,7 @@ footer {
 
 .history-empty-state {
   text-align: center;
-  padding: 40px 20px;
+  padding: 24px 12px;
   color: var(--muted);
 }
 
@@ -1222,6 +1224,7 @@ footer {
   max-height: none;
   overflow-y: visible;
   padding-right: 0;
+  margin-bottom: 8px; /* small spacer so grid doesn't collide with navbar on small screens */
 }
 
 .history-card {

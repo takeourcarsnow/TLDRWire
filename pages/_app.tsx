@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Script from 'next/script';
 import { useEffect } from 'react';
 import '../styles/globals.css';
+// Layout debugger removed
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
@@ -95,7 +96,8 @@ export default function App({ Component, pageProps }: AppProps) {
         </div>
       </noscript>
       
-      <Component {...pageProps} />
+  <Component {...pageProps} />
+  {/* Layout debugger removed */}
     </>
   );
 }
