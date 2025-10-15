@@ -17,7 +17,6 @@ interface RequestBody {
   limit?: number;
   language?: string;
   locale?: string;
-  query?: string;
   length?: string;
 }
 
@@ -117,7 +116,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       limit = 20,
       language: bodyLanguage,
       locale: bodyLocale,
-      query = '',
       length = 'medium'
     } = (body || {});
 
@@ -126,8 +124,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const language = (localePref.language || 'en');
     const uiLocale = localePref.normalized;
 
-    const cacheKey = JSON.stringify({ region, category, style, timeframeHours, limit, language, query, length, uiLocale });
-    const requestLog = logger.child({ route: '/api/tldr', region, category, style, timeframeHours, limit, language, query, length, uiLocale });
+    const cacheKey = JSON.stringify({ region, category, style, timeframeHours, limit, language, length, uiLocale });
+    const requestLog = logger.child({ route: '/api/tldr', region, category, style, timeframeHours, limit, language, length, uiLocale });
 
     // Log basic request source info for diagnostics (don't log sensitive headers)
     try {
@@ -201,11 +199,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const compute = async (): Promise<{ status: number; payload: ApiResponse }> => {
   // Hint to fetchFeeds how many items we ultimately need so it can stop early once
   // enough articles are gathered. This reduces upstream load and latency.
-  const feeds = await fetchFeeds({ region, category, query, hours: timeframeHours, language, loggerContext: { uiLocale }, maxFeeds: 16, desiredItems: Math.max(8, limit) });
+  const feeds = await fetchFeeds({ region, category, query: '', hours: timeframeHours, language, loggerContext: { uiLocale }, maxFeeds: 16, desiredItems: Math.max(8, limit) });
 
     // Pass the requested timeframe (in hours) to processArticles so it filters by the
     // user's desired window. processArticles will cap this to the default maximum (7 days).
-    const processed = await processArticles({ feedsResult: feeds, maxArticles: limit, region, category, query, loggerContext: { uiLocale }, maxAgeHours: timeframeHours });
+    const processed = await processArticles({ feedsResult: feeds, maxArticles: limit, region, category, query: '', loggerContext: { uiLocale }, maxAgeHours: timeframeHours });
   const { topItems, cleanTopItems, maxAge } = processed;
   // processArticles returns maxAge in milliseconds (used for filtering). Convert to hours
   // for use in prompts and API metadata so the UI shows a human-friendly hours value.

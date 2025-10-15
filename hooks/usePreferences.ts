@@ -8,7 +8,6 @@ export interface Preferences {
   timeframe: string;
   limit: string;
   length: string;
-  query: string;
 }
 
 const defaultPreferences: Preferences = {
@@ -19,7 +18,6 @@ const defaultPreferences: Preferences = {
   timeframe: '24',
   limit: '20',
   length: 'medium',
-  query: '',
 };
 
 export function usePreferences() {

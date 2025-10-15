@@ -14,7 +14,6 @@ export interface ApiRequestPayload {
   timeframeHours: number;
   limit: number;
   length: string;
-  query: string;
 }
 
 export interface ApiResponse {

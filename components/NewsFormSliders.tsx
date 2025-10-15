@@ -1,17 +1,17 @@
 import React from 'react';
-import { Ruler, Diff, Clock, BarChart } from 'lucide-react';
+import { Ruler, Clock, BarChart } from 'lucide-react';
 import { Preferences } from '../hooks/usePreferences';
 
 interface Props {
   preferences: Preferences;
   onPreferenceChange: (key: keyof Preferences, value: string) => void;
-  fontSize: number;
-  onFontSizeChange: (size: number) => void;
 }
 
 const LENGTH_OPTIONS = ['short', 'medium', 'long', 'very-long'];
 
-export default function NewsFormSliders({ preferences, onPreferenceChange, fontSize, onFontSizeChange }: Props) {
+export default function NewsFormSliders({ preferences, onPreferenceChange }: Props) {
+  const [dragging, setDragging] = React.useState<{timeframe?: boolean, limit?: boolean, length?: boolean}>({});
+
   const handleTimeframeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = Number(e.target.value);
     if (value < 1) value = 1;
@@ -37,6 +37,29 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
     return idx >= 0 ? idx : 1;
   };
 
+  const handlePointerDown = (slider: keyof typeof dragging) => {
+    setDragging(prev => ({ ...prev, [slider]: true }));
+  };
+
+  const handlePointerUp = (slider: keyof typeof dragging) => {
+    setDragging(prev => ({ ...prev, [slider]: false }));
+  };
+
+  // Handle pointer up events globally to ensure dragging state is reset
+  React.useEffect(() => {
+    const handleGlobalPointerUp = () => {
+      setDragging({});
+    };
+
+    document.addEventListener('pointerup', handleGlobalPointerUp);
+    document.addEventListener('pointercancel', handleGlobalPointerUp);
+
+    return () => {
+      document.removeEventListener('pointerup', handleGlobalPointerUp);
+      document.removeEventListener('pointercancel', handleGlobalPointerUp);
+    };
+  }, []);
+
   return (
     <div className="form-group">
       <div className="slider-row">
@@ -44,7 +67,7 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
           <label htmlFor="timeframe" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Clock size={18} /> Timeframe (hours)
           </label>
-              <div className="slider-control-row" style={{ marginTop: 4 }}>
+          <div className="slider-container" style={{ marginTop: 4, position: 'relative' }}>
             <input
               aria-label="Timeframe hours slider"
               type="range"
@@ -52,16 +75,40 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
               max={72}
               value={Number(preferences.timeframe)}
               onChange={handleTimeframeChange}
-              style={{ flex: 1 }}
+              onPointerDown={() => handlePointerDown('timeframe')}
+              onPointerUp={() => handlePointerUp('timeframe')}
+              style={{ width: '100%' }}
             />
-            <div className="muted">{preferences.timeframe}</div>
+            {dragging.timeframe && (
+              <div 
+                className="slider-value" 
+                style={{
+                  position: 'absolute',
+                  left: `${((Number(preferences.timeframe) - 1) / (72 - 1)) * 100}%`,
+                  top: '-24px',
+                  transform: 'translateX(-50%)',
+                  background: 'var(--panel)',
+                  color: 'var(--text)',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  whiteSpace: 'nowrap',
+                  pointerEvents: 'none',
+                  border: '1px solid var(--border)',
+                  boxShadow: '0 2px 8px var(--shadow)'
+                }}
+              >
+                {preferences.timeframe}
+              </div>
+            )}
           </div>
         </div>
         <div className="slider-group">
           <label htmlFor="limit" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <BarChart size={18} /> Articles to Consider
           </label>
-              <div className="slider-control-row" style={{ marginTop: 4 }}>
+          <div className="slider-container" style={{ marginTop: 4, position: 'relative' }}>
             <input
               aria-label="Articles to consider slider"
               type="range"
@@ -69,16 +116,40 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
               max={40}
               value={Number(preferences.limit)}
               onChange={handleLimitChange}
-              style={{ flex: 1 }}
+              onPointerDown={() => handlePointerDown('limit')}
+              onPointerUp={() => handlePointerUp('limit')}
+              style={{ width: '100%' }}
             />
-            <div className="muted">{preferences.limit}</div>
+            {dragging.limit && (
+              <div 
+                className="slider-value" 
+                style={{
+                  position: 'absolute',
+                  left: `${((Number(preferences.limit) - 8) / (40 - 8)) * 100}%`,
+                  top: '-24px',
+                  transform: 'translateX(-50%)',
+                  background: 'var(--panel)',
+                  color: 'var(--text)',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  whiteSpace: 'nowrap',
+                  pointerEvents: 'none',
+                  border: '1px solid var(--border)',
+                  boxShadow: '0 2px 8px var(--shadow)'
+                }}
+              >
+                {preferences.limit}
+              </div>
+            )}
           </div>
         </div>
         <div className="slider-group">
           <label htmlFor="length" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Ruler size={18} /> TLDR Length
           </label>
-              <div className="slider-control-row" style={{ marginTop: 4 }}>
+          <div className="slider-container" style={{ marginTop: 4, position: 'relative' }}>
             <input
               aria-label="TLDR length slider"
               type="range"
@@ -87,30 +158,33 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
               step={1}
               value={lengthIndex(preferences.length)}
               onChange={handleLengthSliderChange}
-              style={{ flex: 1 }}
+              onPointerDown={() => handlePointerDown('length')}
+              onPointerUp={() => handlePointerUp('length')}
+              style={{ width: '100%' }}
             />
-            <div className="muted">{preferences.length.replace('-', ' ')}</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="form-group">
-        <div style={{ display: 'grid', gap: 8 }}>
-          <label htmlFor="fontSize" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Diff size={16} /> Font size
-          </label>
-          <div className="slider-control-row">
-            <input
-              id="fontSize"
-              type="range"
-              min={12}
-              max={20}
-              step={1}
-              value={fontSize}
-              onChange={(e) => onFontSizeChange(Number(e.target.value))}
-              aria-label="Summary font size"
-            />
-            <div className="muted">{fontSize}px</div>
+            {dragging.length && (
+              <div 
+                className="slider-value" 
+                style={{
+                  position: 'absolute',
+                  left: `${(lengthIndex(preferences.length) / (LENGTH_OPTIONS.length - 1)) * 100}%`,
+                  top: '-24px',
+                  transform: 'translateX(-50%)',
+                  background: 'var(--panel)',
+                  color: 'var(--text)',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  whiteSpace: 'nowrap',
+                  pointerEvents: 'none',
+                  border: '1px solid var(--border)',
+                  boxShadow: '0 2px 8px var(--shadow)'
+                }}
+              >
+                {preferences.length.replace('-', ' ')}
+              </div>
+            )}
           </div>
         </div>
       </div>

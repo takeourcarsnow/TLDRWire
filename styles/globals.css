@@ -12,56 +12,9 @@
   --shadow: rgba(0,0,0,0.2);
   --radius: 12px;
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --summary-font-size: 15px;
 }
 
-/* Slide-out disclaimer styles */
-.note-wrap {
-  position: relative;
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.note-toggle {
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.06);
-  color: #9fb8d6;
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  display: inline-block;
-  margin: 8px auto;
-}
-.note {
-  /* Inline collapsible panel that pushes content instead of overlapping */
-  position: static;
-  display: block;
-  width: 100%;
-  max-width: 560px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.04);
-  color: #d7eaf8;
-  padding: 0; /* inner padding handled by .note-inner */
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(2,6,23,0.06);
-  overflow: hidden;
-  transition: max-height 200ms ease, opacity 160ms ease, padding 160ms ease;
-  max-height: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-.note.slide-open {
-  max-height: 420px; /* room for content */
-  opacity: 1;
-  pointer-events: auto;
-}
-.note-inner { padding: 16px; text-align: center; }
-.note-inner p { margin: 8px 0; font-size: 13px; line-height: 1.4; text-align: center; }
-.note-inner .muted { color: rgba(255,255,255,0.6); font-size: 12px; text-align: center; }
 
-/* Remove hover reveal to avoid accidental overlap on touch devices; rely on the toggle button */
 
 
 @media (prefers-color-scheme: light) {
@@ -209,8 +162,8 @@ header .tag {
 }
 
 main {
-  max-width: 1200px; 
-  margin: 0 auto; 
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 0 16px 80px; /* Add bottom padding for navbar */
   min-height: calc(100vh - 120px); /* Minimum height instead of fixed */
 }
@@ -223,6 +176,66 @@ main {
 
 .panel::before {
   display: none;
+}
+
+/* Center content in home section */
+.panel:first-child {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.panel:first-child .form-group {
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.panel:first-child .row {
+  justify-content: center;
+  width: 100%;
+  max-width: 800px;
+}
+
+.panel:first-child .slider-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.panel:first-child .slider-group {
+  width: 100%;
+  max-width: 400px;
+}
+
+.panel:first-child label {
+  text-align: center;
+  justify-content: center;
+}
+
+.panel:first-child .custom-select {
+  margin: 0 auto;
+}
+
+.panel:first-child .slider-group {
+  margin: 0 auto;
+  max-width: 400px;
+}
+
+.panel:first-child .actions {
+  justify-content: center;
+  max-width: 400px;
+  width: 100%;
+}
+
+.panel:first-child .row > div {
+  width: 100%;
 }
 
 /* Form improvements */
@@ -248,13 +261,6 @@ main {
   color: var(--muted);
   display: block;
   margin-bottom: 6px;
-}
-
-/* Align the slider value to the right for visual balance. The markup uses a flex container for the control row. */
-.slider-group .muted {
-  min-width: 44px;
-  text-align: right;
-  font-size: 0.95rem;
 }
 
 /* Make slider control rows use flex so slider track and value align predictably */
@@ -413,6 +419,15 @@ button.secondary {
 button.secondary:hover:not(:disabled) {
   background: rgba(255,255,255,0.05);
   box-shadow: 0 4px 12px var(--shadow);
+}
+
+button.danger {
+  background: var(--danger);
+  color: white;
+}
+
+.icon-button.danger {
+  color: var(--danger) !important;
 }
 
 .icon-button {
@@ -626,6 +641,7 @@ button.secondary:hover:not(:disabled) {
   width: 100%;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 10px 12px;
   border-radius: 8px;
@@ -690,7 +706,7 @@ button.secondary:hover:not(:disabled) {
 .custom-select-button:active {
   box-shadow: none !important;
 }
-.custom-select-label { flex: 1; text-align: left; }
+.custom-select-label { text-align: center; }
 .custom-select-caret { opacity: 0.8; }
 .custom-select-list {
   position: absolute;
@@ -715,8 +731,10 @@ button.secondary:hover:not(:disabled) {
   display: flex;
   gap: 8px;
   align-items: center;
+  justify-content: center;
   padding: 10px 12px;
   cursor: pointer;
+  text-align: center;
 }
 .custom-select-option.highlight, .custom-select-option[aria-selected="true"] {
   background: rgba(77,163,255,0.08);
@@ -749,7 +767,7 @@ button.secondary:hover:not(:disabled) {
 
 .summary {
   line-height: 1.7;
-  font-size: var(--summary-font-size);
+  font-size: 15px;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -822,32 +840,30 @@ footer {
   justify-content: space-around;
   padding: 8px 0;
   z-index: 1000;
-  box-shadow: 0 -4px 12px var(--shadow);
 }
 
 .nav-tab {
-  background: transparent;
-  border: none;
+  background: transparent !important;
+  border: none !important;
   color: var(--muted);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   padding: 8px 12px;
-  border-radius: 8px;
-  transition: var(--transition);
   font-size: 12px;
   min-width: 60px;
+  box-shadow: none !important;
+  transition: none !important;
+  cursor: default !important;
+  appearance: none !important;
+  border-radius: 0 !important;
+  transform: none !important;
+  outline: none !important;
 }
 
 .nav-tab.active {
   color: var(--accent);
-  background: rgba(77,163,255,0.1);
-}
-
-.nav-tab:hover {
-  color: var(--accent);
-  background: rgba(77,163,255,0.05);
 }
 
 .nav-label {

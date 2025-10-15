@@ -14,15 +14,20 @@ export function BottomNavbar({ activeIndex, onTabChange }: BottomNavbarProps) {
   ];
 
   return (
-    <nav className="bottom-navbar">
+    <nav className="bottom-navbar" role="tablist" aria-label="Main navigation">
       {tabs.map((tab, index) => {
         const Icon = tab.icon;
+        const isActive = activeIndex === index;
+
         return (
           <button
             key={index}
-            className={`nav-tab ${activeIndex === index ? 'active' : ''}`}
+            className={`nav-tab ${isActive ? 'active' : ''}`}
             onClick={() => onTabChange(index)}
-            aria-label={tab.label}
+            aria-label={`${tab.label} tab`}
+            aria-selected={isActive}
+            role="tab"
+            tabIndex={isActive ? 0 : -1}
           >
             <Icon size={20} />
             <span className="nav-label">{tab.label}</span>

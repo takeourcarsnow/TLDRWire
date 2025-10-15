@@ -242,26 +242,9 @@ export default function Home() {
     }
   };
   const [showAboutModal, setShowAboutModal] = useState(false);
-  const [fontSize, setFontSize] = useState(15);
   const lastRequestRef = useRef<any>(null);
   const [lastGenerateTime, setLastGenerateTime] = useState<number>(0);
   const [rateLimitCountdown, setRateLimitCountdown] = useState<number>(0);
-
-  useEffect(() => {
-    // Load font size
-    const savedSize = Number(localStorage.getItem('tldrwire:fontSize') || '15') || 15;
-    setFontSize(savedSize);
-  }, []);
-
-  useEffect(() => {
-    // Persist and apply summary font size
-    localStorage.setItem('tldrwire:fontSize', String(fontSize));
-    try {
-      document.documentElement.style.setProperty('--summary-font-size', `${fontSize}px`);
-    } catch (err) {
-      // ignore in non-browser envs
-    }
-  }, [fontSize]);
 
   useEffect(() => {
     // Health check on mount - only run in non-localhost environments to avoid
@@ -419,15 +402,14 @@ export default function Home() {
     } catch (e) {}
     clearError();
 
-    const payload = overridePayload || {
+    const payload = {
       region: preferences.region,
       category: preferences.category,
       style: preferences.style,
       language: preferences.language,
       timeframeHours: Number(preferences.timeframe) || 24,
       limit: Number(preferences.limit) || 20,
-      length: preferences.length || 'medium',
-      query: (preferences.query || '').trim()
+      length: preferences.length || 'medium'
     };
     lastRequestRef.current = payload;
     await makeRequest(payload);
@@ -444,7 +426,6 @@ export default function Home() {
       timeframe: prefTimeframe,
       limit: prefLimit,
       length: prefLength,
-      query: prefQuery,
     } = preferences;
 
     let updates = {};
@@ -457,8 +438,7 @@ export default function Home() {
           style: 'executive-brief',
           length: 'short',
           timeframe: '12',
-          limit: '20',
-          query: ''
+          limit: '20'
         };
         break;
       case 'tech':
@@ -468,8 +448,7 @@ export default function Home() {
           style: 'concise-bullets',
           length: 'medium',
           timeframe: '24',
-          limit: '24',
-          query: ''
+          limit: '24'
         };
         break;
       case 'markets':
@@ -479,8 +458,7 @@ export default function Home() {
           style: 'market-analyst',
           length: 'long',
           timeframe: '24',
-          limit: '28',
-          query: 'stocks OR bonds OR inflation OR rate'
+          limit: '28'
         };
         break;
       case 'lt-local': {
@@ -519,8 +497,7 @@ export default function Home() {
           style: 'neutral',
           length: 'medium',
           timeframe: '24',
-          limit: '20',
-          query: ''
+          limit: '20'
         };
         break;
       }
@@ -539,8 +516,7 @@ export default function Home() {
       language: (updates as any).language || preferences.language,
       timeframeHours: Number((updates as any).timeframe || preferences.timeframe) || 24,
       limit: Number((updates as any).limit || preferences.limit) || 20,
-      length: (updates as any).length || preferences.length || 'medium',
-      query: ((updates as any).query || preferences.query || '').trim()
+      length: (updates as any).length || preferences.length || 'medium'
     };
 
     (async () => {
@@ -606,8 +582,6 @@ export default function Home() {
               isLoading={isLoading}
               rateLimited={rateLimitCountdown > 0}
               rateLimitCountdown={rateLimitCountdown}
-              fontSize={fontSize}
-              onFontSizeChange={setFontSize}
             />
           </section>
 

@@ -4,7 +4,7 @@ import TwEmoji from './TwEmoji';
 interface Option {
   value: string;
   label: string;
-  icon?: string;
+  icon?: string | React.ComponentType<any>;
 }
 
 interface Props {
@@ -72,7 +72,11 @@ export default function CustomSelect({ id, value, options, onChange, className }
   return (
     <div ref={rootRef} className={`custom-select ${className || ''}`} onKeyDown={onKeyDown} tabIndex={0} aria-haspopup="listbox" aria-expanded={open} aria-controls={listId} aria-activedescendant={open ? activeId : undefined}>
       <button type="button" aria-expanded={open} aria-controls={id ? `${id}-list` : undefined} className="custom-select-button" onClick={toggle}>
-        {selected?.icon ? <TwEmoji text={selected.icon} /> : null}
+        {selected?.icon ? (
+          typeof selected.icon === 'string' ? 
+            <TwEmoji text={selected.icon} /> : 
+            React.createElement(selected.icon, { size: 16 })
+        ) : null}
         <span className="custom-select-label">{selected?.label}</span>
         <span className="custom-select-caret">▾</span>
       </button>
@@ -90,7 +94,11 @@ export default function CustomSelect({ id, value, options, onChange, className }
                 onMouseEnter={() => setHighlight(i)}
                 onClick={() => handleOptionClick(i)}
               >
-                {opt.icon ? <TwEmoji text={opt.icon} /> : null}
+                {opt.icon ? (
+                  typeof opt.icon === 'string' ? 
+                    <TwEmoji text={opt.icon} /> : 
+                    React.createElement(opt.icon, { size: 16 })
+                ) : null}
                 <span className="custom-select-option-label">{opt.label}</span>
               </li>
             );
