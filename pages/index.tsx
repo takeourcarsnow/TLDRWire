@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Head from 'next/head';
 import { useTheme } from '../hooks/useTheme';
 import { usePreferences, type Preferences } from '../hooks/usePreferences';
 import { useApi } from '../hooks/useApi';
 import HistoryList from '../components/HistoryList';
-import { NewsForm } from '../components/NewsForm';
-import { NewsOutput } from '../components/NewsOutput';
+import dynamic from 'next/dynamic';
+const NewsForm = dynamic(() => import('../components/NewsForm').then(m => m.NewsForm), { ssr: false });
+const NewsOutput = dynamic(() => import('../components/NewsOutput').then(m => m.NewsOutput), { ssr: false });
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Modal } from '../components/Modal';
 import { SwipeableContainer } from '../components/SwipeableContainer';
 import { BottomNavbar } from '../components/BottomNavbar';
-import { HistoryPanel } from '../components/HistoryPanel';
+const HistoryPanel = dynamic(() => import('../components/HistoryPanel').then(m => m.HistoryPanel), { ssr: false });
+const PresetCarousel = dynamic(() => import('../components/PresetCarousel').then(m => m.default), { ssr: false });
 import { SettingsPanel } from '../components/SettingsPanel';
-import PresetCarousel from '../components/PresetCarousel';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -21,227 +22,46 @@ export default function Home() {
   const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<any | null>(null);
   const selectedSummaryRef = useRef<HTMLDivElement | null>(null);
   const [activeTab, setActiveTab] = useState(0);
+  // Memoized markdown renderer so the function reference is stable across renders
+  const renderMarkdownToElement = useMemo(() => {
+    return (el: HTMLDivElement | null, markdown: string | undefined) => {
+      if (!el || !markdown) return;
+      try {
+        const mdLib = (window as any).marked;
+        const sanitizer = (window as any).DOMPurify;
+        const html = sanitizer ? sanitizer.sanitize(mdLib ? mdLib.parse(markdown) : markdown) : (mdLib ? mdLib.parse(markdown) : markdown);
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        const children = Array.from(temp.children);
+        el.innerHTML = '';
+        children.forEach((child, idx) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'reveal-up';
+          wrapper.style.animationDelay = `${Math.min(idx * 60, 360)}ms`;
+          wrapper.appendChild(child);
+          el.appendChild(wrapper);
+        });
 
-  const renderMarkdownToElement = (el: HTMLDivElement | null, markdown: string | undefined) => {
-    if (!el || !markdown) return;
-    try {
-      const html = (window as any).DOMPurify.sanitize((window as any).marked.parse(markdown));
-      const temp = document.createElement('div');
-      temp.innerHTML = html;
-      const children = Array.from(temp.children);
-      el.innerHTML = '';
-      children.forEach((child, idx) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'reveal-up';
-        wrapper.style.animationDelay = `${Math.min(idx * 60, 360)}ms`;
-        wrapper.appendChild(child);
-        el.appendChild(wrapper);
-      });
-
-      // Process links similarly to NewsOutput
-      el.querySelectorAll('a').forEach((link) => {
-        link.setAttribute('target', '_blank');
-        link.setAttribute('rel', 'noopener noreferrer');
-        try {
-          const rawHref = link.getAttribute('href') || '';
-          if (rawHref && !/^https?:/i.test(rawHref)) return;
-          const href = rawHref || '#';
-          let url = new URL(href, window.location.href);
-          let host = (url.hostname || '').replace(/^www\./, '');
-          const currentText = (link.textContent || '').trim();
-          const looksLikeUrl = /^https?:\/\//i.test(currentText) || currentText === href;
-          const endsWithPunct = /[.,;:!?]+$/.test(currentText);
-          const looksLikeHostWithPunct = Boolean(host && currentText && currentText.toLowerCase().includes(host.toLowerCase()) && endsWithPunct);
-          if (!currentText || looksLikeUrl || currentText.length > 42 || looksLikeHostWithPunct) {
-            try {
-              const prev = link.previousSibling;
-              if (prev && prev.nodeType === Node.TEXT_NODE) {
-                const txt = (prev.textContent || '');
-                const m = txt.match(/\[([^\]]+)\]\($/);
-                if (m) {
-                    // remove the trailing bracketed fragment from the previous text node
-                    prev.textContent = txt.slice(0, m.index);
-                    // Do NOT re-insert the original label text here. Instead ensure a single
-                    // separating space so the favicon/link doesn't glue to preceding text.
-                    try {
-                      const prevTxt = (prev.textContent || '');
-                      if (!/\s$/.test(prevTxt)) {
-                        link.parentNode?.insertBefore(document.createTextNode(' '), link);
-                      } else {
-                        prev.textContent = prevTxt.replace(/\s+$/, ' ');
-                      }
-                    } catch (e) {}
-                    const next = link.nextSibling;
-                    if (next && next.nodeType === Node.TEXT_NODE) {
-                      const nextTxt = next.textContent || '';
-                      if (/^\)/.test(nextTxt)) {
-                        next.textContent = nextTxt.replace(/^\)+\s*/, '');
-                      }
-                    }
-                } else {
-                  if (txt.length > 0 && !/\s$/.test(txt)) {
-                    link.parentNode?.insertBefore(document.createTextNode(' '), link);
-                  }
-                }
-              }
-            } catch { /* ignore link text repair errors */ }
-            link.textContent = (host || 'source').trim().replace(/[\uFFFD\uFEFF\u200B]+/g, '');
-
-            const trimLeadingPunctFromText = (textNode: Node | null) => {
-              try {
-                if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return;
-                let t = (textNode.textContent || '');
-                const m = t.match(/^([)\]\.,;:!?\u2026]+)\s*/);
-                if (m) {
-                  t = t.slice(m[0].length);
-                  (textNode as any).textContent = t;
-                }
-                (textNode as any).textContent = (textNode as any).textContent.replace(/^[\uFFFD\uFEFF\u200B\u00A0\s]+/, '');
-              } catch (e) { /* ignore punctuation trim errors */ }
-            };
-
-            const trimLeadingPunctFromElementFirstChild = (el: Node | null) => {
-              try {
-                if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
-                const first = (el as Element).firstChild;
-                if (first && first.nodeType === Node.TEXT_NODE) {
-                  trimLeadingPunctFromText(first);
-                  if (((first.textContent || '').trim().length) === 0) {
-                    (el as Element).removeChild(first);
-                  }
-                }
-              } catch (e) {}
-            };
-
-            try {
-              const nextNode = link.nextSibling;
-              trimLeadingPunctFromText(nextNode);
-              if (nextNode && nextNode.nodeType === Node.ELEMENT_NODE) {
-                trimLeadingPunctFromElementFirstChild(nextNode);
-              }
-
-              const removePunctSiblings = (node: Node | null) => {
-                try {
-                  let n = node;
-                  for (let i = 0; i < 3 && n; i++) {
-                    if (n.nodeType === Node.TEXT_NODE) {
-                      const txt = (n.textContent || '').trim();
-                      if (/^[\u00A0\uFEFF\uFFFD\u200B\s]*[.,;:!?\u2026]+[\u00A0\uFEFF\uFFFD\u200B\s]*$/.test(txt)) {
-                        const toRemove = n;
-                        n = n.nextSibling;
-                        toRemove.parentNode?.removeChild(toRemove);
-                        continue;
-                      }
-                    }
-                    n = n.nextSibling;
-                  }
-                } catch (e) { /* ignore sibling punctuation removal errors */ }
-              };
-              removePunctSiblings(link.nextSibling);
-
-              const removePrevPunct = (node: Node | null) => {
-                try {
-                  let n = node;
-                  for (let i = 0; i < 3 && n; i++) {
-                    if (n.nodeType === Node.TEXT_NODE) {
-                      const txt = (n.textContent || '');
-                      if (/([\u00A0\uFEFF\uFFFD\u200B\s]*[.,;:!?\u2026]+)\s*$/.test(txt)) {
-                        n.textContent = txt.replace(/([\u00A0\uFEFF\uFFFD\u200B\s]*[.,;:!?\u2026]+)\s*$/, '');
-                      }
-                    }
-                    n = n.previousSibling;
-                  }
-                } catch (e) {}
-              };
-              removePrevPunct(link.previousSibling);
-            } catch { /* ignore punctuation cleanup errors */ }
+        // Keep link processing lightweight; delegate complex behaviour to NewsOutput when available
+        el.querySelectorAll('a').forEach((link) => {
+          try {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+            const rawHref = link.getAttribute('href') || '';
+            if (rawHref && !/^https?:/i.test(rawHref)) return;
+            const href = rawHref || '#';
+            const url = new URL(href, window.location.href);
+            const host = (url.hostname || '').replace(/^www\./, '');
+            link.title = `Open ${host || 'link'} in new tab`;
+          } catch (e) {
+            // ignore link processing errors
           }
-          link.title = `Open ${host || 'link'} in new tab`;
-          const isGNews = /(^|\.)news\.google\.com$/i.test(url.hostname || '');
-          if (isGNews) {
-            const raw = url.searchParams.get('url');
-            if (raw) {
-              try {
-                const decoded = decodeURIComponent(raw);
-                const candidate = new URL(decoded);
-                url = candidate;
-                host = (url.hostname || '').replace(/^www\./, '');
-              } catch { /* ignore google news url decode errors */ }
-            }
-            link.setAttribute('href', url.toString());
-          }
-          if (host) {
-            const faviconUrl = `https://www.google.com/s2/favicons?domain=${url.protocol}//${url.hostname}`;
-            try {
-              const parentEl = link.parentElement as HTMLElement | null;
-              if (parentEl && parentEl.classList && parentEl.classList.contains('tldrwire-source')) {
-                const first = parentEl.firstElementChild as HTMLElement | null;
-                if (first && first.tagName !== 'IMG') {
-                  const img = document.createElement('img');
-                  img.src = faviconUrl;
-                  img.alt = `${host} favicon`;
-                  img.style.width = '16px';
-                  img.style.height = '16px';
-                  img.style.verticalAlign = 'middle';
-                  img.style.marginRight = '6px';
-                  parentEl.insertBefore(img, parentEl.firstChild);
-                }
-              } else {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'tldrwire-source';
-                wrapper.style.display = 'block';
-                wrapper.style.marginTop = '6px';
-                wrapper.style.marginBottom = '2px';
-
-                const img = document.createElement('img');
-                img.src = faviconUrl;
-                img.alt = `${host} favicon`;
-                img.dataset.tldrHost = host;
-                img.style.width = '16px';
-                img.style.height = '16px';
-                img.style.verticalAlign = 'middle';
-                img.style.marginRight = '6px';
-                const applyThemeToFavicon = (image: HTMLImageElement | null) => {
-                  try {
-                    if (!image) return;
-                    const h = (image.dataset.tldrHost || '').toLowerCase();
-                    const theme = document.documentElement.getAttribute('data-theme') || 'light';
-                    if (h.includes('nytimes.com')) {
-                      if (theme === 'dark') {
-                        image.style.filter = 'invert(1)';
-                      } else {
-                        image.style.filter = '';
-                      }
-                    }
-                  } catch (e) {}
-                };
-                applyThemeToFavicon(img);
-                try {
-                  if (!(window as any).__tldrThemeObserverInitialized) {
-                    const obs = new MutationObserver(() => {
-                      document.querySelectorAll<HTMLImageElement>('.tldrwire-source img[data-tldr-host]').forEach((im) => applyThemeToFavicon(im));
-                    });
-                    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-                    (window as any).__tldrThemeObserverInitialized = true;
-                  }
-                } catch (e) {}
-
-                link.parentNode?.insertBefore(wrapper, link);
-                wrapper.appendChild(img);
-                wrapper.appendChild(link);
-              }
-            } catch (e) {}
-          }
-        } catch {
-          const t = (link.textContent || '').trim();
-          if (t.length > 42) link.textContent = t.slice(0, 40) + '…';
-          link.title = 'Open link in new tab';
-        }
-      });
-    } catch (err) {
-      if (el) el.textContent = markdown || '';
-    }
-  };
+        });
+      } catch (err) {
+        if (el) el.textContent = markdown || '';
+      }
+    };
+  }, []);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const lastRequestRef = useRef<any>(null);
   const [lastGenerateTime, setLastGenerateTime] = useState<number>(0);
@@ -384,7 +204,7 @@ export default function Home() {
       const md = selectedHistoryEntry.summaryFull || selectedHistoryEntry.summarySnippet || '';
       renderMarkdownToElement(selectedSummaryRef.current, md);
     }
-  }, [selectedHistoryEntry]);
+  }, [selectedHistoryEntry, renderMarkdownToElement]);
   
   // Keep the browser tab title stable; avoid tying it to changing preferences.
 

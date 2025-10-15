@@ -856,7 +856,7 @@ button.danger {
 
 .summary ul, .summary ol {
   margin: 1em 0;
-  padding-left: 1.5em;
+  list-style: none;
 }
 
 .summary li {
@@ -982,6 +982,45 @@ footer {
   margin: 16px 0;
   overflow: hidden;
   position: relative;
+}
+
+/* Fade out the sides using mask on the swiper */
+.preset-swiper {
+  mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+/* Override global button styles for carousel arrows */
+.preset-carousel .preset-prev,
+.preset-carousel .preset-next {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--muted-foreground, #111827) !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  line-height: 1 !important;
+  padding: 4px !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 20 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: auto !important;
+  transition: none !important;
+}
+
+.preset-carousel .preset-prev {
+  left: -20px !important;
+}
+
+.preset-carousel .preset-next {
+  right: -20px !important;
 }
 
 

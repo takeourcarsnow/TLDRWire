@@ -1,7 +1,7 @@
 import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { FreeMode } from 'swiper/modules';
-import { 
+import { FreeMode, Navigation } from 'swiper/modules';
+import {
   Sunrise, 
   Monitor, 
   TrendingUp, 
@@ -26,6 +26,7 @@ import {
 
 // Import Swiper styles
 import 'swiper/css';
+import 'swiper/css/navigation';
 
 interface PresetCarouselProps {
   onPresetClick: (preset: string) => void;
@@ -51,10 +52,22 @@ const presets = [
 ];
 
 export default function PresetCarousel({ onPresetClick }: PresetCarouselProps) {
+  const prevRef = React.useRef<HTMLButtonElement | null>(null);
+  const nextRef = React.useRef<HTMLButtonElement | null>(null);
+  const [navPrev, setNavPrev] = React.useState<any>(null);
+  const [navNext, setNavNext] = React.useState<any>(null);
+  const swiperRef = React.useRef<any>(null);
+
+  React.useEffect(() => {
+    // set refs after mount so Swiper can attach
+    setNavPrev(prevRef.current);
+    setNavNext(nextRef.current);
+  }, []);
   return (
-    <div className="preset-carousel">
+  <div className="preset-carousel" style={{ position: 'relative', overflow: 'visible' }}>
       <Swiper
-        modules={[FreeMode]}
+        className="preset-swiper"
+        modules={[FreeMode, Navigation]}
         spaceBetween={6}
         // Use auto slide sizing so more items can fit; slide widths come from content/styles
         slidesPerView={'auto'}
@@ -68,7 +81,13 @@ export default function PresetCarousel({ onPresetClick }: PresetCarouselProps) {
           1024: { spaceBetween: 10 },
           1280: { spaceBetween: 12 },
         }}
-        style={{ paddingBottom: '24px' }}
+        navigation={{ prevEl: navPrev, nextEl: navNext }}
+        onBeforeInit={(swiper) => {
+          // attach swiper instance so we can fallback to programmatic control
+          // @ts-ignore
+          swiperRef.current = swiper;
+        }}
+        style={{ height: '46px', overflow: 'visible' }}
       >
         {presets.map((preset) => {
           const Icon = preset.icon;
@@ -95,6 +114,32 @@ export default function PresetCarousel({ onPresetClick }: PresetCarouselProps) {
           );
         })}
       </Swiper>
+      {/* Minimalist navigation arrows (no effects, vertically centered) */}
+      <button
+        ref={prevRef}
+        aria-label="Previous presets"
+        className="preset-prev"
+        onClick={() => {
+          if (swiperRef.current && typeof swiperRef.current.slidePrev === 'function') {
+            swiperRef.current.slidePrev();
+          }
+        }}
+      >
+        ‹
+      </button>
+
+      <button
+        ref={nextRef}
+        aria-label="Next presets"
+        className="preset-next"
+        onClick={() => {
+          if (swiperRef.current && typeof swiperRef.current.slideNext === 'function') {
+            swiperRef.current.slideNext();
+          }
+        }}
+      >
+        ›
+      </button>
     </div>
   );
 }

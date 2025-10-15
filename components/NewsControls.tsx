@@ -13,19 +13,19 @@ export default function NewsControls({ isHidden, onCopy, onShare, onHistory, onP
   if (isHidden) return null;
 
   return (
-    <div className="btn-group" style={{ marginBottom: '16px', gap: '8px', justifyContent: 'space-between' }}>
-      <div className="btn-group" style={{ flex: 1 }}>
-        <button className="secondary" type="button" title="Copy summary" onClick={onCopy}>
-          <Copy size={16} /> Copy
+    <div className="btn-group" style={{ marginBottom: '16px', gap: '8px' }}>
+      <div className="btn-group">
+        <button className="secondary" type="button" title="Copy summary" onClick={onCopy} style={{ flex: 'none', minWidth: 0 }}>
+          <Copy size={16} />
         </button>
-        <button className="secondary" type="button" title="Share summary" onClick={onShare}>
-          <Share size={16} /> Share
+        <button className="secondary" type="button" title="Share summary" onClick={onShare} style={{ flex: 'none', minWidth: 0 }}>
+          <Share size={16} />
         </button>
-        <button className="secondary" type="button" title="History" onClick={onHistory}>
-          <History size={16} /> History
+        <button className="secondary" type="button" title="History" onClick={onHistory} style={{ flex: 'none', minWidth: 0 }}>
+          <History size={16} />
         </button>
-        <button className="secondary" type="button" title="Print summary" onClick={onPrint}>
-          <Printer size={16} /> Print
+        <button className="secondary" type="button" title="Print summary" onClick={onPrint} style={{ flex: 'none', minWidth: 0 }}>
+          <Printer size={16} />
         </button>
       </div>
     </div>

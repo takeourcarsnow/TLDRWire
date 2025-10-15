@@ -77,15 +77,15 @@ export default function NewsFormSelectors({ preferences, onPreferenceChange }: P
     <>
       <div className="form-group">
         <div className="row">
-          <div>
-            <label htmlFor="region"><MapPin size={16} /> Region</label>
-            <div className="select-with-flag">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label htmlFor="region" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}><MapPin size={16} /> Region:</label>
+            <div className="select-with-flag" style={{ flex: 1 }}>
               <CustomSelect id="region" value={preferences.region} options={regionOptions} onChange={(v) => onPreferenceChange('region', v)} />
             </div>
           </div>
-          <div>
-            <label htmlFor="language"><Globe size={16} /> Language</label>
-            <div className="select-with-flag">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label htmlFor="language" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}><Globe size={16} /> Language:</label>
+            <div className="select-with-flag" style={{ flex: 1 }}>
               <CustomSelect id="language" value={preferences.language} options={languageOptions} onChange={(v) => onPreferenceChange('language', v)} />
             </div>
           </div>
@@ -94,12 +94,12 @@ export default function NewsFormSelectors({ preferences, onPreferenceChange }: P
 
       <div className="form-group">
         <div className="row">
-          <div>
-            <label htmlFor="category"><Folder size={16} /> Category</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label htmlFor="category" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}><Folder size={16} /> Category:</label>
             <CustomSelect id="category" value={preferences.category} options={categoryOptions} onChange={(v) => onPreferenceChange('category', v)} />
           </div>
-          <div>
-            <label htmlFor="style"><PenTool size={16} /> Writing Style</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label htmlFor="style" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}><PenTool size={16} /> Writing Style:</label>
             <CustomSelect id="style" value={preferences.style} options={styleOptions} onChange={(v) => onPreferenceChange('style', v)} />
           </div>
         </div>

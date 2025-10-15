@@ -53,8 +53,9 @@ export default function App({ Component, pageProps }: AppProps) {
           // Register a small no-op dev service worker to replace any previously
           // installed worker that might be intercepting HMR. The dev SW is a
           // passthrough and explicitly ignores /_next/ so it won't interfere
-          // with Next.js hot-update.json requests.
-          <Script id="register-dev-sw" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: `(function(){try{if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(r=>{r.forEach(reg=>{try{reg.unregister();}catch(e){}})}).catch(()=>{}).finally(function(){try{navigator.serviceWorker.register('/dev-sw.js').catch(()=>{});}catch(e){}});} }catch(e){} })();` }} />
+          // with Next.js hot-update.json requests. Use afterInteractive to avoid
+          // beforeInteractive warnings outside _document.
+          <Script id="register-dev-sw" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: `(function(){try{if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(r=>{r.forEach(reg=>{try{reg.unregister();}catch(e){}})}).catch(()=>{}).finally(function(){try{navigator.serviceWorker.register('/dev-sw.js').catch(()=>{});}catch(e){}});} }catch(e){} })();` }} />
         )}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="dark light" />
