@@ -1,4 +1,5 @@
 import React from 'react';
+import { Copy, Share, History, Printer } from 'lucide-react';
 
 interface Props {
   isHidden: boolean;
@@ -15,16 +16,16 @@ export default function NewsControls({ isHidden, onCopy, onShare, onHistory, onP
     <div className="btn-group" style={{ marginBottom: '16px', gap: '8px', justifyContent: 'space-between' }}>
       <div className="btn-group" style={{ flex: 1 }}>
         <button className="secondary" type="button" title="Copy summary" onClick={onCopy}>
-          📋 Copy
+          <Copy size={16} /> Copy
         </button>
         <button className="secondary" type="button" title="Share summary" onClick={onShare}>
-          🔗 Share
+          <Share size={16} /> Share
         </button>
         <button className="secondary" type="button" title="History" onClick={onHistory}>
-          🕘 History
+          <History size={16} /> History
         </button>
         <button className="secondary" type="button" title="Print summary" onClick={onPrint}>
-          🖨️ Print
+          <Printer size={16} /> Print
         </button>
       </div>
     </div>

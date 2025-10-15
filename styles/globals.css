@@ -145,18 +145,25 @@ body {
 
 /* Theme toggle */
 .theme-toggle {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 10000;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: fixed !important;
+  top: 16px !important;
+  right: 16px !important;
+  z-index: 10000 !important;
+  background: transparent;
+  border: none;
   border-radius: var(--radius);
   padding: 8px;
   cursor: pointer;
   transition: none;
   font-size: 18px;
   box-shadow: none;
+  color: var(--text);
+  transform: none !important;
+  will-change: auto !important;
+  /* Ensure it stays fixed even if parent has transforms */
+  transform-origin: top right !important;
+  backface-visibility: hidden !important;
+  perspective: none !important;
 }
 
 .theme-toggle:hover,
@@ -167,7 +174,6 @@ body {
   background: transparent !important;
   border: none !important;
   outline: none !important;
-  filter: none !important;
 }
 
 header {
@@ -940,8 +946,10 @@ footer {
   }
   
   .theme-toggle {
-    top: 16px;
-    right: 16px;
+    top: 16px !important;
+    right: 16px !important;
+    position: fixed !important;
+    z-index: 10000 !important;
   }
 }
 

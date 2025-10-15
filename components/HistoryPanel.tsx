@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { FaCheck, FaTrash } from 'react-icons/fa';
+import { Check, Trash2 } from 'lucide-react';
 import HistoryList from './HistoryList';
 import { Modal } from './Modal';
 import { Preferences } from '../hooks/usePreferences';
@@ -36,7 +36,7 @@ export function HistoryPanel({
       <div className="panel-header">
         <h2>Generation History</h2>
         <button className="secondary icon-button" onClick={onClear} title="Clear all">
-          <FaTrash size={16} />
+          <Trash2 size={16} />
         </button>
       </div>
       <HistoryList
@@ -85,7 +85,7 @@ export function HistoryPanel({
                 });
                 setSelectedHistoryEntry(null);
               }} title="Apply settings">
-                <FaCheck size={14} />
+                <Check size={14} />
               </button>
               <button className="secondary" onClick={() => {
                 navigator.clipboard?.writeText(selectedHistoryEntry.summaryFull || selectedHistoryEntry.summarySnippet || '');
@@ -94,7 +94,7 @@ export function HistoryPanel({
                 onDelete(selectedHistoryEntry.id);
                 setSelectedHistoryEntry(null);
               }} title="Delete">
-                <FaTrash size={14} />
+                <Trash2 size={14} />
               </button>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Ruler, Diff, Clock, BarChart } from 'lucide-react';
 import { Preferences } from '../hooks/usePreferences';
 
 interface Props {
@@ -41,7 +42,7 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
       <div className="slider-row">
         <div className="slider-group">
           <label htmlFor="timeframe" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: '1.1em' }}>⏰</span> Timeframe (hours)
+            <Clock size={18} /> Timeframe (hours)
           </label>
               <div className="slider-control-row" style={{ marginTop: 4 }}>
             <input
@@ -58,7 +59,7 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
         </div>
         <div className="slider-group">
           <label htmlFor="limit" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: '1.1em' }}>📊</span> Articles to Consider
+            <BarChart size={18} /> Articles to Consider
           </label>
               <div className="slider-control-row" style={{ marginTop: 4 }}>
             <input
@@ -75,7 +76,7 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
         </div>
         <div className="slider-group">
           <label htmlFor="length" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: '1.1em' }}>📏</span> TLDR Length
+            <Ruler size={18} /> TLDR Length
           </label>
               <div className="slider-control-row" style={{ marginTop: 4 }}>
             <input
@@ -95,7 +96,9 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, fontS
 
       <div className="form-group">
         <div style={{ display: 'grid', gap: 8 }}>
-          <label htmlFor="fontSize">📏 Font size</label>
+          <label htmlFor="fontSize" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Diff size={16} /> Font size
+          </label>
           <div className="slider-control-row">
             <input
               id="fontSize"

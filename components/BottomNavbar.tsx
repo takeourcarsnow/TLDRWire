@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaHome, FaNewspaper, FaHistory } from 'react-icons/fa';
+import { Home, Newspaper, History } from 'lucide-react';
 
 interface BottomNavbarProps {
   activeIndex: number;
@@ -8,9 +8,9 @@ interface BottomNavbarProps {
 
 export function BottomNavbar({ activeIndex, onTabChange }: BottomNavbarProps) {
   const tabs = [
-    { icon: FaHome, label: 'Home' },
-    { icon: FaNewspaper, label: 'Results' },
-    { icon: FaHistory, label: 'History' },
+    { icon: Home, label: 'Home' },
+    { icon: Newspaper, label: 'Results' },
+    { icon: History, label: 'History' },
   ];
 
   return (

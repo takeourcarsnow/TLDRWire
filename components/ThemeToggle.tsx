@@ -1,4 +1,5 @@
 import React from 'react';
+import { Sun, Moon } from 'lucide-react';
 
 interface ThemeToggleProps {
   theme: 'light' | 'dark';
@@ -13,7 +14,7 @@ export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
       title="Toggle theme"
       aria-label="Toggle theme"
     >
-      <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
+      <span>{theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</span>
     </button>
   );
 }

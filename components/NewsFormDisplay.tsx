@@ -1,4 +1,5 @@
 import React from 'react';
+import { Search } from 'lucide-react';
 import { Preferences } from '../hooks/usePreferences';
 
 interface Props {
@@ -11,7 +12,9 @@ export default function NewsFormDisplay({ preferences, onPreferenceChange }: Pro
     <>
       <div className="form-group">
         <div style={{ display: 'grid', gap: 8 }}>
-          <label htmlFor="query">🔍 Keyword Filter (Optional)</label>
+          <label htmlFor="query" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Search size={16} /> Keyword Filter (Optional)
+          </label>
           <input
             id="query"
             type="text"

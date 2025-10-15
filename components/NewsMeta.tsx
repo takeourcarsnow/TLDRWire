@@ -1,6 +1,7 @@
 import React from 'react';
 import { ApiResponse } from '../hooks/useApi';
 import TwEmoji from './TwEmoji';
+import { MapPin, Globe, Folder, PenTool, Clock, BarChart, Ruler } from 'lucide-react';
 
 interface Props {
   data: ApiResponse | null;
@@ -17,13 +18,13 @@ export default function NewsMeta({ data }: Props) {
 
   const lang = sanitize(data.meta.language) || '';
   const items = [
-    { icon: <TwEmoji text={'📍'} />, label: 'Region', value: sanitize(data.meta.region) },
-    { icon: <TwEmoji text={'🌐'} />, label: 'Language', value: lang },
-    { icon: '📂', label: 'Category', value: sanitize(data.meta.category) },
-    { icon: '✍️', label: 'Style', value: sanitize(data.meta.style) },
-    { icon: '⏰', label: 'Window', value: `${sanitize(data.meta.timeframeHours)}h` },
-    { icon: '📊', label: 'Articles', value: sanitize(data.meta.usedArticles) },
-    data.meta.length ? { icon: '📏', label: 'Length', value: sanitize(data.meta.length) } : null,
+    { icon: <MapPin size={14} />, label: 'Region', value: sanitize(data.meta.region) },
+    { icon: <Globe size={14} />, label: 'Language', value: lang },
+    { icon: <Folder size={14} />, label: 'Category', value: sanitize(data.meta.category) },
+    { icon: <PenTool size={14} />, label: 'Style', value: sanitize(data.meta.style) },
+    { icon: <Clock size={14} />, label: 'Window', value: `${sanitize(data.meta.timeframeHours)}h` },
+    { icon: <BarChart size={14} />, label: 'Articles', value: sanitize(data.meta.usedArticles) },
+    data.meta.length ? { icon: <Ruler size={14} />, label: 'Length', value: sanitize(data.meta.length) } : null,
     // model intentionally hidden from meta topbar
   ].filter(Boolean);
 

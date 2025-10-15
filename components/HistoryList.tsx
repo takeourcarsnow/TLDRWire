@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { FaCheck, FaEye, FaTrash } from 'react-icons/fa';
+import { Check, Eye, Trash2 } from 'lucide-react';
 import { HistoryEntry } from '../hooks/useApi';
 
 interface Props {
@@ -96,13 +96,13 @@ export function HistoryList({ history, onApply, onDelete, onClear, onView }: Pro
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 30 }}>
                 <button className="secondary icon-button" onClick={() => onApply(h.payload)} title="Apply settings">
-                  <FaCheck size={14} />
+                  <Check size={14} />
                 </button>
                 <button className="secondary icon-button" onClick={() => onView(h)} title="View full summary">
-                  <FaEye size={14} />
+                  <Eye size={14} />
                 </button>
                 <button className="danger icon-button" onClick={() => onDelete(h.id)} title="Delete">
-                  <FaTrash size={14} />
+                  <Trash2 size={14} />
                 </button>
               </div>
             </div>

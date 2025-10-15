@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Clock, Sparkles, RotateCcw, Sunrise, Monitor, TrendingUp, MapPin } from 'lucide-react';
 
 interface Props {
   onGenerate: () => Promise<void>;
@@ -31,9 +32,9 @@ export default function NewsFormActions({ onGenerate, onReset, onPresetClick, is
               <span>Analyzing latest news…</span>
             </>
           ) : rateLimited ? (
-            <span>⏳ Wait {rateLimitCountdown}s…</span>
+            <span><Clock size={16} /> Wait {rateLimitCountdown}s…</span>
           ) : (
-            <span>✨ Generate TLDR</span>
+            <span><Sparkles size={16} /> Generate TLDR</span>
           )}
           </button>
         </div>
@@ -42,16 +43,16 @@ export default function NewsFormActions({ onGenerate, onReset, onPresetClick, is
       <div className="btn-group" style={{ marginTop: '12px', gap: '8px', justifyContent: 'space-between' }}>
         <div className="btn-group" style={{ flex: 1 }}>
           <button className="secondary" type="button" title="Reset filters to defaults" onClick={onReset}>
-            ♻️ Reset
+            <RotateCcw size={16} /> Reset
           </button>
         </div>
       </div>
 
       <div className="btn-group" style={{ marginTop: '12px', flexWrap: 'wrap', gap: '8px' }}>
-        <button className="secondary" type="button" onClick={() => onPresetClick('morning')}>🌅 Morning Brief</button>
-        <button className="secondary" type="button" onClick={() => onPresetClick('tech')}>💻 Tech Digest</button>
-        <button className="secondary" type="button" onClick={() => onPresetClick('markets')}>📈 Market Pulse</button>
-  <button className="secondary" type="button" onClick={() => onPresetClick('lt-local')}>📍 Local News</button>
+        <button className="secondary" type="button" onClick={() => onPresetClick('morning')}><Sunrise size={16} /> Morning Brief</button>
+        <button className="secondary" type="button" onClick={() => onPresetClick('tech')}><Monitor size={16} /> Tech Digest</button>
+        <button className="secondary" type="button" onClick={() => onPresetClick('markets')}><TrendingUp size={16} /> Market Pulse</button>
+  <button className="secondary" type="button" onClick={() => onPresetClick('lt-local')}><MapPin size={16} /> Local News</button>
       </div>
 
       {/* Slide-out disclosure: hidden by default, appears on hover or when toggled */}
