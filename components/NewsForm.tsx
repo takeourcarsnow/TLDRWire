@@ -8,7 +8,6 @@ interface NewsFormProps {
   preferences: Preferences;
   onPreferenceChange: (key: keyof Preferences, value: string) => void;
   onGenerate: () => Promise<void>;
-  onReset: () => void;
   onPresetClick: (preset: string) => void;
   isLoading: boolean;
   rateLimited?: boolean;
@@ -20,7 +19,7 @@ export function NewsForm(props: NewsFormProps) {
     <>
       <NewsFormSelectors preferences={props.preferences} onPreferenceChange={props.onPreferenceChange} />
       <NewsFormSliders preferences={props.preferences} onPreferenceChange={props.onPreferenceChange} />
-      <NewsFormActions onGenerate={props.onGenerate} onReset={props.onReset} onPresetClick={props.onPresetClick} isLoading={props.isLoading} rateLimited={props.rateLimited} rateLimitCountdown={props.rateLimitCountdown} />
+      <NewsFormActions onGenerate={props.onGenerate} onPresetClick={props.onPresetClick} isLoading={props.isLoading} rateLimited={props.rateLimited} rateLimitCountdown={props.rateLimitCountdown} />
     </>
   );
 }

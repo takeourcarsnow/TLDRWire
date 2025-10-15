@@ -98,32 +98,23 @@ body {
 
 /* Theme toggle */
 .theme-toggle {
-  position: fixed !important;
+  position: absolute !important;
   top: 16px !important;
   right: 16px !important;
-  z-index: 10000 !important;
   background: transparent;
   border: none;
   border-radius: var(--radius);
   padding: 8px;
   cursor: pointer;
-  transition: none;
+  transition: var(--transition);
   font-size: 18px;
   box-shadow: none;
   color: var(--text);
-  transform: none !important;
-  will-change: auto !important;
-  /* Ensure it stays fixed even if parent has transforms */
-  transform-origin: top right !important;
-  backface-visibility: hidden !important;
-  perspective: none !important;
 }
 
 .theme-toggle:hover,
 .theme-toggle:active,
 .theme-toggle:focus {
-  transform: none !important;
-  box-shadow: none !important;
   background: transparent !important;
   border: none !important;
   outline: none !important;
@@ -406,6 +397,82 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Compact preset buttons inside the carousel should be allowed to shrink so more items fit */
+.preset-button.compact-preset {
+  min-width: 0 !important;
+  max-width: 92px; /* keep labels readable but compact */
+  padding: 6px 8px !important;
+}
+
+/* Ensure swiper slides size to content when using slidesPerView: 'auto' */
+.preset-carousel .swiper-slide {
+  width: auto !important;
+}
+
+/* Remove any visual effects from Swiper navigation arrows: make them plain icons */
+.swiper-button-prev, .swiper-button-next {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 6px !important;
+  border-radius: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  color: var(--text) !important;
+  transition: none !important;
+  cursor: pointer !important;
+}
+
+.swiper-button-prev:hover,
+.swiper-button-next:hover,
+.swiper-button-prev:active,
+.swiper-button-next:active,
+.swiper-button-prev:focus,
+.swiper-button-next:focus {
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  outline: none !important;
+}
+
+/* Ensure the icon inside stays visible and not inverted by any other rules */
+.swiper-button-prev svg, .swiper-button-next svg {
+  display: inline-block;
+  vertical-align: middle;
+  pointer-events: none;
+}
+
+/* Stronger, more specific reset scoped to the carousel container to prevent any
+   hover/transition effects (including library CSS or global button:hover rules)
+   from moving the arrows. */
+.preset-carousel .swiper-button-prev,
+.preset-carousel .swiper-button-next {
+  margin: 0 !important;
+  padding: 6px !important;
+  /* preserve vertical centering that Swiper uses */
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 10 !important;
+  /* remove animated transitions so hover won't move them */
+  transition: none !important;
+  will-change: auto !important;
+}
+
+.preset-carousel .swiper-button-prev:hover,
+.preset-carousel .swiper-button-next:hover,
+.preset-carousel .swiper-button-prev:focus,
+.preset-carousel .swiper-button-next:focus,
+.preset-carousel .swiper-button-prev:active,
+.preset-carousel .swiper-button-next:active {
+  /* keep the same vertical translate and disallow any scaling or other transforms */
+  transform: translateY(-50%) !important;
+  margin: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 button.secondary { 
@@ -909,17 +976,81 @@ footer {
   border: 1px solid rgba(255,255,255,0.05);
 }
 
-/* Utility classes */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
+/* Preset Carousel */
+.preset-carousel {
+  max-width: 100%;
+  margin: 16px 0;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+  position: relative;
+}
+
+
+
+.preset-carousel .swiper-button-prev,
+.preset-carousel .swiper-button-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.preset-carousel .swiper-button-prev {
+  left: -16px;
+}
+
+.preset-carousel .swiper-button-next {
+  right: -16px;
+}
+
+.preset-carousel .swiper-button-prev:hover,
+.preset-carousel .swiper-button-next:hover {
+  background: var(--accent);
+  color: white;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.preset-carousel .swiper-button-prev::after,
+.preset-carousel .swiper-button-next::after {
+  display: none;
+}
+
+.preset-button {
+  transition: none !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.preset-button:hover:not(:disabled),
+.preset-button:focus,
+.preset-button:active {
+  background: transparent !important;
+  border-color: transparent !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Also ensure any .secondary buttons inside the carousel don't animate */
+.preset-carousel button.secondary,
+.preset-carousel button.secondary:hover,
+.preset-carousel button.secondary:focus,
+.preset-carousel button.secondary:active {
+  transition: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 
 .fade-in {
@@ -964,26 +1095,294 @@ footer {
   .theme-toggle {
     top: 16px !important;
     right: 16px !important;
-    position: fixed !important;
-    z-index: 10000 !important;
+    position: absolute !important;
   }
 }
 
-/* Print styles */
-@media print {
-  .theme-toggle,
-  .panel:first-child,
-  .actions,
-  footer {
-    display: none;
+/* History Section Styles */
+.history-list-container {
+  width: 100%;
+  /* let the list flow naturally and use the page scrollbar instead of
+     constraining it to a viewport height which causes an extra inner
+     scrollbar. Keeping a simple column flow makes better use of screen
+     space on mobile and desktop. */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-search-wrapper {
+  margin-bottom: 20px;
+}
+
+.history-search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--muted);
+  z-index: 1;
+}
+
+.history-search-input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 14px;
+  transition: var(--transition);
+  outline: none;
+}
+
+.history-search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(77,163,255,0.1);
+  background: rgba(255,255,255,0.05);
+}
+
+.history-search-input::placeholder {
+  color: var(--muted);
+}
+
+.history-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.history-empty-state h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.history-empty-state p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.history-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  /* allow the history to grow with the page; avoid forcing an internal
+     scroll container (which shows an extra scrollbar/slider). The page
+     itself will handle scrolling when needed. */
+  max-height: none;
+  overflow-y: visible;
+  padding-right: 0;
+}
+
+.history-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px var(--shadow);
+  animation: historyCardFadeIn 0.4s ease-out forwards;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.history-card:nth-child(1) { animation-delay: 0.05s; }
+.history-card:nth-child(2) { animation-delay: 0.1s; }
+.history-card:nth-child(3) { animation-delay: 0.15s; }
+.history-card:nth-child(4) { animation-delay: 0.2s; }
+.history-card:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes historyCardFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Print-specific link styles */
-@media print {
-  .summary a {
-    color: black;
-    text-decoration: underline;
+.history-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow);
+  border-color: rgba(77,163,255,0.2);
+}
+
+.history-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow);
+  border-color: rgba(77,163,255,0.2);
+}
+
+.history-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.history-timestamp {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.history-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.history-tag {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+  text-transform: capitalize;
+  border: 1px solid transparent;
+}
+
+.region-tag {
+  background: linear-gradient(135deg, rgba(77,163,255,0.1), rgba(77,163,255,0.05));
+  color: var(--accent);
+  border-color: rgba(77,163,255,0.2);
+}
+
+.category-tag {
+  background: linear-gradient(135deg, rgba(122,240,178,0.1), rgba(122,240,178,0.05));
+  color: var(--accent2);
+  border-color: rgba(122,240,178,0.2);
+}
+
+.style-tag {
+  background: linear-gradient(135deg, rgba(255,167,38,0.1), rgba(255,167,38,0.05));
+  color: var(--warning);
+  border-color: rgba(255,167,38,0.2);
+}
+
+.history-content {
+  margin-bottom: 20px;
+}
+
+.history-snippet {
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 14px;
+  max-height: 4.8em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-clamp: 3;
+}
+
+.history-snippet * {
+  color: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+.history-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.history-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 36px;
+}
+
+.history-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.apply-btn {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.apply-btn:hover {
+  background: rgba(77,163,255,0.9);
+  border-color: rgba(77,163,255,0.9);
+}
+
+.view-btn {
+  background: rgba(255,255,255,0.05);
+}
+
+.view-btn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: var(--accent);
+}
+
+.delete-btn {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+}
+
+.delete-btn:hover {
+  background: rgba(255,107,107,0.9);
+  border-color: rgba(255,107,107,0.9);
+}
+
+/* Mobile responsiveness for history */
+@media (max-width: 640px) {
+  .history-card {
+    padding: 16px;
+  }
+
+  .history-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .history-tags {
+    justify-content: flex-start;
+  }
+
+  .history-actions {
+    justify-content: stretch;
+  }
+
+  .history-action-btn {
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .history-grid {
+    gap: 12px;
+    /* remove the reduced mobile viewport cap so the section can expand
+       and make better use of the screen. */
+    max-height: none;
   }
 }
 

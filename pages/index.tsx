@@ -12,6 +12,7 @@ import { SwipeableContainer } from '../components/SwipeableContainer';
 import { BottomNavbar } from '../components/BottomNavbar';
 import { HistoryPanel } from '../components/HistoryPanel';
 import { SettingsPanel } from '../components/SettingsPanel';
+import PresetCarousel from '../components/PresetCarousel';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -461,6 +462,126 @@ export default function Home() {
           limit: '28'
         };
         break;
+      case 'breaking':
+        updates = {
+          region: 'global',
+          category: 'top',
+          style: 'bullet-points',
+          length: 'short',
+          timeframe: '6',
+          limit: '15'
+        };
+        break;
+      case 'politics':
+        updates = {
+          region: 'global',
+          category: 'politics',
+          style: 'neutral',
+          length: 'medium',
+          timeframe: '24',
+          limit: '20'
+        };
+        break;
+      case 'sports':
+        updates = {
+          region: 'global',
+          category: 'sports',
+          style: 'bullet-points',
+          length: 'medium',
+          timeframe: '24',
+          limit: '25'
+        };
+        break;
+      case 'entertainment':
+        updates = {
+          region: 'global',
+          category: 'entertainment',
+          style: 'casual',
+          length: 'medium',
+          timeframe: '24',
+          limit: '20'
+        };
+        break;
+      case 'science':
+        updates = {
+          region: 'global',
+          category: 'science',
+          style: 'educational',
+          length: 'medium',
+          timeframe: '48',
+          limit: '15'
+        };
+        break;
+      case 'health':
+        updates = {
+          region: 'global',
+          category: 'health',
+          style: 'informative',
+          length: 'medium',
+          timeframe: '24',
+          limit: '18'
+        };
+        break;
+      case 'business':
+        updates = {
+          region: 'global',
+          category: 'business',
+          style: 'executive-brief',
+          length: 'medium',
+          timeframe: '24',
+          limit: '22'
+        };
+        break;
+      case 'international':
+        updates = {
+          region: 'global',
+          category: 'world',
+          style: 'neutral',
+          length: 'medium',
+          timeframe: '24',
+          limit: '25'
+        };
+        break;
+      case 'environment':
+        updates = {
+          region: 'global',
+          category: 'climate',
+          style: 'informative',
+          length: 'medium',
+          timeframe: '48',
+          limit: '15'
+        };
+        break;
+      case 'education':
+        updates = {
+          region: 'global',
+          category: 'education',
+          style: 'educational',
+          length: 'medium',
+          timeframe: '48',
+          limit: '12'
+        };
+        break;
+      case 'arts':
+        updates = {
+          region: 'global',
+          category: 'culture',
+          style: 'casual',
+          length: 'medium',
+          timeframe: '48',
+          limit: '15'
+        };
+        break;
+      case 'weekend':
+        updates = {
+          region: 'global',
+          category: 'top',
+          style: 'casual',
+          length: 'long',
+          timeframe: '72',
+          limit: '30'
+        };
+        break;
       case 'lt-local': {
         // Try server-side geo lookup first (IP-based). If it fails, fall back to browser locale.
         let regionGuess = 'global';
@@ -558,9 +679,8 @@ export default function Home() {
         />
       </Head>
 
-      <ThemeToggle theme={theme} onToggle={toggleTheme} />
-
       <header>
+        <ThemeToggle theme={theme} onToggle={toggleTheme} />
         <div className="header-content">
           <h1>TLDRWire</h1>
           <span className="tag">AI-powered quick rundowns 📰</span>
@@ -573,11 +693,12 @@ export default function Home() {
       <main>
         <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab}>
           <section className="panel">
+            {/* Put presets at the very top of the home panel */}
+            <PresetCarousel onPresetClick={handlePresetClick} />
             <NewsForm
               preferences={preferences}
               onPreferenceChange={updatePreference}
               onGenerate={async () => { await generateSummary(); setActiveTab(1); }}
-              onReset={resetPreferences}
               onPresetClick={handlePresetClick}
               isLoading={isLoading}
               rateLimited={rateLimitCountdown > 0}

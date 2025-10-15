@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { Check, Eye, Trash2 } from 'lucide-react';
+import { Check, Eye, Trash2, Search } from 'lucide-react';
 import { HistoryEntry } from '../hooks/useApi';
 
 interface Props {
@@ -43,7 +43,7 @@ function HistorySnippet({ markdown }: { markdown: string }) {
     }
   }, [markdown]);
 
-  return <div ref={ref} className="muted" style={{ maxHeight: '3.6em', overflow: 'hidden', textOverflow: 'ellipsis' }} />;
+  return <div ref={ref} className="history-snippet" />;
 }
 
 export function HistoryList({ history, onApply, onDelete, onClear, onView }: Props) {
@@ -63,52 +63,74 @@ export function HistoryList({ history, onApply, onDelete, onClear, onView }: Pro
   }, [history, q]);
 
   return (
-    <div>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-        <input
-          placeholder="Search history (region, category, style, text)"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)', background: 'var(--panel-bg)' }}
-        />
+    <div className="history-list-container">
+      <div className="history-search-wrapper">
+        <div className="history-search-input-wrapper">
+          <Search size={16} className="search-icon" />
+          <input
+            placeholder="Search history (region, category, style, text)"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="history-search-input"
+          />
+        </div>
       </div>
 
-      {filtered.length === 0 && <div className="muted">No matching history. Generate a TLDR to save an entry.</div>}
+      {filtered.length === 0 && (
+        <div className="history-empty-state">
+          <div className="empty-icon">📝</div>
+          <h3>No matching history</h3>
+          <p>Generate a TLDR to save an entry.</p>
+        </div>
+      )}
 
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: '52vh', overflowY: 'auto', paddingRight: 8 }}>
+      <div className="history-grid">
         {filtered.map((h) => (
-          <li key={h.id} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{new Date(h.timestamp).toLocaleString()}</div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <span style={{ fontSize: '0.85rem', padding: '4px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.02)' }}>{h.payload.region}</span>
-                    <span style={{ fontSize: '0.85rem', padding: '4px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.02)' }}>{h.payload.category}</span>
-                    <span style={{ fontSize: '0.85rem', padding: '4px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.02)' }}>{h.payload.style}</span>
-                  </div>
-                </div>
-
-                <div style={{ marginTop: 8 }}>
-                  <HistorySnippet markdown={h.summarySnippet || ''} />
-                </div>
+          <div key={h.id} className="history-card">
+            <div className="history-card-header">
+              <div className="history-timestamp">
+                {new Date(h.timestamp).toLocaleDateString()} at {new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 30 }}>
-                <button className="secondary icon-button" onClick={() => onApply(h.payload)} title="Apply settings">
-                  <Check size={14} />
-                </button>
-                <button className="secondary icon-button" onClick={() => onView(h)} title="View full summary">
-                  <Eye size={14} />
-                </button>
-                <button className="danger icon-button" onClick={() => onDelete(h.id)} title="Delete">
-                  <Trash2 size={14} />
-                </button>
+              <div className="history-tags">
+                <span className="history-tag region-tag">{h.payload.region}</span>
+                <span className="history-tag category-tag">{h.payload.category}</span>
+                <span className="history-tag style-tag">{h.payload.style}</span>
               </div>
             </div>
-          </li>
+
+            <div className="history-content">
+              <HistorySnippet markdown={h.summarySnippet || ''} />
+            </div>
+
+            <div className="history-actions">
+              <button
+                className="history-action-btn apply-btn"
+                onClick={() => onApply(h.payload)}
+                title="Apply settings"
+              >
+                <Check size={16} />
+                <span>Apply</span>
+              </button>
+              <button
+                className="history-action-btn view-btn"
+                onClick={() => onView(h)}
+                title="View full summary"
+              >
+                <Eye size={16} />
+                <span>View</span>
+              </button>
+              <button
+                className="history-action-btn delete-btn"
+                onClick={() => onDelete(h.id)}
+                title="Delete"
+              >
+                <Trash2 size={16} />
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

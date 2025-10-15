@@ -33,12 +33,6 @@ export function HistoryPanel({
 
   return (
     <div className="history-panel">
-      <div className="panel-header">
-        <h2>Generation History</h2>
-        <button className="secondary icon-button" onClick={onClear} title="Clear all">
-          <Trash2 size={16} />
-        </button>
-      </div>
       <HistoryList
         history={history}
         onApply={(payload) => {
