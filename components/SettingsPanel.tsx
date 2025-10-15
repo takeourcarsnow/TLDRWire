@@ -34,12 +34,7 @@ export function SettingsPanel({
         <p>
           TLDRWire delivers quick, readable summaries of today&apos;s headlines from multiple publishers so you can stay informed fast. Choose region, topic, and length to get briefings tailored to what matters to you.
         </p>
-        <p>
-          Built with ❤️ using Google&apos;s Gemini AI •{' '}
-          <a href="https://nefas.tv" target="_blank" rel="noopener noreferrer">
-            Author
-          </a>
-        </p>
+        {/* Attribution removed per user request */}
       </div>
     </div>
   );

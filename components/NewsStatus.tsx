@@ -14,7 +14,7 @@ export default function NewsStatus({ isLoading, error, dataCached }: Props) {
         <div className="message">
           <strong>Analyzing latest news…</strong>
           <span className="subtle">This usually takes a few seconds</span>
-          <div className="progress" aria-hidden="true"></div>
+          {/* progress visual now rendered via CSS pseudo-element on .loader .message ::after */}
         </div>
       </div>
     );

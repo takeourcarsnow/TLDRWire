@@ -12,6 +12,7 @@ interface NewsFormProps {
   isLoading: boolean;
   rateLimited?: boolean;
   rateLimitCountdown?: number;
+  selectedPreset?: string | null;
 }
 
 export function NewsForm(props: NewsFormProps) {

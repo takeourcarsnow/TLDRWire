@@ -30,6 +30,7 @@ import 'swiper/css/navigation';
 
 interface PresetCarouselProps {
   onPresetClick: (preset: string) => void;
+  selectedPreset?: string | null;
 }
 
 const presets = [
@@ -51,7 +52,7 @@ const presets = [
   { key: 'weekend', label: 'Weekend Roundup', icon: Calendar },
 ];
 
-export default function PresetCarousel({ onPresetClick }: PresetCarouselProps) {
+export default function PresetCarousel({ onPresetClick, selectedPreset = null }: PresetCarouselProps) {
   const prevRef = React.useRef<HTMLButtonElement | null>(null);
   const nextRef = React.useRef<HTMLButtonElement | null>(null);
   const [navPrev, setNavPrev] = React.useState<any>(null);
@@ -63,6 +64,20 @@ export default function PresetCarousel({ onPresetClick }: PresetCarouselProps) {
     setNavPrev(prevRef.current);
     setNavNext(nextRef.current);
   }, []);
+
+  React.useEffect(() => {
+    if (!selectedPreset) return;
+    if (!swiperRef.current) return;
+    const idx = presets.findIndex(p => p.key === selectedPreset);
+    if (idx >= 0) {
+      try {
+        // slideTo will center the slide when centeredSlides is true
+        swiperRef.current.slideTo(idx, 220);
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [selectedPreset]);
   return (
   <div className="preset-carousel" style={{ position: 'relative', overflow: 'visible' }}>
       <Swiper
@@ -71,7 +86,8 @@ export default function PresetCarousel({ onPresetClick }: PresetCarouselProps) {
         spaceBetween={6}
         // Use auto slide sizing so more items can fit; slide widths come from content/styles
         slidesPerView={'auto'}
-        centeredSlides={false}
+  // Keep the selected preset centered in view
+  centeredSlides={true}
         nested={true}
         allowTouchMove={true}
         freeMode={true}
@@ -94,7 +110,7 @@ export default function PresetCarousel({ onPresetClick }: PresetCarouselProps) {
           return (
             <SwiperSlide key={preset.key} style={{ height: 'auto', width: 'auto' }}>
               <button
-                className="secondary preset-button compact-preset"
+                className={"secondary preset-button compact-preset" + (selectedPreset === preset.key ? ' preset-selected' : '')}
                 type="button"
                 onClick={() => onPresetClick(preset.key)}
                 style={{

@@ -66,6 +66,7 @@ export default function Home() {
   const lastRequestRef = useRef<any>(null);
   const [lastGenerateTime, setLastGenerateTime] = useState<number>(0);
   const [rateLimitCountdown, setRateLimitCountdown] = useState<number>(0);
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
 
   useEffect(() => {
     // Health check on mount - only run in non-localhost environments to avoid
@@ -449,24 +450,9 @@ export default function Home() {
       updatePreference(key as keyof Preferences, value as string);
     });
 
-    // Immediately generate using the preset payload (do not rely on state update timing)
-    const payload = {
-      region: (updates as any).region || preferences.region,
-      category: (updates as any).category || preferences.category,
-      style: (updates as any).style || preferences.style,
-      language: (updates as any).language || preferences.language,
-      timeframeHours: Number((updates as any).timeframe || preferences.timeframe) || 24,
-      limit: Number((updates as any).limit || preferences.limit) || 20,
-      length: (updates as any).length || preferences.length || 'medium'
-    };
-
-    (async () => {
-      try {
-        await generateSummary(payload);
-      } catch (err: any) {
-        console.warn('generateSummary failed', err);
-      }
-    })();
+    // Mark this preset as selected in the UI but do NOT auto-generate.
+    // Generation remains an explicit action (Generate button / keyboard shortcut).
+    setSelectedPreset(preset);
   }, [updatePreference, generateSummary, preferences]);
 
   // Keyboard shortcuts
@@ -514,12 +500,13 @@ export default function Home() {
         <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab}>
           <section className="panel">
             {/* Put presets at the very top of the home panel */}
-            <PresetCarousel onPresetClick={handlePresetClick} />
+            <PresetCarousel onPresetClick={handlePresetClick} selectedPreset={selectedPreset} />
             <NewsForm
               preferences={preferences}
               onPreferenceChange={updatePreference}
               onGenerate={async () => { await generateSummary(); setActiveTab(1); }}
               onPresetClick={handlePresetClick}
+              selectedPreset={selectedPreset}
               isLoading={isLoading}
               rateLimited={rateLimitCountdown > 0}
               rateLimitCountdown={rateLimitCountdown}
@@ -554,14 +541,7 @@ export default function Home() {
 
       <BottomNavbar activeIndex={activeTab} onTabChange={setActiveTab} />
 
-      <footer>
-        <p>
-          Built with ❤️ using Google&apos;s Gemini AI •{' '}
-          <a href="https://nefas.tv" target="_blank" rel="noopener noreferrer">
-            Author
-          </a>
-        </p>
-      </footer>
+      {/* Footer removed per user request */}
 
 
 
