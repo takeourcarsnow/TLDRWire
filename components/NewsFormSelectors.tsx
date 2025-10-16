@@ -1,6 +1,6 @@
 import React from 'react';
 import TwEmoji from './TwEmoji';
-import CustomSelect from './CustomSelect';
+import VerticalSelectCarousel from './VerticalSelectCarousel';
 import { MapPin, Globe, Folder, Star, Briefcase, Monitor, Microscope, Trophy, Film, Theater, Hospital, Building, Leaf, Coins, Zap, GraduationCap, Plane, Gamepad, Rocket, Shield, PenTool, FileText, Target, MessageCircle, Newspaper, BarChart, Meh, Rainbow, Eye, Book, Frown, Clock, TrendingUp, AlertTriangle, Glasses, Pen, Angry } from 'lucide-react';
 import { Preferences } from '../hooks/usePreferences';
 
@@ -77,30 +77,26 @@ export default function NewsFormSelectors({ preferences, onPreferenceChange }: P
     <>
       <div className="form-group">
         <div className="row">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
             <label htmlFor="region" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}><MapPin size={16} /> Region:</label>
-            <div className="select-with-flag" style={{ flex: 1 }}>
-              <CustomSelect id="region" value={preferences.region} options={regionOptions} onChange={(v) => onPreferenceChange('region', v)} />
-            </div>
+            <VerticalSelectCarousel id="region" value={preferences.region} options={regionOptions} onChange={(v) => onPreferenceChange('region', v)} />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
             <label htmlFor="language" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}><Globe size={16} /> Language:</label>
-            <div className="select-with-flag" style={{ flex: 1 }}>
-              <CustomSelect id="language" value={preferences.language} options={languageOptions} onChange={(v) => onPreferenceChange('language', v)} />
-            </div>
+            <VerticalSelectCarousel id="language" value={preferences.language} options={languageOptions} onChange={(v) => onPreferenceChange('language', v)} />
           </div>
         </div>
       </div>
 
       <div className="form-group">
         <div className="row">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
             <label htmlFor="category" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}><Folder size={16} /> Category:</label>
-            <CustomSelect id="category" value={preferences.category} options={categoryOptions} onChange={(v) => onPreferenceChange('category', v)} />
+            <VerticalSelectCarousel id="category" value={preferences.category} options={categoryOptions} onChange={(v) => onPreferenceChange('category', v)} />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
             <label htmlFor="style" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}><PenTool size={16} /> Writing Style:</label>
-            <CustomSelect id="style" value={preferences.style} options={styleOptions} onChange={(v) => onPreferenceChange('style', v)} />
+            <VerticalSelectCarousel id="style" value={preferences.style} options={styleOptions} onChange={(v) => onPreferenceChange('style', v)} />
           </div>
         </div>
       </div>

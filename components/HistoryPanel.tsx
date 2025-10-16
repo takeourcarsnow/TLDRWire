@@ -1,7 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Check, Trash2 } from 'lucide-react';
+import React from 'react';
 import HistoryList from './HistoryList';
-import { Modal } from './Modal';
 import { Preferences } from '../hooks/usePreferences';
 
 interface HistoryPanelProps {
@@ -21,16 +19,6 @@ export function HistoryPanel({
   updatePreference,
   renderMarkdownToElement
 }: HistoryPanelProps) {
-  const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<any | null>(null);
-  const selectedSummaryRef = useRef<HTMLDivElement | null>(null);
-
-  React.useEffect(() => {
-    if (selectedHistoryEntry) {
-      const md = selectedHistoryEntry.summaryFull || selectedHistoryEntry.summarySnippet || '';
-      renderMarkdownToElement(selectedSummaryRef.current, md);
-    }
-  }, [selectedHistoryEntry, renderMarkdownToElement]);
-
   return (
     <div className="history-panel">
       <HistoryList
@@ -42,58 +30,8 @@ export function HistoryPanel({
         }}
         onDelete={onDelete}
         onClear={onClear}
-        onView={(entry) => setSelectedHistoryEntry(entry)}
+        renderMarkdownToElement={renderMarkdownToElement}
       />
-
-      <Modal
-        isOpen={Boolean(selectedHistoryEntry)}
-        onClose={() => setSelectedHistoryEntry(null)}
-        title={selectedHistoryEntry ? `Generated ${new Date(selectedHistoryEntry.timestamp).toLocaleString()}` : 'Entry'}
-      >
-        {selectedHistoryEntry && (
-          <div>
-            <div style={{ marginBottom: 12 }}>
-              <strong>Settings:</strong>
-              <div className="muted" style={{ marginTop: 6 }}>
-                {selectedHistoryEntry.payload.region} • {selectedHistoryEntry.payload.category} • {selectedHistoryEntry.payload.style} • {selectedHistoryEntry.payload.length}
-              </div>
-            </div>
-
-            <article
-              ref={selectedSummaryRef}
-              className="summary"
-              aria-label="Saved summary"
-              style={{
-                marginBottom: 12,
-                width: 'min(680px, 78vw)',
-                maxHeight: '68vh',
-                overflowY: 'auto',
-                paddingRight: 8
-              }}
-            />
-
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="secondary icon-button" onClick={() => {
-                Object.entries(selectedHistoryEntry.payload).forEach(([key, value]) => {
-                  updatePreference(key as keyof Preferences, String(value));
-                });
-                setSelectedHistoryEntry(null);
-              }} title="Apply settings">
-                <Check size={14} />
-              </button>
-              <button className="secondary" onClick={() => {
-                navigator.clipboard?.writeText(selectedHistoryEntry.summaryFull || selectedHistoryEntry.summarySnippet || '');
-              }}>Copy summary</button>
-              <button className="danger icon-button" onClick={() => {
-                onDelete(selectedHistoryEntry.id);
-                setSelectedHistoryEntry(null);
-              }} title="Delete">
-                <Trash2 size={14} />
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }

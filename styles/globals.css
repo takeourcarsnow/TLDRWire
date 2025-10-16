@@ -80,6 +80,18 @@ body {
   will-change: background-color, color;
 }
 
+/* Prevent layout jumps when the vertical scrollbar appears/disappears.
+   Use the modern `scrollbar-gutter` to reserve space where supported.
+   For older browsers, fall back to always-reserved scrollbar space so the
+   viewport width doesn't change and content doesn't shift. */
+@supports (scrollbar-gutter: stable) {
+  html { scrollbar-gutter: stable; }
+}
+@supports not (scrollbar-gutter: stable) {
+  /* Fallback: always show vertical scrollbar track to avoid width shifts */
+  html { overflow-y: scroll; }
+}
+
 /* Accessibility improvements */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -162,7 +174,7 @@ header .tag {
 main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1px 80px; /* Add bottom padding for navbar */
+  padding: 0 16px 80px; /* Add bottom padding for navbar */
   /* Allow page flow to determine height so sections don't stretch to full
      viewport height when content is short. Removing the forced min-height
      prevents large empty areas and avoids extra scrolling on short pages. */
@@ -929,21 +941,22 @@ footer {
 
 /* Pill highlight that sits behind the active tab */
 .bottom-navbar {
-  --nav-pill-left: 0px;
-  --nav-pill-width: 72px;
+  --nav-pill-left-percent: 50%;
+  --nav-pill-width-percent: 20%;
 }
 .bottom-navbar .nav-pill {
   position: absolute;
-  left: var(--nav-pill-left);
+  left: var(--nav-pill-left-percent);
+  transform: translateX(-50%);
   /* move pill slightly closer to the bar and make it smaller for a subtle look */
   bottom: 8px;
   height: 28px; /* reduced height */
-  width: calc(var(--nav-pill-width) - 8px); /* slightly narrower than button */
+  width: calc(var(--nav-pill-width-percent) * 1% - 8px); /* slightly narrower than button */
   background: linear-gradient(90deg, rgba(77,163,255,0.08), rgba(122,240,178,0.04));
   border: 1px solid rgba(77,163,255,0.08);
   opacity: 0.85;
   border-radius: 999px;
-  transition: left 220ms cubic-bezier(0.22,1,0.36,1), width 220ms cubic-bezier(0.22,1,0.36,1), background 220ms, opacity 180ms;
+  transition: left 220ms cubic-bezier(0.22,1,0.36,1), width 220ms cubic-bezier(0.22,1,0.36,1), background 220ms, opacity 180ms, transform 220ms;
   pointer-events: none;
   z-index: 2;
 }
@@ -952,7 +965,7 @@ footer {
 .bottom-navbar .nav-pill { display: none; }
 .bottom-navbar .nav-dot {
   position: absolute;
-  left: var(--nav-dot-left);
+  left: var(--nav-dot-left-percent, 50%);
   /* sit lower (closer to the bottom edge) so it doesn't overlap labels */
   bottom: 4px;
   transform: translateX(-50%);
@@ -1501,6 +1514,40 @@ footer {
        and make better use of the screen. */
     max-height: none;
   }
+}
+
+/* History list -> detail animations */
+.history-list-wrapper {
+  transition: transform 360ms cubic-bezier(0.22,1,0.36,1), opacity 300ms ease;
+}
+.history-list-exit {
+  transform: translateX(-12px) scale(0.995);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.history-detail {
+  opacity: 1;
+  transform: translateX(0);
+  transition: transform 360ms cubic-bezier(0.22,1,0.36,1), opacity 280ms ease;
+}
+.history-detail-enter {
+  opacity: 0;
+  transform: translateX(12px) scale(0.995);
+  animation: historyDetailEnter 360ms cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.history-detail-exit {
+  animation: historyDetailExit 320ms cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+@keyframes historyDetailEnter {
+  from { opacity: 0; transform: translateX(12px) scale(0.995); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes historyDetailExit {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to { opacity: 0; transform: translateX(12px) scale(0.995); }
 }
 
 /* Modal styles */

@@ -61,8 +61,13 @@ export default function PresetCarousel({ onPresetClick, selectedPreset = null }:
     const idx = presets.findIndex(p => p.key === selectedPreset);
     if (idx >= 0) {
       try {
-        // slideTo will center the slide when centeredSlides is true
-        swiperRef.current.slideTo(idx, 220);
+        // slideToLoop will navigate to the correct duplicated slide when looping is enabled
+        // and will center the slide when centeredSlides is true.
+        if (typeof swiperRef.current.slideToLoop === 'function') {
+          swiperRef.current.slideToLoop(idx, 220);
+        } else {
+          swiperRef.current.slideTo(idx, 220);
+        }
       } catch (e) {
         // ignore
       }
@@ -78,7 +83,8 @@ export default function PresetCarousel({ onPresetClick, selectedPreset = null }:
         slidesPerView={'auto'}
         nested={true}
         allowTouchMove={true}
-        freeMode={true}
+  freeMode={true}
+  centeredSlides={true}
         loop={true}
         breakpoints={{
           // These breakpoints keep spacing sensible on larger screens but slides remain auto-sized
@@ -91,8 +97,16 @@ export default function PresetCarousel({ onPresetClick, selectedPreset = null }:
           // @ts-ignore
           swiperRef.current = swiper;
         }}
-        onSlideChange={(swiper) => {
-          // Auto-select the preset when swiping
+        // Only select a preset when the user releases the swipe (or when the slide transition ends).
+        // This prevents changing selection while the user is still dragging.
+        onTouchEnd={(swiper) => {
+          const idx = swiper.realIndex;
+          if (idx >= 0 && idx < presets.length && presets[idx].key !== selectedPreset) {
+            onPresetClick(presets[idx].key);
+          }
+        }}
+        onSlideChangeTransitionEnd={(swiper) => {
+          // Also handle programmatic or momentum transitions ending.
           const idx = swiper.realIndex;
           if (idx >= 0 && idx < presets.length && presets[idx].key !== selectedPreset) {
             onPresetClick(presets[idx].key);

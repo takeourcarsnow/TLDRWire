@@ -7,7 +7,7 @@ interface Props {
   onApply: (payload: any) => void;
   onDelete: (id: number) => void;
   onClear: () => void;
-  onView: (entry: HistoryEntry) => void;
+  renderMarkdownToElement: (el: HTMLDivElement | null, markdown: string | undefined) => void;
 }
 
 function HistorySnippet({ markdown }: { markdown: string }) {
@@ -46,8 +46,38 @@ function HistorySnippet({ markdown }: { markdown: string }) {
   return <div ref={ref} className="history-snippet" />;
 }
 
-export function HistoryList({ history, onApply, onDelete, onClear, onView }: Props) {
+function HistoryFull({ id, markdown, renderTo }: { id: number; markdown: string; renderTo: (el: HTMLDivElement | null, md: string) => void }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    renderTo(ref.current, markdown || '');
+  }, [markdown, renderTo]);
+
+  return <div ref={ref} className="history-full summary reveal-up" />;
+}
+
+export function HistoryList({ history, onApply, onDelete, onClear, renderMarkdownToElement }: Props) {
   const [q, setQ] = useState('');
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const expandedRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  // when a card expands, render the full markdown into its element
+  useEffect(() => {
+    if (expandedId == null) return;
+    const el = expandedRefs.current[expandedId] || null;
+    const entry = history.find(h => h.id === expandedId);
+    if (!entry) return;
+    const md = entry.summaryFull || entry.summarySnippet || '';
+    try {
+      renderMarkdownToElement(el, md);
+      // scroll expanded card into view for small screens
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } catch (e) {
+      if (el) el.textContent = md;
+    }
+  }, [expandedId, history, renderMarkdownToElement]);
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -86,7 +116,7 @@ export function HistoryList({ history, onApply, onDelete, onClear, onView }: Pro
 
       <div className="history-grid">
         {filtered.map((h) => (
-          <div key={h.id} className="history-card">
+          <div key={h.id} className={`history-card ${expandedId === h.id ? 'expanded' : ''}`}>
             <div className="history-card-header">
               <div className="history-timestamp">
                 {new Date(h.timestamp).toLocaleDateString()} at {new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -99,7 +129,15 @@ export function HistoryList({ history, onApply, onDelete, onClear, onView }: Pro
             </div>
 
             <div className="history-content">
-              <HistorySnippet markdown={h.summarySnippet || ''} />
+              {expandedId === h.id ? (
+                <div
+                  ref={(el) => { expandedRefs.current[h.id] = el; }}
+                  className="history-full summary"
+                  aria-label="Full saved summary"
+                />
+              ) : (
+                <HistorySnippet markdown={h.summarySnippet || ''} />
+              )}
             </div>
 
             <div className="history-actions">
@@ -113,11 +151,18 @@ export function HistoryList({ history, onApply, onDelete, onClear, onView }: Pro
               </button>
               <button
                 className="history-action-btn view-btn"
-                onClick={() => onView(h)}
+                onClick={() => {
+                  // toggle inline expansion
+                  if (expandedId === h.id) {
+                    setExpandedId(null);
+                  } else {
+                    setExpandedId(h.id);
+                  }
+                }}
                 title="View full summary"
               >
                 <Eye size={16} />
-                <span>View</span>
+                <span>{expandedId === h.id ? 'Close' : 'View'}</span>
               </button>
               <button
                 className="history-action-btn delete-btn"
