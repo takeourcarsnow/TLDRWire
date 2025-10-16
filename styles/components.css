@@ -135,24 +135,19 @@
 
 /* Preset Carousel */
 .preset-carousel {
-  max-width: 600px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 16px;
   margin: 16px auto;
-  overflow: hidden;
-  position: relative;
+  max-width: 600px;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-/* Fade out the sides using mask on the swiper */
-.preset-swiper {
-  mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
-  height: 60px;
-  overflow: hidden;
-}
-
-/* Ensure swiper slides size to content when using slidesPerView: 'auto' */
-.preset-carousel .swiper-slide {
-  width: auto !important;
-  height: auto;
+.preset-carousel::-webkit-scrollbar {
+  display: none;
 }
 
 .preset-button {
@@ -164,144 +159,34 @@
   min-height: 46px;
   border-radius: 8px;
   border: 1px solid transparent;
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(255,255,255,0.03) 50%, var(--bg-secondary) 100%);
+  background: var(--bg-secondary);
   color: var(--text);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.03);
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 0;
-  max-width: 92px;
-  transform: translateY(0);
+  transition: all 0.2s ease;
+  width: 92px;
+  flex-shrink: 0;
 }
 
 .preset-button span {
   font-size: 10px;
   text-align: center;
   line-height: 1.1;
-  max-width: 72px;
+  max-width: 76px;
 }
 
 /* Visual highlight for the selected preset */
 .preset-button.preset-selected {
-  background: linear-gradient(135deg, rgba(77,163,255,0.18) 0%, rgba(77,163,255,0.12) 50%, rgba(77,163,255,0.06) 100%);
-  border: 1px solid rgba(77,163,255,0.3);
-  color: var(--accent);
-  box-shadow: 0 2px 4px rgba(77,163,255,0.2), 0 4px 8px rgba(77,163,255,0.15), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.05);
+  background: var(--accent);
+  color: white;
 }
 
 .preset-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 3px 6px rgba(0,0,0,0.15), 0 6px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.05);
+  background: rgba(77,163,255,0.1);
+  transform: translateY(-1px);
 }
 
 .preset-button:active {
   transform: translateY(0);
-  box-shadow: 0 0 1px rgba(0,0,0,0.08), inset 0 1px 2px rgba(0,0,0,0.08), inset 0 -1px 0 rgba(0,0,0,0.05);
-}
-
-/* Navigation arrows */
-.preset-carousel .swiper-button-prev,
-.preset-carousel .swiper-button-next {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.preset-carousel .swiper-button-prev {
-  left: -16px;
-}
-
-.preset-carousel .swiper-button-next {
-  right: -16px;
-}
-
-.preset-carousel .swiper-button-prev:hover,
-.preset-carousel .swiper-button-next:hover {
-  background: var(--accent);
-  color: white;
-  transform: translateY(-50%) scale(1.1);
-}
-
-.preset-carousel .swiper-button-prev::after,
-.preset-carousel .swiper-button-next::after {
-  display: none;
-}
-
-/* Remove any visual effects from Swiper navigation arrows: make them plain icons */
-.swiper-button-prev, .swiper-button-next {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 6px !important;
-  border-radius: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-  color: var(--text) !important;
-  transition: none !important;
-  cursor: pointer !important;
-}
-
-.swiper-button-prev:hover,
-.swiper-button-next:hover,
-.swiper-button-prev:active,
-.swiper-button-next:active,
-.swiper-button-prev:focus,
-.swiper-button-next:focus {
-  background: transparent !important;
-  box-shadow: none !important;
-  transform: none !important;
-  outline: none !important;
-}
-
-/* Ensure the icon inside stays visible and not inverted by any other rules */
-.swiper-button-prev svg, .swiper-button-next svg {
-  display: inline-block;
-  vertical-align: middle;
-  pointer-events: none;
-}
-
-/* Stronger, more specific reset scoped to the carousel container to prevent any
-   hover/transition effects (including library CSS or global button:hover rules)
-   from moving the arrows. */
-.preset-carousel .swiper-button-prev,
-.preset-carousel .swiper-button-next {
-  margin: 0 !important;
-  padding: 6px !important;
-  /* preserve vertical centering that Swiper uses */
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  z-index: 10 !important;
-  /* remove animated transitions so hover won't move them */
-  transition: none !important;
-  will-change: auto !important;
-}
-
-.preset-carousel .swiper-button-prev:hover,
-.preset-carousel .swiper-button-next:hover,
-.preset-carousel .swiper-button-prev:focus,
-.preset-carousel .swiper-button-next:focus,
-.preset-carousel .swiper-button-prev:active,
-.preset-carousel .swiper-button-next:active {
-  /* keep the same vertical translate and disallow any scaling or other transforms */
-  transform: translateY(-50%) !important;
-  margin: 0 !important;
-  outline: none !important;
-  box-shadow: none !important;
 }
 
 /* Panel headers */

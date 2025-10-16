@@ -497,10 +497,9 @@ export default function Home() {
       </header>
 
       <main>
+        <PresetCarousel onPresetClick={handlePresetClick} selectedPreset={selectedPreset} />
         <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab}>
           <section className="panel">
-            {/* Put presets at the very top of the home panel */}
-            <PresetCarousel onPresetClick={handlePresetClick} selectedPreset={selectedPreset} />
             <NewsForm
               preferences={preferences}
               onPreferenceChange={updatePreference}
