@@ -1,0 +1,45 @@
+/* Performance optimizations */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Improved font loading */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: radial-gradient(60% 120% at 100% 0, rgba(77,163,255,0.06), transparent), var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 16px;
+  transition: var(--transition);
+  will-change: background-color, color;
+}
+
+/* Prevent layout jumps when the vertical scrollbar appears/disappears.
+   Use the modern `scrollbar-gutter` to reserve space where supported.
+   For older browsers, fall back to always-reserved scrollbar space so the
+   viewport width doesn't change and content doesn't shift. */
+@supports (scrollbar-gutter: stable) {
+  html { scrollbar-gutter: stable; }
+}
+@supports not (scrollbar-gutter: stable) {
+  /* Fallback: always show vertical scrollbar track to avoid width shifts */
+  html { overflow-y: scroll; }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus management */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

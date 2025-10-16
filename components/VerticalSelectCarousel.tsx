@@ -22,6 +22,7 @@ interface VerticalSelectCarouselProps {
 
 export default function VerticalSelectCarousel({ id, value, options, onChange, className }: VerticalSelectCarouselProps) {
   const swiperRef = React.useRef<any>(null);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
     if (!swiperRef.current) return;
@@ -39,12 +40,17 @@ export default function VerticalSelectCarousel({ id, value, options, onChange, c
     }
   }, [value]);
 
-  const handleSlideChange = (swiper: any) => {
-    const idx = swiper.realIndex;
-    if (idx >= 0 && idx < options.length && options[idx].value !== value) {
-      onChange(options[idx].value);
-    }
-  };
+  const handleTouchEnd = React.useCallback(() => {
+    // Small delay to let momentum scrolling finish
+    setTimeout(() => {
+      if (swiperRef.current) {
+        const idx = swiperRef.current.realIndex;
+        if (idx >= 0 && idx < options.length && options[idx].value !== value) {
+          onChange(options[idx].value);
+        }
+      }
+    }, 100);
+  }, [options, value, onChange]);
 
   return (
     <div className={`vertical-select-carousel ${className || ''}`} style={{ height: '120px', overflow: 'hidden' }}>
@@ -60,7 +66,7 @@ export default function VerticalSelectCarousel({ id, value, options, onChange, c
         onBeforeInit={(swiper) => {
           swiperRef.current = swiper;
         }}
-        onSlideChangeTransitionEnd={() => {}} // Disabled auto-selection
+        onTouchEnd={handleTouchEnd}
         style={{ height: '100%' }}
       >
         {options.map((opt) => {
@@ -79,9 +85,9 @@ export default function VerticalSelectCarousel({ id, value, options, onChange, c
                   padding: '8px 12px',
                   borderRadius: '8px',
                   background: isSelected 
-                    ? 'linear-gradient(135deg, var(--accent), rgba(77,163,255,0.8))' 
-                    : 'linear-gradient(135deg, var(--bg-secondary), rgba(255,255,255,0.02))',
-                  color: isSelected ? 'var(--accent-text)' : 'var(--text)',
+                    ? 'linear-gradient(135deg, rgba(77,163,255,0.18) 0%, rgba(77,163,255,0.12) 50%, rgba(77,163,255,0.06) 100%)' 
+                    : 'linear-gradient(135deg, var(--bg-secondary) 0%, rgba(255,255,255,0.03) 50%, var(--bg-secondary) 100%)',
+                  color: isSelected ? 'var(--accent)' : 'var(--text)',
                   border: isSelected 
                     ? '1px solid rgba(77,163,255,0.3)' 
                     : '1px solid var(--border)',
@@ -89,8 +95,8 @@ export default function VerticalSelectCarousel({ id, value, options, onChange, c
                   width: '100%',
                   fontSize: '14px',
                   boxShadow: isSelected 
-                    ? '0 4px 16px rgba(77,163,255,0.25), inset 0 1px 0 rgba(255,255,255,0.1)' 
-                    : '0 2px 8px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.05)',
+                    ? '0 2px 4px rgba(77,163,255,0.2), 0 4px 8px rgba(77,163,255,0.15), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.05)' 
+                    : '0 1px 2px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.03)',
                   transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   transform: 'translateY(0)',
                   position: 'relative',
@@ -99,26 +105,26 @@ export default function VerticalSelectCarousel({ id, value, options, onChange, c
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
                   e.currentTarget.style.boxShadow = isSelected 
-                    ? '0 8px 24px rgba(77,163,255,0.35), inset 0 1px 0 rgba(255,255,255,0.15)' 
-                    : '0 6px 20px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.08)';
+                    ? '0 4px 8px rgba(77,163,255,0.25), 0 6px 12px rgba(77,163,255,0.2), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.08)' 
+                    : '0 3px 6px rgba(0,0,0,0.15), 0 6px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.05)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = isSelected 
-                    ? '0 4px 16px rgba(77,163,255,0.25), inset 0 1px 0 rgba(255,255,255,0.1)' 
-                    : '0 2px 8px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.05)';
+                    ? '0 2px 4px rgba(77,163,255,0.2), 0 4px 8px rgba(77,163,255,0.15), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.05)' 
+                    : '0 1px 2px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.03)';
                 }}
                 onMouseDown={(e) => {
-                  e.currentTarget.style.transform = 'translateY(1px)';
+                  e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = isSelected 
-                    ? '0 2px 8px rgba(77,163,255,0.2), inset 0 2px 4px rgba(0,0,0,0.1)' 
-                    : '0 1px 4px var(--shadow), inset 0 2px 4px rgba(0,0,0,0.05)';
+                    ? '0 1px 2px rgba(77,163,255,0.15), inset 0 1px 2px rgba(0,0,0,0.1), inset 0 -1px 0 rgba(0,0,0,0.08)' 
+                    : '0 0 1px rgba(0,0,0,0.08), inset 0 1px 2px rgba(0,0,0,0.08), inset 0 -1px 0 rgba(0,0,0,0.05)';
                 }}
                 onMouseUp={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
                   e.currentTarget.style.boxShadow = isSelected 
-                    ? '0 8px 24px rgba(77,163,255,0.35), inset 0 1px 0 rgba(255,255,255,0.15)' 
-                    : '0 6px 20px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.08)';
+                    ? '0 4px 8px rgba(77,163,255,0.25), 0 6px 12px rgba(77,163,255,0.2), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.08)' 
+                    : '0 3px 6px rgba(0,0,0,0.15), 0 6px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.05)';
                 }}
               >
                 {opt.icon ? (

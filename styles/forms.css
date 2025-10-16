@@ -1,0 +1,401 @@
+/* Form improvements */
+.form-group {
+  margin-bottom: 24px;
+}
+
+/* Balanced slider layout for the main controls */
+
+/* slider-row: use a stacked layout (full-width controls) for balance */
+.slider-row {
+  display: block;
+  width: 100%;
+}
+
+.slider-group {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.slider-group > label {
+  font-weight: 600;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* Make slider control rows use flex so slider track and value align predictably */
+.slider-control-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.slider-control-row input[type="range"] {
+  flex: 1 1 auto; /* slider expands to available space */
+}
+
+.slider-control-row .muted {
+  flex: 0 0 84px; /* wider fixed width so longer labels (e.g. "very long") fit on one line */
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+label {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+  display: block;
+  font-weight: 500;
+}
+
+/* Prefer emoji-capable fonts on form controls so country flags render in Chromium on Windows */
+select, input[type="text"], input[type="number"] {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  outline: none;
+  transition: var(--transition);
+  font-size: 14px;
+  /* include common color-emoji fonts as fallbacks so regional indicator flags render */
+  font-family: "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Symbol", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Improve native dropdown option readability in dark/light themes */
+select option, select optgroup {
+  background-color: var(--panel);
+  color: var(--text);
+}
+
+/* Ensure options also prefer emoji-capable fonts in Chromium-based browsers */
+select option {
+  font-family: "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Symbol", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+select option:checked, select option:hover {
+  background-color: rgba(77,163,255,0.18);
+  color: var(--text);
+}
+
+select:focus, input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(77,163,255,0.1);
+  background: rgba(255,255,255,0.08);
+}
+
+select:hover, input:hover {
+  border-color: var(--accent);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Ensure the primary action is visually prominent and wider */
+.actions > button {
+  min-width: 240px;
+  max-width: 100%;
+}
+
+button.primary {
+  min-width: 0; /* allow container to control width */
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 15px;
+  background: linear-gradient(135deg, var(--accent) 0%, rgba(77,163,255,0.9) 50%, var(--accent) 100%);
+  box-shadow: 0 2px 4px rgba(77,163,255,0.3), 0 4px 8px rgba(77,163,255,0.2), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1);
+  border: 1px solid rgba(77,163,255,0.4);
+}
+
+button {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--accent);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(77,163,255,0.3);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  min-width: 120px;
+  text-align: center;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(77,163,255,0.4), 0 6px 12px rgba(77,163,255,0.3), inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.12);
+}
+
+button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(77,163,255,0.2), inset 0 1px 2px rgba(0,0,0,0.15), inset 0 -1px 0 rgba(0,0,0,0.15);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Compact preset buttons inside the carousel should be allowed to shrink so more items fit */
+.preset-button.compact-preset {
+  min-width: 0 !important;
+  max-width: 92px; /* keep labels readable but compact */
+  padding: 6px 8px !important;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--text);
+  box-shadow: 0 2px 8px var(--shadow);
+  min-width: 100px;
+  flex: 1;
+}
+
+button.secondary:hover:not(:disabled) {
+  background: rgba(255,255,255,0.05);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+button.danger {
+  background: var(--danger);
+  color: white;
+}
+
+.icon-button.danger {
+  color: var(--danger) !important;
+}
+
+.icon-button {
+  min-width: 0 !important;
+  padding: 6px !important;
+  width: auto !important;
+  flex: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  transition: none !important;
+}
+
+.icon-button:hover:not(:disabled),
+.icon-button:active,
+.icon-button:focus {
+  transform: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.btn-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Custom select/listbox styles */
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+.custom-select-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  /* remove the general button glow (overrides generic button rules) */
+  box-shadow: none;
+}
+.custom-select-button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Prevent the global :focus-visible rule from painting an outline on the select button */
+.custom-select-button:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Force-disable any remaining glow/shadow/filters for the custom selects used for
+   Region and Language. Use high specificity and !important to override global rules
+   (e.g. generic button rules or :focus-visible). */
+.custom-select, .custom-select-button, .custom-select-list, .custom-select-option {
+  outline: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.custom-select:focus, .custom-select:focus-visible,
+.custom-select-button:focus, .custom-select-button:focus-visible,
+.custom-select-button:hover, .custom-select-button:active,
+.custom-select-list:focus, .custom-select-list:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Remove hover/interactive visual reactions for custom select buttons used for
+   Region and Language. Prevent movement, shadow, and transitions on hover/active. */
+.custom-select-button,
+.custom-select-button:not(:disabled) {
+  /* allow a subtle transition for border/background but keep other effects disabled */
+  transition: border-color 0.12s ease, background 0.12s ease !important;
+}
+.custom-select-button:hover,
+.custom-select-button:focus,
+.custom-select-button:focus-visible,
+.custom-select-button:active {
+  transform: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  /* subtle background shift and colored border on hover like native selects */
+  background: rgba(255,255,255,0.04) !important;
+  border-color: var(--accent) !important;
+  cursor: pointer;
+}
+
+/* Also make sure hover/active states do not introduce a glow */
+.custom-select-button:hover,
+.custom-select-button:active {
+  box-shadow: none !important;
+}
+.custom-select-label { text-align: center; }
+.custom-select-caret { opacity: 0.8; }
+.custom-select-list {
+  position: absolute;
+  left: 0; right: 0;
+  margin-top: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 30px var(--shadow);
+  max-height: 260px;
+  overflow: auto;
+  z-index: 80;
+}
+
+/* Prevent the global focus-visible glow from wrapping the custom select root
+   so the region/language menus don't get the accent outline/glow. */
+.custom-select:focus-visible {
+  outline: none;
+  outline-offset: 0;
+}
+.custom-select-option {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  text-align: center;
+}
+.custom-select-option.highlight, .custom-select-option[aria-selected="true"] {
+  background: rgba(77,163,255,0.08);
+}
+.custom-select-option .twemoji img { width: 1.2em; height: 1.2em; }
+
+/* Layout helper: keep native select but allow a small flag/icon next to it if needed */
+.select-with-flag {
+  display: flex;
+  align-items: center;
+}
+.select-with-flag select {
+  flex: 1 1 auto;
+}
+
+/* Range (slider) styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  background: linear-gradient(135deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.02) 100%);
+  border-radius: 999px;
+  outline: none;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1), inset 0 -1px 1px rgba(255,255,255,0.1), 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input[type="range"]::-webkit-slider-track {
+  -webkit-appearance: none;
+  height: 8px;
+  background: linear-gradient(135deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.02) 100%);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1), inset 0 -1px 1px rgba(255,255,255,0.1), 0 1px 2px rgba(0,0,0,0.05);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--panel) 0%, rgba(255,255,255,0.1) 50%, var(--panel) 100%);
+  border: 2px solid var(--accent2);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2), 0 6px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.15);
+}
+
+input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(0.95);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1), inset 0 1px 2px rgba(0,0,0,0.2), inset 0 -1px 0 rgba(0,0,0,0.15);
+}
+
+input[type="range"]:focus {
+  box-shadow: 0 0 0 4px rgba(77,163,255,0.12), inset 0 1px 2px rgba(0,0,0,0.1), inset 0 -1px 1px rgba(255,255,255,0.1), 0 1px 2px rgba(0,0,0,0.05);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 8px;
+  background: linear-gradient(135deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.02) 100%);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1), inset 0 -1px 1px rgba(255,255,255,0.1), 0 1px 2px rgba(0,0,0,0.05);
+  border: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--panel) 0%, rgba(255,255,255,0.1) 50%, var(--panel) 100%);
+  border: 2px solid var(--accent2);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}

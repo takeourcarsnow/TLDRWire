@@ -1,0 +1,241 @@
+/* Theme toggle */
+.theme-toggle {
+  position: absolute !important;
+  top: 16px !important;
+  right: 16px !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: var(--radius) !important;
+  padding: 8px !important;
+  cursor: pointer !important;
+  transition: none !important;
+  font-size: 18px !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  outline: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+.theme-toggle:hover,
+.theme-toggle:active,
+.theme-toggle:focus,
+.theme-toggle:focus-visible {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+header {
+  padding: 24px 16px 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  letter-spacing: 0.3px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+header .tag {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px 80px; /* Add bottom padding for navbar */
+  /* Allow page flow to determine height so sections don't stretch to full
+     viewport height when content is short. Removing the forced min-height
+     prevents large empty areas and avoids extra scrolling on short pages. */
+}
+
+.panel {
+  padding: 16px;
+  position: relative;
+  overflow: visible;
+}
+
+.panel::before {
+  display: none;
+}
+
+/* Center content in home section */
+.panel:first-child {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.panel:first-child .form-group {
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.panel:first-child .row {
+  justify-content: center;
+  width: 100%;
+  max-width: 800px;
+}
+
+.panel:first-child .slider-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 600px;
+  width: 100%;
+}
+
+.panel:first-child .slider-group {
+  width: 100%;
+  max-width: 600px;
+}
+
+.panel:first-child label {
+  text-align: center;
+  justify-content: center;
+}
+
+.panel:first-child .custom-select {
+  margin: 0 auto;
+}
+
+.panel:first-child .slider-group {
+  margin: 0 auto;
+  max-width: 600px;
+}
+
+.panel:first-child .actions {
+  justify-content: center;
+  max-width: 600px;
+  width: 100%;
+}
+
+.panel:first-child .row > div {
+  width: 100%;
+}
+
+footer {
+  text-align: center;
+  color: var(--muted);
+  padding: 32px 0;
+  font-size: 0.875rem;
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+}
+
+/* Bottom Navbar */
+.bottom-navbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0;
+  z-index: 1000;
+}
+
+/* Pill highlight that sits behind the active tab */
+.bottom-navbar {
+  --nav-pill-left-percent: 50%;
+  --nav-pill-width-percent: 20%;
+}
+.bottom-navbar .nav-pill {
+  position: absolute;
+  left: var(--nav-pill-left-percent);
+  transform: translateX(-50%);
+  /* move pill slightly closer to the bar and make it smaller for a subtle look */
+  bottom: 8px;
+  height: 28px; /* reduced height */
+  width: calc(var(--nav-pill-width-percent) * 1% - 8px); /* slightly narrower than button */
+  background: linear-gradient(90deg, rgba(77,163,255,0.08), rgba(122,240,178,0.04));
+  border: 1px solid rgba(77,163,255,0.08);
+  opacity: 0.85;
+  border-radius: 999px;
+  transition: left 220ms cubic-bezier(0.22,1,0.36,1), width 220ms cubic-bezier(0.22,1,0.36,1), background 220ms, opacity 180ms, transform 220ms;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Replace the pill with a tiny centered dot indicator for subtlety */
+.bottom-navbar .nav-pill { display: none; }
+.bottom-navbar .nav-dot {
+  position: absolute;
+  left: var(--nav-dot-left-percent, 50%);
+  /* sit lower (closer to the bottom edge) so it doesn't overlap labels */
+  bottom: 4px;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(77,163,255,0.08);
+  opacity: 0.95;
+  transition: left 180ms cubic-bezier(0.22,1,0.36,1), opacity 140ms;
+  /* render behind the tab content so it never covers icon/label */
+  z-index: 1;
+  pointer-events: none;
+}
+
+.bottom-navbar .nav-tab {
+  position: relative;
+  z-index: 3; /* sit above the pill */
+}
+
+.nav-tab {
+  background: transparent !important;
+  border: none !important;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  min-width: 60px;
+  box-shadow: none !important;
+  transition: none !important;
+  cursor: default !important;
+  appearance: none !important;
+  border-radius: 0 !important;
+  transform: none !important;
+  outline: none !important;
+}
+
+.nav-tab.active {
+  color: var(--accent);
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 500;
+}

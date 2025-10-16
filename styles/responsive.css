@@ -1,0 +1,80 @@
+@media (max-width: 640px) {
+  .row, .row-3, .slider-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .actions > button, button.primary { width: 100%; min-width: 0; }
+}
+
+/* Improved responsiveness */
+@media (max-width: 480px) {
+  header {
+    padding: 20px 16px 12px;
+  }
+
+  .panel {
+    padding: 12px;
+  }
+
+  button {
+    padding: 10px 16px;
+    min-width: 100px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .theme-toggle {
+    top: 16px !important;
+    right: 16px !important;
+    position: absolute !important;
+  }
+}
+
+/* Mobile responsiveness for history */
+@media (max-width: 640px) {
+  .history-list-container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .history-card {
+    padding: 16px;
+  }
+
+  .history-card-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .history-tags {
+    justify-content: center;
+  }
+
+  .history-actions {
+    justify-content: stretch;
+  }
+
+  .history-action-btn {
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .history-grid {
+    gap: 12px;
+    /* remove the reduced mobile viewport cap so the section can expand
+       and make better use of the screen. */
+    max-height: none;
+  }
+}
+
+/* Make sure meta items still wrap visually on very small screens when JS is disabled */
+@media (max-width: 420px) {
+  .meta { overflow-x: auto; }
+  .meta-strip-inner { gap: 12px; }
+}
