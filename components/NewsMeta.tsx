@@ -8,9 +8,9 @@ interface Props {
 }
 
 export default function NewsMeta({ data }: Props) {
-  if (!data?.meta) return null;
-
   const { containerRef } = useOverflowDetection();
+
+  if (!data?.meta) return null;
 
   const sanitize = (s: any) => {
     try {
