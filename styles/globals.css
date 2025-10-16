@@ -218,13 +218,13 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  max-width: 400px;
+  max-width: 600px;
   width: 100%;
 }
 
 .panel:first-child .slider-group {
   width: 100%;
-  max-width: 400px;
+  max-width: 600px;
 }
 
 .panel:first-child label {
@@ -238,12 +238,12 @@ main {
 
 .panel:first-child .slider-group {
   margin: 0 auto;
-  max-width: 400px;
+  max-width: 600px;
 }
 
 .panel:first-child .actions {
   justify-content: center;
-  max-width: 400px;
+  max-width: 600px;
   width: 100%;
 }
 
@@ -1055,8 +1055,8 @@ footer {
 
 /* Preset Carousel */
 .preset-carousel {
-  max-width: 100%;
-  margin: 16px 0;
+  max-width: 600px;
+  margin: 16px auto;
   overflow: hidden;
   position: relative;
 }
