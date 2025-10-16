@@ -101,27 +101,34 @@ body {
   position: absolute !important;
   top: 16px !important;
   right: 16px !important;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius);
-  padding: 8px;
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 18px;
-  box-shadow: none;
-  color: var(--text);
+  background: transparent !important;
+  border: none !important;
+  border-radius: var(--radius) !important;
+  padding: 8px !important;
+  cursor: pointer !important;
+  transition: none !important;
+  font-size: 18px !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  outline: none !important;
+  transform: none !important;
+  filter: none !important;
 }
 
 .theme-toggle:hover,
 .theme-toggle:active,
-.theme-toggle:focus {
+.theme-toggle:focus,
+.theme-toggle:focus-visible {
   background: transparent !important;
   border: none !important;
   outline: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
 }
 
 header {
-  padding: 32px 16px 24px;
+  padding: 24px 16px 16px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -155,14 +162,14 @@ header .tag {
 main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 16px 80px; /* Add bottom padding for navbar */
+  padding: 0 1px 80px; /* Add bottom padding for navbar */
   /* Allow page flow to determine height so sections don't stretch to full
      viewport height when content is short. Removing the forced min-height
      prevents large empty areas and avoids extra scrolling on short pages. */
 }
 
 .panel {
-  padding: 20px;
+  padding: 16px;
   position: relative;
   overflow: visible;
 }
@@ -177,6 +184,7 @@ main {
   flex-direction: column;
   align-items: center;
   text-align: center;
+  overflow: hidden;
 }
 
 .panel:first-child .form-group {
@@ -534,6 +542,8 @@ button.danger {
   /* Keep a small visual minimum but allow the panel to collapse when empty */
   min-height: 0; /* removed fixed 300px so output only takes needed space */
   position: relative;
+  max-height: calc(100vh - 160px);
+  overflow: hidden;
 }
 
 /* Enhanced loading states */
@@ -669,8 +679,8 @@ button.danger {
   display: flex; 
   gap: 16px; 
   flex-wrap: wrap; 
-  margin-bottom: 16px;
-  padding: 12px 0;
+  margin-bottom: 8px;
+  padding: 8px 0;
   border-bottom: 1px solid var(--border);
 }
 
@@ -843,6 +853,8 @@ button.danger {
   font-size: 15px;
   overflow-wrap: anywhere;
   word-break: break-word;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
 }
 
 /* compact reading mode removed; density controlled via font size slider */
@@ -1174,11 +1186,11 @@ footer {
 /* Improved responsiveness */
 @media (max-width: 480px) {
   header {
-    padding: 24px 16px 20px;
+    padding: 20px 16px 12px;
   }
   
   .panel {
-    padding: 16px;
+    padding: 12px;
   }
   
   button {
@@ -1206,6 +1218,8 @@ footer {
      space on mobile and desktop. */
   display: block; /* use normal document flow so height equals content */
   gap: 12px;
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
 .history-search-wrapper {
@@ -1452,6 +1466,11 @@ footer {
 
 /* Mobile responsiveness for history */
 @media (max-width: 640px) {
+  .history-list-container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
   .history-card {
     padding: 16px;
   }
@@ -1588,4 +1607,45 @@ input[type="range"]::-moz-range-thumb {
 }
 .summary::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, rgba(77,163,255,0.20), rgba(77,163,255,0.30));
+}
+
+/* Single-line meta strip with optional auto-scroll (marquee) when content overflows */
+.meta-strip {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
+}
+.meta-strip-inner {
+  display: inline-flex;
+  gap: 16px;
+  align-items: center;
+  padding: 8px 0;
+  will-change: transform;
+}
+
+/* When meta-scroll is active, animate the inner strip from right to left */
+.meta-strip.meta-scroll .meta-strip-inner {
+  /* duration and translate are set by JS via CSS variables for a consistent speed */
+  animation: metaMarquee var(--meta-marquee-duration, 12s) linear infinite;
+}
+
+/* Duplicate content technique: if content width <= container, do not animate.
+   ResizeObserver in JS enables meta-scroll only when inner is wider. */
+
+@keyframes metaMarquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(var(--meta-marquee-translate, 50%) * -1)); }
+}
+
+/* Respect reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .meta-strip.meta-scroll .meta-strip-inner { animation: none !important; }
+}
+
+/* Make sure meta items still wrap visually on very small screens when JS is disabled */
+@media (max-width: 420px) {
+  .meta { overflow-x: auto; }
+  .meta-strip-inner { gap: 12px; }
 }

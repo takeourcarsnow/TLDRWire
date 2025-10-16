@@ -1,6 +1,6 @@
 import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { FreeMode, Navigation } from 'swiper/modules';
+import { FreeMode } from 'swiper/modules';
 import {
   Sunrise, 
   Monitor, 
@@ -53,17 +53,7 @@ const presets = [
 ];
 
 export default function PresetCarousel({ onPresetClick, selectedPreset = null }: PresetCarouselProps) {
-  const prevRef = React.useRef<HTMLButtonElement | null>(null);
-  const nextRef = React.useRef<HTMLButtonElement | null>(null);
-  const [navPrev, setNavPrev] = React.useState<any>(null);
-  const [navNext, setNavNext] = React.useState<any>(null);
   const swiperRef = React.useRef<any>(null);
-
-  React.useEffect(() => {
-    // set refs after mount so Swiper can attach
-    setNavPrev(prevRef.current);
-    setNavNext(nextRef.current);
-  }, []);
 
   React.useEffect(() => {
     if (!selectedPreset) return;
@@ -82,26 +72,31 @@ export default function PresetCarousel({ onPresetClick, selectedPreset = null }:
   <div className="preset-carousel" style={{ position: 'relative', overflow: 'visible' }}>
       <Swiper
         className="preset-swiper"
-        modules={[FreeMode, Navigation]}
+        modules={[FreeMode]}
         spaceBetween={6}
         // Use auto slide sizing so more items can fit; slide widths come from content/styles
         slidesPerView={'auto'}
-  // Keep the selected preset centered in view
-  centeredSlides={true}
         nested={true}
         allowTouchMove={true}
         freeMode={true}
+        loop={true}
         breakpoints={{
           // These breakpoints keep spacing sensible on larger screens but slides remain auto-sized
           640: { spaceBetween: 8 },
           1024: { spaceBetween: 10 },
           1280: { spaceBetween: 12 },
         }}
-        navigation={{ prevEl: navPrev, nextEl: navNext }}
         onBeforeInit={(swiper) => {
           // attach swiper instance so we can fallback to programmatic control
           // @ts-ignore
           swiperRef.current = swiper;
+        }}
+        onSlideChange={(swiper) => {
+          // Auto-select the preset when swiping
+          const idx = swiper.realIndex;
+          if (idx >= 0 && idx < presets.length && presets[idx].key !== selectedPreset) {
+            onPresetClick(presets[idx].key);
+          }
         }}
         style={{ height: '46px', overflow: 'visible' }}
       >
@@ -130,32 +125,6 @@ export default function PresetCarousel({ onPresetClick, selectedPreset = null }:
           );
         })}
       </Swiper>
-      {/* Minimalist navigation arrows (no effects, vertically centered) */}
-      <button
-        ref={prevRef}
-        aria-label="Previous presets"
-        className="preset-prev"
-        onClick={() => {
-          if (swiperRef.current && typeof swiperRef.current.slidePrev === 'function') {
-            swiperRef.current.slidePrev();
-          }
-        }}
-      >
-        ‹
-      </button>
-
-      <button
-        ref={nextRef}
-        aria-label="Next presets"
-        className="preset-next"
-        onClick={() => {
-          if (swiperRef.current && typeof swiperRef.current.slideNext === 'function') {
-            swiperRef.current.slideNext();
-          }
-        }}
-      >
-        ›
-      </button>
     </div>
   );
 }
