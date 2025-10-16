@@ -22,7 +22,7 @@ interface VerticalSelectCarouselProps {
 
 export default function VerticalSelectCarousel({ id, value, options, onChange, className }: VerticalSelectCarouselProps) {
   const swiperRef = React.useRef<any>(null);
-  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
     if (!swiperRef.current) return;
@@ -38,7 +38,7 @@ export default function VerticalSelectCarousel({ id, value, options, onChange, c
         // ignore
       }
     }
-  }, [value]);
+  }, [value, options]);
 
   const handleTouchEnd = React.useCallback(() => {
     // Small delay to let momentum scrolling finish

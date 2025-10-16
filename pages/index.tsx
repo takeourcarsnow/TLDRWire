@@ -453,7 +453,7 @@ export default function Home() {
     // Mark this preset as selected in the UI but do NOT auto-generate.
     // Generation remains an explicit action (Generate button / keyboard shortcut).
     setSelectedPreset(preset);
-  }, [updatePreference, generateSummary, preferences]);
+  }, [updatePreference, preferences]);
 
   // Keyboard shortcuts
   useEffect(() => {

@@ -20,9 +20,9 @@ const presets = [
   ['weekend', 'Weekend Roundup', Calendar],
 ] as const;
 
-export default (props: { onPresetClick: (preset: string) => void; selectedPreset?: string | null }) => {
+const PresetCarousel = (props: { onPresetClick: (preset: string) => void; selectedPreset?: string | null }) => {
   const carouselRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+  const scrollTimeoutRef = useRef<number>();
 
   const findCenteredPreset = useCallback(() => {
     if (!carouselRef.current) return;
@@ -55,7 +55,7 @@ export default (props: { onPresetClick: (preset: string) => void; selectedPreset
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
     }
-    scrollTimeoutRef.current = setTimeout(findCenteredPreset, 150);
+    scrollTimeoutRef.current = window.setTimeout(findCenteredPreset, 150);
   }, [findCenteredPreset]);
 
   useEffect(() => {
@@ -81,3 +81,5 @@ export default (props: { onPresetClick: (preset: string) => void; selectedPreset
     </div>
   );
 };
+
+export default PresetCarousel;
