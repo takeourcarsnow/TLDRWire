@@ -14,6 +14,9 @@ import { BottomNavbar } from '../components/BottomNavbar';
 const HistoryPanel = dynamic(() => import('../components/HistoryPanel').then(m => m.HistoryPanel), { ssr: false });
 const PresetCarousel = dynamic(() => import('../components/PresetCarousel').then(m => m.default), { ssr: false });
 import { SettingsPanel } from '../components/SettingsPanel';
+import { PRESET_CONFIGS } from '../constants/ui';
+import { renderMarkdownToElement } from '../utils/rendering';
+import { detectLanguage, detectRegionFromLanguage } from '../utils/language';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -67,6 +70,9 @@ export default function Home() {
   const [lastGenerateTime, setLastGenerateTime] = useState<number>(0);
   const [rateLimitCountdown, setRateLimitCountdown] = useState<number>(0);
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+
+  // Memoized markdown renderer so the function reference is stable across renders
+  const memoizedRenderMarkdownToElement = useMemo(() => renderMarkdownToElement, []);
 
   useEffect(() => {
     // Health check on mount - only run in non-localhost environments to avoid
@@ -203,9 +209,9 @@ export default function Home() {
     if (selectedHistoryEntry) {
       // Render the saved summaryFull (or snippet) into the modal's div
       const md = selectedHistoryEntry.summaryFull || selectedHistoryEntry.summarySnippet || '';
-      renderMarkdownToElement(selectedSummaryRef.current, md);
+      memoizedRenderMarkdownToElement(selectedSummaryRef.current, md);
     }
-  }, [selectedHistoryEntry, renderMarkdownToElement]);
+  }, [selectedHistoryEntry, memoizedRenderMarkdownToElement]);
   
   // Keep the browser tab title stable; avoid tying it to changing preferences.
 
@@ -252,196 +258,44 @@ export default function Home() {
 
     let updates = {};
     
-    switch (preset) {
-      case 'morning':
-        updates = {
-          region: 'global',
-          category: 'top',
-          style: 'executive-brief',
-          length: 'short',
-          timeframe: '12',
-          limit: '20'
-        };
-        break;
-      case 'tech':
-        updates = {
-          region: 'global',
-          category: 'technology',
-          style: 'concise-bullets',
-          length: 'medium',
-          timeframe: '24',
-          limit: '24'
-        };
-        break;
-      case 'markets':
-        updates = {
-          region: 'global',
-          category: 'business',
-          style: 'market-analyst',
-          length: 'long',
-          timeframe: '24',
-          limit: '28'
-        };
-        break;
-      case 'breaking':
-        updates = {
-          region: 'global',
-          category: 'top',
-          style: 'bullet-points',
-          length: 'short',
-          timeframe: '6',
-          limit: '15'
-        };
-        break;
-      case 'politics':
-        updates = {
-          region: 'global',
-          category: 'politics',
-          style: 'neutral',
-          length: 'medium',
-          timeframe: '24',
-          limit: '20'
-        };
-        break;
-      case 'sports':
-        updates = {
-          region: 'global',
-          category: 'sports',
-          style: 'bullet-points',
-          length: 'medium',
-          timeframe: '24',
-          limit: '25'
-        };
-        break;
-      case 'entertainment':
-        updates = {
-          region: 'global',
-          category: 'entertainment',
-          style: 'casual',
-          length: 'medium',
-          timeframe: '24',
-          limit: '20'
-        };
-        break;
-      case 'science':
-        updates = {
-          region: 'global',
-          category: 'science',
-          style: 'educational',
-          length: 'medium',
-          timeframe: '48',
-          limit: '15'
-        };
-        break;
-      case 'health':
-        updates = {
-          region: 'global',
-          category: 'health',
-          style: 'informative',
-          length: 'medium',
-          timeframe: '24',
-          limit: '18'
-        };
-        break;
-      case 'business':
-        updates = {
-          region: 'global',
-          category: 'business',
-          style: 'executive-brief',
-          length: 'medium',
-          timeframe: '24',
-          limit: '22'
-        };
-        break;
-      case 'international':
-        updates = {
-          region: 'global',
-          category: 'world',
-          style: 'neutral',
-          length: 'medium',
-          timeframe: '24',
-          limit: '25'
-        };
-        break;
-      case 'environment':
-        updates = {
-          region: 'global',
-          category: 'climate',
-          style: 'informative',
-          length: 'medium',
-          timeframe: '48',
-          limit: '15'
-        };
-        break;
-      case 'education':
-        updates = {
-          region: 'global',
-          category: 'education',
-          style: 'educational',
-          length: 'medium',
-          timeframe: '48',
-          limit: '12'
-        };
-        break;
-      case 'arts':
-        updates = {
-          region: 'global',
-          category: 'culture',
-          style: 'casual',
-          length: 'medium',
-          timeframe: '48',
-          limit: '15'
-        };
-        break;
-      case 'weekend':
-        updates = {
-          region: 'global',
-          category: 'top',
-          style: 'casual',
-          length: 'long',
-          timeframe: '72',
-          limit: '30'
-        };
-        break;
-      case 'lt-local': {
-        // Try server-side geo lookup first (IP-based). If it fails, fall back to browser locale.
-        let regionGuess = 'global';
-        let langGuess = preferences.language || 'en';
-        try {
-          const resp = await fetch('/api/geo');
-          if (resp.ok) {
-            const j = await resp.json();
-            if (j && j.regionKey) regionGuess = j.regionKey;
-            if (j && j.language) langGuess = j.language;
-          } else {
-            throw new Error('geo fetch failed');
-          }
-        } catch (e) {
-          try {
-            const navLang = navigator.language || (navigator as any).userLanguage || '';
-            const primary = (navLang || '').split('-')[0].toLowerCase();
-            if (primary === 'lt') { regionGuess = 'lithuania'; langGuess = 'lt'; }
-            else if (primary === 'fr') { regionGuess = 'france'; langGuess = 'fr'; }
-            else if (primary === 'de') { regionGuess = 'germany'; langGuess = 'de'; }
-            else if (primary === 'es') { regionGuess = 'spain'; langGuess = 'es'; }
-            else if (primary === 'it') { regionGuess = 'italy'; langGuess = 'it'; }
-            else { regionGuess = 'global'; }
-          } catch (ex) {
-            regionGuess = 'global';
-            langGuess = preferences.language || 'en';
-          }
+    if (preset === 'lt-local') {
+      // Try server-side geo lookup first (IP-based). If it fails, fall back to browser locale.
+      let regionGuess = 'global';
+      let langGuess = preferences.language || 'en';
+      try {
+        const resp = await fetch('/api/geo');
+        if (resp.ok) {
+          const j = await resp.json();
+          if (j && j.regionKey) regionGuess = j.regionKey;
+          if (j && j.language) langGuess = j.language;
+        } else {
+          throw new Error('geo fetch failed');
         }
+      } catch (e) {
+        try {
+          const navLang = navigator.language || (navigator as any).userLanguage || '';
+          const primary = (navLang || '').split('-')[0].toLowerCase();
+          regionGuess = detectRegionFromLanguage(primary);
+          langGuess = detectLanguage();
+        } catch (ex) {
+          regionGuess = 'global';
+          langGuess = preferences.language || 'en';
+        }
+      }
 
-        updates = {
-          region: regionGuess,
-          category: 'top',
-          language: langGuess,
-          style: 'neutral',
-          length: 'medium',
-          timeframe: '24',
-          limit: '20'
-        };
-        break;
+      updates = {
+        region: regionGuess,
+        category: 'top',
+        language: langGuess,
+        style: 'neutral',
+        length: 'medium',
+        timeframe: '24',
+        limit: '20'
+      };
+    } else {
+      const config = PRESET_CONFIGS[preset as keyof typeof PRESET_CONFIGS];
+      if (config) {
+        updates = config;
       }
     }
 
@@ -533,7 +387,7 @@ export default function Home() {
             onDelete={removeHistoryItem}
             onClear={clearHistory}
             updatePreference={updatePreference}
-            renderMarkdownToElement={renderMarkdownToElement}
+            renderMarkdownToElement={memoizedRenderMarkdownToElement}
           />
         </SwipeableContainer>
       </main>

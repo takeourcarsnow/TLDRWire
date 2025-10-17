@@ -1,10 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-
-const CONFIG = {
-  CACHE_TTL: 5 * 60 * 1000, // 5 minutes
-  API_TIMEOUT: 60000,
-  MAX_RETRIES: 1
-};
+import {
+  CACHE_TTL_MS,
+  API_TIMEOUT_MS,
+  MAX_RETRIES,
+  HISTORY_KEY,
+  HISTORY_LIMIT,
+  CLIENT_CACHE_SIZE
+} from '../pages/api/constants';
 
 export interface ApiRequestPayload {
   region: string;
@@ -49,8 +51,6 @@ export function useApi() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ApiResponse | null>(null);
-  const HISTORY_KEY = 'tldrwire:history';
-  const HISTORY_LIMIT = 200;
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   // Load history from localStorage on client
   useEffect(() => {
@@ -98,12 +98,12 @@ export function useApi() {
     retryCount = 0, 
     options: { timeoutMs?: number } = {}
   ) => {
-    const timeoutMs = options.timeoutMs || CONFIG.API_TIMEOUT;
+    const timeoutMs = options.timeoutMs || API_TIMEOUT_MS;
     const cacheKey = getCacheKey(payload);
 
     // Check cache
     const cached = cache.current.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CONFIG.CACHE_TTL) {
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
       setData({ ...cached.data, cached: true });
       return { ...cached.data, cached: true };
     }
@@ -182,7 +182,7 @@ export function useApi() {
 
         // Cache the response
         cache.current.set(cacheKey, { data: responseData, timestamp: Date.now() });
-        if (cache.current.size > 50) {
+        if (cache.current.size > CLIENT_CACHE_SIZE) {
           const oldestKey = cache.current.keys().next().value;
           cache.current.delete(oldestKey);
         }
@@ -235,10 +235,10 @@ export function useApi() {
       const errMsg = String(err?.message || err?.toString?.() || '');
       const errMsgLc = errMsg.toLowerCase();
       if (
-        retryCount < CONFIG.MAX_RETRIES &&
+        retryCount < MAX_RETRIES &&
         (errMsgLc.includes('network') || errMsgLc.includes('fetch') || errMsgLc.includes('timed out'))
       ) {
-        console.warn(`Retry attempt ${retryCount + 1}/${CONFIG.MAX_RETRIES}`);
+        console.warn(`Retry attempt ${retryCount + 1}/${MAX_RETRIES}`);
         await new Promise((resolve) => setTimeout(resolve, 1000 * (retryCount + 1)));
         inflightRequests.current.delete(cacheKey);
         return makeRequest(payload, retryCount + 1, options);

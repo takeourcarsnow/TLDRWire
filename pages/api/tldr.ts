@@ -8,6 +8,20 @@ import { dedupeSummaryBullets } from './utils';
 import { fetchFeeds } from './fetchFeeds';
 import { processArticles } from './processArticles';
 import { summarizeWithLLM } from './summarize';
+import {
+  API_TIMEOUT_MS,
+  MAX_RETRIES,
+  CACHE_TTL_MS,
+  SERVER_CACHE_TTL_MS,
+  LLM_NEGATIVE_CACHE_MS,
+  IP_THROTTLE_MS,
+  HISTORY_KEY,
+  HISTORY_LIMIT,
+  RATE_LIMIT_KEY,
+  RATE_LIMIT_SECONDS,
+  CLIENT_CACHE_SIZE,
+  LENGTH_CONFIGS
+} from './constants';
 
 interface RequestBody {
   region?: string;
@@ -48,19 +62,19 @@ interface CacheEntry {
 const CACHE = new Map<string, CacheEntry>();
 // Increase server-side cache TTL to reduce LLM/function invocations from frequent identical requests.
 // 15 minutes is a reasonable tradeoff between freshness and cost.
-const CACHE_TTL_MS = 1000 * 60 * 15; // 15 minutes
+const SERVER_CACHE_TTL = SERVER_CACHE_TTL_MS; // 15 minutes
 
 const INFLIGHT = new Map<string, Promise<{ status: number; payload: ApiResponse }>>();
 // Simple in-memory negative-cache to avoid repeated LLM calls when quota is hit.
 // Keyed by a stable string; value is expire timestamp (ms).
 const LLM_NEGATIVE_CACHE = new Map<string, number>();
-const LLM_NEGATIVE_CACHE_MS = Number(process.env.LLM_NEGATIVE_CACHE_MS || String(1000 * 60 * 20)); // default 20 minutes
+const NEGATIVE_CACHE_TTL = LLM_NEGATIVE_CACHE_MS; // default 20 minutes
 
 // Lightweight per-IP throttle to avoid accidental or malicious tight loops.
 // Keyed by client IP (or X-Forwarded-For header when present). Window is small to avoid
 // interfering with normal UX but helps reduce rapid repeated invocations.
 const LAST_REQUEST_BY_IP = new Map<string, number>();
-const IP_THROTTLE_MS = 5 * 1000; // 5 seconds
+const THROTTLE_WINDOW = IP_THROTTLE_MS; // 5 seconds
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
@@ -177,7 +191,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     const cached = CACHE.get(cacheKey);
-    if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+    if (cached && Date.now() - cached.ts < SERVER_CACHE_TTL) {
       requestLog.info('cache hit', { ageMs: Date.now() - cached.ts });
       return res.status(200).json({ cached: true, ...cached.payload });
     }
@@ -188,7 +202,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       const last = LAST_REQUEST_BY_IP.get(ip) || 0;
       const now = Date.now();
       LAST_REQUEST_BY_IP.set(ip, now);
-      if (now - last < IP_THROTTLE_MS) {
+      if (now - last < THROTTLE_WINDOW) {
         requestLog.warn('client request throttled (too frequent)', { ip, sinceLastMs: now - last });
         return res.status(429).json({ ok: false, error: 'Too many requests; slow down a little' });
       }
@@ -245,12 +259,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
 
       const lengthPreset = (typeof length === 'string' ? length : 'medium').toLowerCase();
-      const lengthConfig = {
-        short: { tldrSentences: '1 sentence', bulletsMin: 4, bulletsMax: 6 },
-        medium: { tldrSentences: '2–3 sentences', bulletsMin: 6, bulletsMax: 9 },
-        long: { tldrSentences: '4–5 sentences', bulletsMin: 8, bulletsMax: 12 },
-        'very-long': { tldrSentences: '6–8 sentences', bulletsMin: 10, bulletsMax: 16 }
-      }[lengthPreset] || { tldrSentences: '1–2 sentences', bulletsMin: 6, bulletsMax: 9 };
+      const lengthConfig = LENGTH_CONFIGS[lengthPreset as keyof typeof LENGTH_CONFIGS] || LENGTH_CONFIGS.medium;
 
       // If LLM usage is temporarily disabled via env or negative-cache (quota hit),
       // skip the call and return a fast extractive fallback to avoid consuming quota.
@@ -308,8 +317,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         // requests in the near term don't call the LLM and instead use an extractive fallback.
         try {
           if (/quota|too many requests|429/i.test(payloadErrorForLogs)) {
-            LLM_NEGATIVE_CACHE.set('gemini_quota', Date.now() + LLM_NEGATIVE_CACHE_MS);
-            requestLog.warn('LLM quota detected; negative-cache enabled', { ttlMs: LLM_NEGATIVE_CACHE_MS });
+            LLM_NEGATIVE_CACHE.set('gemini_quota', Date.now() + NEGATIVE_CACHE_TTL);
+            requestLog.warn('LLM quota detected; negative-cache enabled', { ttlMs: NEGATIVE_CACHE_TTL });
           }
         } catch (e) { /* ignore cache errors */ }
       }

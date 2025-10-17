@@ -1,28 +1,28 @@
 import React from 'react';
 import { Ruler, Clock, BarChart } from 'lucide-react';
 import { Preferences } from '../hooks/usePreferences';
+import { LENGTH_OPTIONS, TIMEFRAME_MIN, TIMEFRAME_MAX, ARTICLES_MIN, ARTICLES_MAX } from '../constants/ui';
+import { SliderValue } from './SliderValue';
 
 interface Props {
   preferences: Preferences;
   onPreferenceChange: (key: keyof Preferences, value: string) => void;
 }
 
-const LENGTH_OPTIONS = ['short', 'medium', 'long', 'very-long'];
-
 export default function NewsFormSliders({ preferences, onPreferenceChange }: Props) {
   const [dragging, setDragging] = React.useState<{timeframe?: boolean, limit?: boolean, length?: boolean}>({});
 
   const handleTimeframeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = Number(e.target.value);
-    if (value < 1) value = 1;
-    if (value > 72) value = 72;
+    if (value < TIMEFRAME_MIN) value = TIMEFRAME_MIN;
+    if (value > TIMEFRAME_MAX) value = TIMEFRAME_MAX;
     onPreferenceChange('timeframe', value.toString());
   };
 
   const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = Number(e.target.value);
-    if (value < 8) value = 8;
-    if (value > 40) value = 40;
+    if (value < ARTICLES_MIN) value = ARTICLES_MIN;
+    if (value > ARTICLES_MAX) value = ARTICLES_MAX;
     onPreferenceChange('limit', value.toString());
   };
 
@@ -71,37 +71,20 @@ export default function NewsFormSliders({ preferences, onPreferenceChange }: Pro
             <input
               aria-label="Timeframe hours slider"
               type="range"
-              min={1}
-              max={72}
+              min={TIMEFRAME_MIN}
+              max={TIMEFRAME_MAX}
               value={Number(preferences.timeframe)}
               onChange={handleTimeframeChange}
               onPointerDown={() => handlePointerDown('timeframe')}
               onPointerUp={() => handlePointerUp('timeframe')}
               style={{ width: '100%' }}
             />
-            {dragging.timeframe && (
-              <div 
-                className="slider-value" 
-                style={{
-                  position: 'absolute',
-                  left: `${((Number(preferences.timeframe) - 1) / (72 - 1)) * 100}%`,
-                  top: '-24px',
-                  transform: 'translateX(-50%)',
-                  background: 'var(--panel)',
-                  color: 'var(--text)',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontWeight: '500',
-                  whiteSpace: 'nowrap',
-                  pointerEvents: 'none',
-                  border: '1px solid var(--border)',
-                  boxShadow: '0 2px 8px var(--shadow)'
-                }}
-              >
-                {preferences.timeframe}
-              </div>
-            )}
+            <SliderValue
+              value={preferences.timeframe}
+              min={TIMEFRAME_MIN}
+              max={TIMEFRAME_MAX}
+              dragging={dragging.timeframe || false}
+            />
           </div>
         </div>
         <div className="slider-group">
@@ -112,37 +95,20 @@ export default function NewsFormSliders({ preferences, onPreferenceChange }: Pro
             <input
               aria-label="Articles to consider slider"
               type="range"
-              min={8}
-              max={40}
+              min={ARTICLES_MIN}
+              max={ARTICLES_MAX}
               value={Number(preferences.limit)}
               onChange={handleLimitChange}
               onPointerDown={() => handlePointerDown('limit')}
               onPointerUp={() => handlePointerUp('limit')}
               style={{ width: '100%' }}
             />
-            {dragging.limit && (
-              <div 
-                className="slider-value" 
-                style={{
-                  position: 'absolute',
-                  left: `${((Number(preferences.limit) - 8) / (40 - 8)) * 100}%`,
-                  top: '-24px',
-                  transform: 'translateX(-50%)',
-                  background: 'var(--panel)',
-                  color: 'var(--text)',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontWeight: '500',
-                  whiteSpace: 'nowrap',
-                  pointerEvents: 'none',
-                  border: '1px solid var(--border)',
-                  boxShadow: '0 2px 8px var(--shadow)'
-                }}
-              >
-                {preferences.limit}
-              </div>
-            )}
+            <SliderValue
+              value={preferences.limit}
+              min={ARTICLES_MIN}
+              max={ARTICLES_MAX}
+              dragging={dragging.limit || false}
+            />
           </div>
         </div>
         <div className="slider-group">
@@ -162,29 +128,13 @@ export default function NewsFormSliders({ preferences, onPreferenceChange }: Pro
               onPointerUp={() => handlePointerUp('length')}
               style={{ width: '100%' }}
             />
-            {dragging.length && (
-              <div 
-                className="slider-value" 
-                style={{
-                  position: 'absolute',
-                  left: `${(lengthIndex(preferences.length) / (LENGTH_OPTIONS.length - 1)) * 100}%`,
-                  top: '-24px',
-                  transform: 'translateX(-50%)',
-                  background: 'var(--panel)',
-                  color: 'var(--text)',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontWeight: '500',
-                  whiteSpace: 'nowrap',
-                  pointerEvents: 'none',
-                  border: '1px solid var(--border)',
-                  boxShadow: '0 2px 8px var(--shadow)'
-                }}
-              >
-                {preferences.length.replace('-', ' ')}
-              </div>
-            )}
+            <SliderValue
+              value={lengthIndex(preferences.length)}
+              min={0}
+              max={LENGTH_OPTIONS.length - 1}
+              dragging={dragging.length || false}
+              displayValue={preferences.length.replace('-', ' ')}
+            />
           </div>
         </div>
       </div>

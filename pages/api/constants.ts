@@ -260,6 +260,41 @@ export const FALLBACK_FEEDS: { [key: string]: string[] } = {
   ]
 };
 
+// API related constants
+export const API_TIMEOUT_MS = 60000;
+export const MAX_RETRIES = 1;
+export const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes (client-side)
+export const SERVER_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes (server-side)
+export const LLM_NEGATIVE_CACHE_MS = 20 * 60 * 1000; // 20 minutes
+export const IP_THROTTLE_MS = 5 * 1000; // 5 seconds
+
+// History and storage
+export const HISTORY_KEY = 'tldrwire:history';
+export const HISTORY_LIMIT = 200;
+export const RATE_LIMIT_KEY = 'tldrwire:rateLimitExpires';
+export const RATE_LIMIT_SECONDS = 60;
+
+// Cache sizes
+export const CLIENT_CACHE_SIZE = 50;
+
+// Supported languages
+export const SUPPORTED_LANGUAGES = ['en', 'lt', 'de', 'fr', 'pt', 'ja', 'hi'];
+
+// Length presets
+export const LENGTH_OPTIONS = ['short', 'medium', 'long', 'very-long'];
+export const LENGTH_CONFIGS = {
+  short: { tldrSentences: '1 sentence', bulletsMin: 4, bulletsMax: 6 },
+  medium: { tldrSentences: '2–3 sentences', bulletsMin: 6, bulletsMax: 9 },
+  long: { tldrSentences: '4–5 sentences', bulletsMin: 8, bulletsMax: 12 },
+  'very-long': { tldrSentences: '6–8 sentences', bulletsMin: 10, bulletsMax: 16 }
+};
+
+// Slider ranges
+export const TIMEFRAME_MIN = 1;
+export const TIMEFRAME_MAX = 72;
+export const ARTICLES_MIN = 8;
+export const ARTICLES_MAX = 40;
+
 // Lightweight sport type detection to diversify sports coverage
 export const SPORT_TYPES: { [key: string]: string[] } = {
   american_football: ['nfl', 'american football', 'ncaaf', 'college football', 'super bowl', 'quarterback', 'touchdown'],

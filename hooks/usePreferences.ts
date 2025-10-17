@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { detectLanguage } from '../utils/language';
 
 export interface Preferences {
   region: string;
@@ -36,10 +37,7 @@ export function usePreferences() {
 
     // Auto-detect language if not set
     if (!localStorage.getItem('tldrwire:language')) {
-      const lang = (navigator.language || 'en').slice(0, 2);
-      if (['en', 'lt', 'de', 'fr', 'pt', 'ja', 'hi'].includes(lang)) {
-        loadedPrefs.language = lang;
-      }
+      loadedPrefs.language = detectLanguage();
     }
 
     setPreferences(loadedPrefs);
@@ -63,10 +61,7 @@ export function usePreferences() {
     const resetPrefs = { ...defaultPreferences };
     
     // Auto-detect language
-    const lang = (navigator.language || 'en').slice(0, 2);
-    if (['en', 'lt', 'de', 'fr', 'pt', 'ja', 'hi'].includes(lang)) {
-      resetPrefs.language = lang;
-    }
+    resetPrefs.language = detectLanguage();
     
     setPreferences(resetPrefs);
   }, []);
