@@ -102,7 +102,7 @@ export const PRESET_CONFIGS = {
   breaking: {
     region: 'global',
     category: 'top',
-    style: 'bullet-points',
+    style: 'concise-bullets',
     length: 'short',
     timeframe: '6',
     limit: '15'
@@ -118,7 +118,7 @@ export const PRESET_CONFIGS = {
   sports: {
     region: 'global',
     category: 'sports',
-    style: 'bullet-points',
+    style: 'concise-bullets',
     length: 'medium',
     timeframe: '24',
     limit: '25'
@@ -134,7 +134,7 @@ export const PRESET_CONFIGS = {
   science: {
     region: 'global',
     category: 'science',
-    style: 'educational',
+    style: 'analytical',
     length: 'medium',
     timeframe: '48',
     limit: '15'
@@ -142,7 +142,7 @@ export const PRESET_CONFIGS = {
   health: {
     region: 'global',
     category: 'health',
-    style: 'informative',
+    style: 'neutral',
     length: 'medium',
     timeframe: '24',
     limit: '18'
@@ -166,7 +166,7 @@ export const PRESET_CONFIGS = {
   environment: {
     region: 'global',
     category: 'climate',
-    style: 'informative',
+    style: 'neutral',
     length: 'medium',
     timeframe: '48',
     limit: '15'
@@ -174,7 +174,7 @@ export const PRESET_CONFIGS = {
   education: {
     region: 'global',
     category: 'education',
-    style: 'educational',
+    style: 'analytical',
     length: 'medium',
     timeframe: '48',
     limit: '12'

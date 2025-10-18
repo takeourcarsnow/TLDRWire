@@ -361,7 +361,9 @@ export default function Home() {
       <main>
         <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab} disabled={isDraggingSlider}>
           <section className="panel">
+            <h2 style={{ margin: 0, flexShrink: 0, fontSize: '18px', fontWeight: 'normal', color: 'var(--text)' }}>Presets</h2>
             <PresetCarousel onPresetClick={handlePresetClick} selectedPreset={selectedPreset} />
+            <div className="form-divider"></div>
             <NewsForm
               preferences={preferences}
               onPreferenceChange={updatePreference}

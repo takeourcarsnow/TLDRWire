@@ -74,28 +74,63 @@ const PresetCarousel = (props: PresetCarouselProps) => {
     return specialCases[label] || label.charAt(0).toUpperCase() + label.slice(1);
   };
 
-  // Center the selected button when selection changes
+  // We'll render the items 3x (tripled) and keep the scroll positioned on the middle segment
+  // so the user can scroll endlessly. When near either edge we'll jump the scroll position
+  // by one segment width to maintain the illusion of infinite looping.
   useEffect(() => {
-    const selectedValue = props.value || props.selectedPreset;
-    if (selectedValue && carouselRef.current) {
-      const selectedButton = carouselRef.current.querySelector(`[aria-pressed="true"]`) as HTMLElement;
-      if (selectedButton) {
-        const carousel = carouselRef.current;
-        const carouselRect = carousel.getBoundingClientRect();
-        const buttonRect = selectedButton.getBoundingClientRect();
-        
-        // Calculate the center position
-        const carouselCenter = carouselRect.left + carouselRect.width / 2;
-        const buttonCenter = buttonRect.left + buttonRect.width / 2;
-        const scrollLeft = carousel.scrollLeft + (buttonCenter - carouselCenter);
-        
-        carousel.scrollTo({
-          left: scrollLeft,
-          behavior: 'smooth'
-        });
+    const initScrollToMiddle = () => {
+      const carousel = carouselRef.current;
+      if (!carousel) return;
+      const seg = carousel.scrollWidth / 3;
+      if (seg && isFinite(seg)) {
+        // Jump to the middle segment without animation
+        carousel.scrollLeft = seg;
+      }
+    };
+
+    // Wait for layout to settle
+    requestAnimationFrame(() => requestAnimationFrame(initScrollToMiddle));
+  }, [props.options, props.value, props.selectedPreset]);
+
+  // Center the selected button when selection changes. Choose the duplicate that
+  // lives in the middle segment when possible (so centering keeps the user in the
+  // middle segment of the tripled list).
+  // Utility to center a given original value in the carousel. If possible
+  // prefer the duplicate that lives in the middle segment (seg === '1') so
+  // we remain in the middle tripled segment.
+  const centerSelected = (value?: string, behaviour: ScrollBehavior = 'smooth') => {
+    const selectedValue = value || props.value || props.selectedPreset;
+    const carousel = carouselRef.current;
+    if (!selectedValue || !carousel) return;
+
+    const candidates = Array.from(carousel.querySelectorAll('[data-original-value]')) as HTMLElement[];
+    // Prefer the middle segment duplicate
+    let selectedButton = candidates.find(el => el.dataset.originalValue === selectedValue && el.dataset.seg === '1');
+    if (!selectedButton) selectedButton = candidates.find(el => el.dataset.originalValue === selectedValue);
+
+    if (selectedButton) {
+      const carouselRect = carousel.getBoundingClientRect();
+      const buttonRect = selectedButton.getBoundingClientRect();
+      const carouselCenter = carouselRect.left + carouselRect.width / 2;
+      const buttonCenter = buttonRect.left + buttonRect.width / 2;
+      const scrollLeft = carousel.scrollLeft + (buttonCenter - carouselCenter);
+
+      // Use scrollTo so we can control behaviour
+      try {
+        carousel.scrollTo({ left: scrollLeft, behavior: behaviour });
+      } catch (e) {
+        // fallback for older browsers
+        carousel.scrollLeft = scrollLeft;
       }
     }
-  }, [props.value, props.selectedPreset]);
+  };
+
+  // Center on mount/when options change (use instant on init to avoid jump animations)
+  useEffect(() => {
+    // defer to next frames so layout is stable (matches earlier logic)
+    requestAnimationFrame(() => requestAnimationFrame(() => centerSelected(undefined, 'auto')));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.options, props.value, props.selectedPreset]);
 
   const scrollLeft = () => {
     if (carouselRef.current) {
@@ -133,49 +168,95 @@ const PresetCarousel = (props: PresetCarouselProps) => {
 
   const usingOptions = Array.isArray(props.options) && props.options.length > 0;
 
+  // Build a normalized items array (value, label, icon) that we can duplicate
+  const normalizedItems = usingOptions
+    ? props.options!.map(opt => ({ value: opt.value, label: opt.label, icon: opt.icon }))
+    : presets.map(([key, Icon]) => ({ value: key, label: capitalizeLabel(key), icon: Icon }));
+
+  // Triplicate for seamless looping
+  const tripledItems = Array.from({ length: 3 }).flatMap((_, seg) =>
+    normalizedItems.map((it, idx) => ({ ...it, _origIndex: idx, _seg: seg }))
+  );
+
+  // Scroll handler to jump when hitting either edge segment
+  const handleScroll = () => {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+    const seg = carousel.scrollWidth / 3;
+    if (!seg || !isFinite(seg)) return;
+
+    // Use a small pixel threshold so we don't trigger during normal snapping
+    const THRESHOLD = 4; // px
+    const left = carousel.scrollLeft;
+
+    // When we need to jump, disable smooth scrolling and scroll-snap so the
+    // reposition is instantaneous and not visibly animated or snapped.
+    const doInstantJump = (newLeft: number) => {
+      const prevBehavior = carousel.style.scrollBehavior;
+      const prevSnap = carousel.style.scrollSnapType;
+      try {
+        carousel.style.scrollBehavior = 'auto';
+        carousel.style.scrollSnapType = 'none';
+        carousel.scrollLeft = newLeft;
+      } finally {
+        // Restore on next frame so subsequent user scrolls still feel smooth
+        requestAnimationFrame(() => {
+          carousel.style.scrollBehavior = prevBehavior || 'smooth';
+          carousel.style.scrollSnapType = prevSnap || 'x mandatory';
+        });
+      }
+    };
+
+    // if we've scrolled past the left edge into the first segment, jump right
+    if (left <= THRESHOLD) {
+      doInstantJump(left + seg);
+      return;
+    }
+
+    // if we've scrolled into/after the last segment, jump left
+    if (left >= seg * 2 - THRESHOLD) {
+      doInstantJump(left - seg);
+      return;
+    }
+  };
+
   return (
     <div className="preset-carousel-container" onKeyDown={handleKeyDown} tabIndex={0} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
       <div className="arrow-button" onClick={scrollLeft} aria-label="Scroll left"><ChevronLeft size={16} /></div>
-      <div className="preset-carousel" ref={carouselRef}>
-        {usingOptions
-          ? props.options!.map(opt => {
-              const isSelected = props.value === opt.value;
-              const onClick = () => {
-                if (props.onChange) props.onChange(opt.value);
-                else if (props.onPresetClick) props.onPresetClick(opt.value);
-              };
+      <div className="preset-carousel" ref={carouselRef} onScroll={handleScroll}>
+        {tripledItems.map((it, i) => {
+          const origValue = it.value as string;
+          const isSelected = (props.value === origValue) || (props.selectedPreset === origValue);
+          const onClick = () => {
+            if (props.onChange) props.onChange(origValue);
+            else if (props.onPresetClick) props.onPresetClick(origValue);
+            // Center the clicked item immediately. Use 'smooth' so it animates.
+            // We pass the origValue to prefer centering the exact clicked duplicate.
+            centerSelected(origValue, 'smooth');
+          };
 
-              return (
-                <div
-                  key={opt.value}
-                  className={`preset-button ${isSelected ? 'selected' : ''}`}
-                  onClick={onClick}
-                  title={opt.label || capitalizeLabel(opt.value)}
-                  aria-label={`Select ${opt.label || capitalizeLabel(opt.value)}`}
-                  aria-pressed={isSelected}
-                >
-                  <div className="preset-icon" aria-hidden="true">
-                    {opt.icon ? (typeof opt.icon === 'string' ? <TwEmoji text={opt.icon} /> : React.createElement(opt.icon as React.ComponentType<any>, { size: 24 })) : null}
-                  </div>
-                  <div className={`preset-label ${isSelected ? 'visible' : 'hidden'}`}>
-                    {opt.label || capitalizeLabel(opt.value)}
-                  </div>
-                </div>
-              );
-            })
-          : presets.map(([key, Icon]) => (
-              <div
-                  key={key}
-                  className={`preset-button ${props.selectedPreset === key ? 'selected' : ''}`}
-                  onClick={() => props.onPresetClick && props.onPresetClick(key)}
-                  title={capitalizeLabel(key)}
-                  aria-label={`Select ${capitalizeLabel(key)} preset`}
-                  aria-pressed={props.selectedPreset === key}
-                >
-                  <div className="preset-icon" aria-hidden="true"><Icon size={24} /></div>
-                  <div className={`preset-label ${props.selectedPreset === key ? 'visible' : 'hidden'}`}>{capitalizeLabel(key)}</div>
-                </div>
-            ))}
+          const iconSize = isSelected ? 36 : 28;
+
+          return (
+            <div
+              key={`${it._seg}-${it._origIndex}-${i}`}
+              className={`preset-button ${isSelected ? 'selected' : ''}`}
+              onClick={onClick}
+              title={it.label || capitalizeLabel(origValue)}
+              aria-label={`Select ${it.label || capitalizeLabel(origValue)}`}
+              aria-pressed={isSelected}
+              data-original-value={origValue}
+              data-seg={String(it._seg)}
+            >
+              <div className="preset-icon" aria-hidden="true">
+                {it.icon ? (typeof it.icon === 'string' ? <TwEmoji text={it.icon} /> : React.createElement(it.icon as React.ComponentType<any>, { size: iconSize })) : null}
+              </div>
+              <div className={`preset-label ${isSelected ? 'visible' : 'hidden'}`}>
+                {it.label || capitalizeLabel(origValue)}
+              </div>
+            </div>
+          );
+        })}
       </div>
       <div className="arrow-button" onClick={scrollRight} aria-label="Scroll right"><ChevronRight size={16} /></div>
     </div>

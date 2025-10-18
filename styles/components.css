@@ -155,8 +155,8 @@
 
 .preset-carousel {
   /* button geometry variables: change these to control how many fit */
-  --preset-button-width: 60px; /* total width reserved per button */
-  --preset-button-gap: 4px; /* gap between buttons (used for calc only) */
+  --preset-button-width: 72px; /* total width reserved per button (increased for larger icons) */
+  --preset-button-gap: 6px; /* gap between buttons (used for calc only) */
 
   display: flex;
   gap: var(--preset-button-gap);
@@ -170,40 +170,40 @@
   -ms-overflow-style: none; /* IE and Edge */
 }
 
-/* Fade the left and right edges so partially-visible icons soften out.
-   Use mask-image for modern browsers and a pseudo-element gradient as a
-   fallback for WebKit engines that need -webkit-mask-image. This keeps the
-   scrollable area interactive while visually fading items near the edges. */
+/* Stronger fade for the left and right edges so partially-visible icons
+   are much more obscured. We increase the fade bands and make the pseudo-
+   element overlays wider for better fallback coverage. */
 .preset-carousel {
-  /* mask that fades the first and last 24% of the carousel viewport */
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 24%, black 76%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0%, black 24%, black 76%, transparent 100%);
+  /* mask that strongly fades the first and last ~40% of the viewport */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 40%, black 60%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, black 40%, black 60%, transparent 100%);
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
 }
 
-/* Fallback for browsers that don't support mask-image: add a pointer-events:none
-   pseudo-element overlay that visually fades the edges without blocking clicks
-   on controls (pseudo-element itself doesn't accept pointer events). */
+/* Fallback for browsers that don't support mask-image: use wider pseudo-
+   elements with an opaque-to-transparent gradient so the edges are visually
+   faded without blocking pointer events. */
 .preset-carousel::before,
 .preset-carousel::after {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 24%;
+  width: 40%; /* wider fallback to match mask stops */
   pointer-events: none; /* allow clicks to pass through to buttons */
 }
 .preset-carousel::before {
   left: 0;
-  background: linear-gradient(to right, var(--panel), rgba(0,0,0,0));
+  /* stronger fade: panel color -> transparent */
+  background: linear-gradient(to right, var(--panel) 0%, rgba(0,0,0,0) 60%);
   mix-blend-mode: normal;
 }
 .preset-carousel::after {
   right: 0;
-  background: linear-gradient(to left, var(--panel), rgba(0,0,0,0));
+  background: linear-gradient(to left, var(--panel) 0%, rgba(0,0,0,0) 60%);
   mix-blend-mode: normal;
 }
 
@@ -267,9 +267,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  font-size: 24px;
+  /* larger base icon container so icons look prominent */
+  width: 28px;
+  height: 28px;
+  font-size: 28px;
 }
 
 .preset-icon .twemoji img {
@@ -318,8 +319,9 @@
   border-color: var(--border);
   color: var(--text);
   box-shadow: none !important;
-  width: 76px;
-  flex: 0 0 76px;
+  /* selected button gets extra width to accommodate label and larger icon */
+  width: 88px;
+  flex: 0 0 88px;
 }
 
 /* keyboard focus styles for accessibility */
@@ -354,9 +356,10 @@
 .preset-button[aria-pressed="true"] .preset-icon {
   color: var(--accent);
   opacity: 1;
-  width: 28px;
-  height: 28px;
-  font-size: 28px;
+  /* selected icon grows larger to emphasize the top preset */
+  width: 36px;
+  height: 36px;
+  font-size: 36px;
 }
 
 .preset-button.selected .preset-icon .twemoji img,
@@ -735,4 +738,12 @@
 .preset-button[aria-pressed="true"] > .preset-label {
   color: var(--text);
   max-width: none; /* allow full width within selected button */
+}
+
+/* Form divider for visual separation in NewsForm */
+.form-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 10px 0;
+  border: none;
 }

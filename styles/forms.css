@@ -3,6 +3,11 @@
   margin-bottom: 6px;
 }
 
+.regions-group,
+.category-group {
+  margin-bottom: 24px;
+}
+
 /* Balanced slider layout for the main controls */
 
 /* Compact slider layout - horizontal arrangement */
@@ -73,7 +78,7 @@ select, input[type="text"], input[type="number"] {
   transition: var(--transition);
   font-size: 14px;
   /* include common color-emoji fonts as fallbacks so regional indicator flags render */
-  font-family: "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Symbol", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Playfair Display', "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Symbol", serif;
 }
 
 /* Improve native dropdown option readability in dark/light themes */
@@ -84,7 +89,7 @@ select option, select optgroup {
 
 /* Ensure options also prefer emoji-capable fonts in Chromium-based browsers */
 select option {
-  font-family: "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Symbol", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: 'Playfair Display', "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Symbol", serif;
 }
 
 select option:checked, select option:hover {
