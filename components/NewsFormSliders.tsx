@@ -7,9 +7,10 @@ import { SliderValue } from './SliderValue';
 interface Props {
   preferences: Preferences;
   onPreferenceChange: (key: keyof Preferences, value: string) => void;
+  onSliderDrag?: (isDragging: boolean) => void;
 }
 
-export default function NewsFormSliders({ preferences, onPreferenceChange }: Props) {
+export default function NewsFormSliders({ preferences, onPreferenceChange, onSliderDrag }: Props) {
   const [dragging, setDragging] = React.useState<{timeframe?: boolean, limit?: boolean, length?: boolean}>({});
 
   const handleTimeframeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,16 +40,25 @@ export default function NewsFormSliders({ preferences, onPreferenceChange }: Pro
 
   const handlePointerDown = (slider: keyof typeof dragging) => {
     setDragging(prev => ({ ...prev, [slider]: true }));
+    onSliderDrag?.(true);
   };
 
   const handlePointerUp = (slider: keyof typeof dragging) => {
     setDragging(prev => ({ ...prev, [slider]: false }));
+    // Check if any slider is still being dragged
+    const newDragging = { ...dragging };
+    delete newDragging[slider];
+    const stillDragging = Object.values(newDragging).some(isDragging => isDragging);
+    if (!stillDragging) {
+      onSliderDrag?.(false);
+    }
   };
 
   // Handle pointer up events globally to ensure dragging state is reset
   React.useEffect(() => {
     const handleGlobalPointerUp = () => {
       setDragging({});
+      onSliderDrag?.(false);
     };
 
     document.addEventListener('pointerup', handleGlobalPointerUp);
@@ -58,7 +68,7 @@ export default function NewsFormSliders({ preferences, onPreferenceChange }: Pro
       document.removeEventListener('pointerup', handleGlobalPointerUp);
       document.removeEventListener('pointercancel', handleGlobalPointerUp);
     };
-  }, []);
+  }, [onSliderDrag]);
 
   return (
     <div className="form-group">

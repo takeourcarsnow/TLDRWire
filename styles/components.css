@@ -214,7 +214,7 @@
   margin: 0 0 12px 0;
   font-size: 1rem;
   color: var(--text);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .note {
@@ -350,7 +350,7 @@
 .history-timestamp {
   font-size: 0.8rem;
   color: var(--muted);
-  font-weight: 500;
+  font-weight: 400;
   flex-shrink: 0;
 }
 
@@ -365,7 +365,7 @@
   font-size: 0.75rem;
   padding: 4px 10px;
   border-radius: 20px;
-  font-weight: 500;
+  font-weight: 400;
   text-transform: capitalize;
   border: 1px solid transparent;
 }
@@ -424,7 +424,7 @@
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 400;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text);

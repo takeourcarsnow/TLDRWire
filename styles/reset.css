@@ -12,6 +12,7 @@ body {
   color: var(--text);
   line-height: 1.6;
   font-size: 16px;
+  font-weight: 400;
   transition: var(--transition);
   will-change: background-color, color;
 }

@@ -38,6 +38,7 @@
   word-break: break-word;
   max-height: calc(100vh - 160px);
   overflow-y: auto;
+  font-weight: 400;
 }
 
 /* compact reading mode removed; density controlled via font size slider */

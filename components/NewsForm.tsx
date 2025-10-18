@@ -13,13 +13,14 @@ interface NewsFormProps {
   rateLimited?: boolean;
   rateLimitCountdown?: number;
   selectedPreset?: string | null;
+  onSliderDrag?: (isDragging: boolean) => void;
 }
 
 export const NewsForm = React.memo(function NewsForm(props: NewsFormProps) {
   return (
     <>
       <NewsFormSelectors preferences={props.preferences} onPreferenceChange={props.onPreferenceChange} />
-      <NewsFormSliders preferences={props.preferences} onPreferenceChange={props.onPreferenceChange} />
+      <NewsFormSliders preferences={props.preferences} onPreferenceChange={props.onPreferenceChange} onSliderDrag={props.onSliderDrag} />
       <NewsFormActions onGenerate={props.onGenerate} onPresetClick={props.onPresetClick} isLoading={props.isLoading} rateLimited={props.rateLimited} rateLimitCountdown={props.rateLimitCountdown} />
     </>
   );

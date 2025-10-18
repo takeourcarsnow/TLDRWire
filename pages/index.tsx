@@ -69,6 +69,7 @@ export default function Home() {
   const [lastGenerateTime, setLastGenerateTime] = useState<number>(0);
   const [rateLimitCountdown, setRateLimitCountdown] = useState<number>(0);
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+  const [isDraggingSlider, setIsDraggingSlider] = useState(false);
 
   // Memoized markdown renderer so the function reference is stable across renders
   const memoizedRenderMarkdownToElement = renderMarkdownToElement;
@@ -350,16 +351,15 @@ export default function Home() {
       <header>
         <ThemeToggle theme={theme} onToggle={toggleTheme} />
         <div className="header-content">
-          <h1>TLDRWire</h1>
-          <span className="tag">AI-powered quick rundowns 📰</span>
-          <div style={{ marginLeft: 12 }}>
-            {/* History is now available in the output controls */}
+          <div className="header-main">
+            <h1>TLDRWire</h1>
+            <span className="tag">Get the news, minus the noise</span>
           </div>
         </div>
       </header>
 
       <main>
-        <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab}>
+        <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab} disabled={isDraggingSlider}>
           <section className="panel">
             <PresetCarousel onPresetClick={handlePresetClick} selectedPreset={selectedPreset} />
             <NewsForm
@@ -371,6 +371,7 @@ export default function Home() {
               isLoading={isLoading}
               rateLimited={rateLimitCountdown > 0}
               rateLimitCountdown={rateLimitCountdown}
+              onSliderDrag={setIsDraggingSlider}
             />
           </section>
 

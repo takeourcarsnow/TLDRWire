@@ -17,7 +17,7 @@
 }
 
 .slider-group > label {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--muted);
   display: block;
   margin-bottom: 6px;
@@ -47,7 +47,7 @@ label {
   color: var(--muted);
   margin-bottom: 6px;
   display: block;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 /* Prefer emoji-capable fonts on form controls so country flags render in Chromium on Windows */
@@ -135,7 +135,7 @@ button {
   padding: 12px 20px;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 14px;
   box-shadow: 0 4px 12px rgba(77,163,255,0.3);
   transition: var(--transition);
