@@ -30,7 +30,7 @@
 }
 
 header {
-  padding: 20px 24px;
+  padding: 16px 24px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -103,14 +103,14 @@ header .tag {
 main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 16px 80px; /* Add bottom padding for navbar */
+  padding: 0 16px 60px; /* Add bottom padding for navbar */
   /* Allow page flow to determine height so sections don't stretch to full
      viewport height when content is short. Removing the forced min-height
      prevents large empty areas and avoids extra scrolling on short pages. */
 }
 
 .panel {
-  padding: 16px;
+  padding: 12px;
   position: relative;
   overflow: visible;
 }
@@ -203,30 +203,7 @@ footer {
   z-index: 1000;
 }
 
-/* Pill highlight that sits behind the active tab */
-.bottom-navbar {
-  --nav-pill-left-percent: 50%;
-  --nav-pill-width-percent: 20%;
-}
-.bottom-navbar .nav-pill {
-  position: absolute;
-  left: var(--nav-pill-left-percent);
-  transform: translateX(-50%);
-  /* move pill slightly closer to the bar and make it smaller for a subtle look */
-  bottom: 8px;
-  height: 28px; /* reduced height */
-  width: calc(var(--nav-pill-width-percent) * 1% - 8px); /* slightly narrower than button */
-  background: linear-gradient(90deg, rgba(77,163,255,0.08), rgba(122,240,178,0.04));
-  border: 1px solid rgba(77,163,255,0.08);
-  opacity: 0.85;
-  border-radius: 999px;
-  transition: left 220ms cubic-bezier(0.22,1,0.36,1), width 220ms cubic-bezier(0.22,1,0.36,1), background 220ms, opacity 180ms, transform 220ms;
-  pointer-events: none;
-  z-index: 2;
-}
-
 /* Replace the pill with a tiny centered dot indicator for subtlety */
-.bottom-navbar .nav-pill { display: none; }
 .bottom-navbar .nav-dot {
   position: absolute;
   left: var(--nav-dot-left-percent, 50%);

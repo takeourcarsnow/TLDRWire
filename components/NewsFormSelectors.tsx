@@ -14,26 +14,23 @@ export default function NewsFormSelectors({ preferences, onPreferenceChange }: P
   return (
     <>
       <div className="form-group">
-        <div className="row">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-            <label htmlFor="region" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}><MapPin size={16} /> Region:</label>
-            <PresetCarousel options={REGION_OPTIONS} value={preferences.region} onChange={(v) => onPreferenceChange('region', v)} />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-            <label htmlFor="language" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}><Globe size={16} /> Language:</label>
-            <PresetCarousel options={LANGUAGE_OPTIONS} value={preferences.language} onChange={(v) => onPreferenceChange('language', v)} />
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+          <label htmlFor="region" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', color: 'var(--text)' }}><MapPin size={16} /> Regions and Language:</label>
+          <PresetCarousel options={REGION_OPTIONS} value={preferences.region} onChange={(v) => onPreferenceChange('region', v)} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+          <PresetCarousel options={LANGUAGE_OPTIONS} value={preferences.language} onChange={(v) => onPreferenceChange('language', v)} />
         </div>
       </div>
 
       <div className="form-group">
         <div className="row">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-            <label htmlFor="category" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}><Folder size={16} /> Category:</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+            <label htmlFor="category" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', color: 'var(--text)' }}><Folder size={16} /> Category:</label>
             <PresetCarousel options={CATEGORY_OPTIONS} value={preferences.category} onChange={(v) => onPreferenceChange('category', v)} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-            <label htmlFor="style" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}><PenTool size={16} /> Writing Style:</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+            <label htmlFor="style" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', color: 'var(--text)' }}><PenTool size={16} /> Writing Style:</label>
             <PresetCarousel options={STYLE_OPTIONS} value={preferences.style} onChange={(v) => onPreferenceChange('style', v)} />
           </div>
         </div>

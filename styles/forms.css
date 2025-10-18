@@ -1,6 +1,6 @@
 /* Form improvements */
 .form-group {
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
 /* Balanced slider layout for the main controls */
@@ -94,7 +94,7 @@ select:hover, input:hover {
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 12px;
 }
 
 .row-3 {
@@ -106,7 +106,7 @@ select:hover, input:hover {
 .actions {
   display: flex;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 16px;
   flex-wrap: wrap;
   justify-content: center;
 }

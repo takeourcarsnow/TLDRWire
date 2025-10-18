@@ -137,8 +137,9 @@
 .preset-carousel-container {
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 8px;
-  margin: 16px 0;
+  margin: 6px 0;
   position: relative;
 }
 
@@ -275,6 +276,7 @@
     max-height: 40px;
     opacity: 1;
     transform: translateY(0);
+    max-width: none; /* allow full width within selected button on small screens */
   }
 
   /* use smaller button geometry on very small screens */
@@ -315,6 +317,7 @@
   /* keep position stable (no transform); use color/spacing for subtle emphasis */
   color: var(--text) !important;
   letter-spacing: 0.25px !important;
+  max-width: none !important; /* allow full width within selected button */
 }
 
 /* subtle lift + shadow for selected button */
@@ -728,4 +731,5 @@
   opacity: 1 !important;
   transform: translateY(0) !important;
   color: var(--text) !important;
+  max-width: none !important; /* allow full width within selected button */
 }
