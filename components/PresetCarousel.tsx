@@ -139,15 +139,55 @@ const PresetCarousel = (props: PresetCarouselProps) => {
   }, [props.options, props.value, props.selectedPreset]);
 
   const scrollLeft = () => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: -200, behavior: 'smooth' });
-    }
+    // Move to the previous preset by centering the previous item in the middle segment.
+    centerNeighbor(-1);
   };
 
   const scrollRight = () => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: 200, behavior: 'smooth' });
-    }
+    // Move to the next preset by centering the next item in the middle segment.
+    centerNeighbor(1);
+  };
+
+  // Center the neighboring item relative to the currently centered item.
+  // direction: 1 -> next, -1 -> previous
+  const centerNeighbor = (direction: 1 | -1) => {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+
+    const candidates = Array.from(carousel.querySelectorAll('[data-original-value]')) as HTMLElement[];
+    if (candidates.length === 0) return;
+
+    // Prefer the middle segment duplicates
+    const midCandidates = candidates.filter(el => el.dataset.seg === '1');
+    const list = midCandidates.length ? midCandidates : candidates;
+
+    const carouselRect = carousel.getBoundingClientRect();
+    const carouselCenter = carouselRect.left + carouselRect.width / 2;
+
+    // find index of currently centered item
+    let closestIndex = 0;
+    let closestDist = Number.POSITIVE_INFINITY;
+    list.forEach((el, idx) => {
+      const r = el.getBoundingClientRect();
+      const center = r.left + r.width / 2;
+      const dist = Math.abs(center - carouselCenter);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestIndex = idx;
+      }
+    });
+
+    const nextIndex = (closestIndex + direction + list.length) % list.length;
+    const nextEl = list[nextIndex];
+    const val = nextEl?.dataset.originalValue;
+    if (!val) return;
+
+    // Notify parent of the change
+    if (props.onChange) props.onChange(val);
+    else if (props.onPresetClick) props.onPresetClick(val);
+
+    // Center the chosen item smoothly (centerSelected prefers middle segment duplicate)
+    centerSelected(val, 'smooth');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -176,7 +216,6 @@ const PresetCarousel = (props: PresetCarouselProps) => {
   const handleTouchEnd = (e: React.TouchEvent) => {
     e.stopPropagation();
     isInteractingRef.current = false;
-    selectClosest();
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -208,7 +247,6 @@ const PresetCarousel = (props: PresetCarouselProps) => {
         suppressClickUntilRef.current = Date.now() + 200; // ms
         // reset moved flag now; click handler will check the timestamp
         movedRef.current = false;
-        selectClosest();
       }
 
       isDraggingRef.current = false;

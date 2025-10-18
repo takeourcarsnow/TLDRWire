@@ -81,8 +81,16 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center; /* center vertically within the panel */
   text-align: center;
   overflow: hidden;
+  /* Give the home panel a reasonable min-height so its contents
+     can be vertically centered on most viewports while leaving
+     room for the header and bottom navbar. */
+  min-height: calc(100vh - 220px);
+  box-sizing: border-box;
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
 
 .panel:first-child .form-group {
@@ -97,6 +105,10 @@ main {
   justify-content: center;
   width: 100%;
   max-width: 800px;
+}
+
+.panel:first-child .row {
+  align-items: center; /* vertically center items inside rows */
 }
 
 .panel:first-child .slider-row {
@@ -131,6 +143,10 @@ main {
   justify-content: center;
   max-width: 600px;
   width: 100%;
+}
+
+.panel:first-child .actions {
+  display: flex; /* ensure actions container is a flexbox for proper centering */
 }
 
 .panel:first-child .row > div {
@@ -199,4 +215,13 @@ footer {
 .nav-label {
   font-size: 10px;
   font-weight: 400;
+}
+
+/* Reduce home panel min-height on small screens so content doesn't feel cramped */
+@media (max-width: 640px) {
+  .panel:first-child {
+    min-height: 60vh;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
 }

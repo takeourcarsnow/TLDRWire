@@ -608,12 +608,17 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   line-clamp: 3;
+  text-align: center;
 }
 
 .history-snippet * {
   color: inherit !important;
   font-size: inherit !important;
   line-height: inherit !important;
+}
+
+.history-full {
+  text-align: center;
 }
 
 .history-actions {
