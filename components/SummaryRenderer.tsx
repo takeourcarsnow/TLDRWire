@@ -157,19 +157,7 @@ export default function SummaryRenderer({ summary, isLoading, summaryRef }: Prop
       ref={summaryRef}
       className="summary"
       aria-label="News summary"
-      aria-busy={isLoading}
     >
-      {isLoading && (
-        <>
-          <div className="skeleton" style={{ height: '20px', width: '55%', margin: '10px 0' }}></div>
-          <div className="skeleton" style={{ height: '14px', width: '100%', margin: '8px 0' }}></div>
-          <div className="skeleton" style={{ height: '14px', width: '96%', margin: '8px 0' }}></div>
-          <div className="skeleton" style={{ height: '14px', width: '90%', margin: '8px 0 16px' }}></div>
-          <div className="skeleton" style={{ height: '16px', width: '45%', margin: '8px 0' }}></div>
-          <div className="skeleton" style={{ height: '14px', width: '98%', margin: '8px 0' }}></div>
-          <div className="skeleton" style={{ height: '14px', width: '93%', margin: '8px 0' }}></div>
-        </>
-      )}
       {!isLoading && !summary && (
         <div style={{
           textAlign: 'center',

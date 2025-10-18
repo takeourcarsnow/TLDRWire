@@ -7,19 +7,6 @@ interface Props {
 }
 
 export default function NewsStatus({ isLoading, error, dataCached }: Props) {
-  if (isLoading) {
-    return (
-      <div className="loader" role="status" aria-live="polite">
-        <span className="spinner" aria-hidden="true"></span>
-        <div className="message">
-          <strong>Analyzing latest news…</strong>
-          <span className="subtle">This usually takes a few seconds</span>
-          {/* progress visual now rendered via CSS pseudo-element on .loader .message ::after */}
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     let message = '❌ ';
     if (error.includes('GEMINI_API_KEY')) {

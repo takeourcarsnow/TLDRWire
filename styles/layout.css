@@ -41,7 +41,6 @@ header {
   -webkit-backdrop-filter: blur(10px);
   z-index: 100;
   border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
   animation: slideDown 0.3s ease-out;
 }
@@ -59,7 +58,7 @@ header {
 
 .header-content {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   width: 100%;
   max-width: 1200px;
@@ -68,7 +67,7 @@ header {
 .header-main {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
 }
 
@@ -201,25 +200,6 @@ footer {
   justify-content: space-around;
   padding: 8px 0;
   z-index: 1000;
-}
-
-/* Replace the pill with a tiny centered dot indicator for subtlety */
-.bottom-navbar .nav-dot {
-  position: absolute;
-  left: var(--nav-dot-left-percent, 50%);
-  /* sit lower (closer to the bottom edge) so it doesn't overlap labels */
-  bottom: 4px;
-  transform: translateX(-50%);
-  width: 6px;
-  height: 6px;
-  background: var(--accent);
-  border-radius: 50%;
-  box-shadow: 0 4px 8px rgba(77,163,255,0.08);
-  opacity: 0.95;
-  transition: left 180ms cubic-bezier(0.22,1,0.36,1), opacity 140ms;
-  /* render behind the tab content so it never covers icon/label */
-  z-index: 1;
-  pointer-events: none;
 }
 
 .bottom-navbar .nav-tab {

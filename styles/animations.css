@@ -58,8 +58,8 @@
 }
 
 @keyframes metaMarquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(calc(var(--meta-marquee-translate, 50%) * -1)); }
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
 }
 
 @keyframes presetSelect {
@@ -105,11 +105,11 @@
 
 /* Respect reduced-motion */
 @media (prefers-reduced-motion: reduce) {
-  .meta-strip.meta-scroll .meta-strip-inner { animation: none !important; }
   .preset-button.selected { animation: none !important; }
   .preset-button.selected .preset-icon { animation: none !important; }
   .preset-button.selected .preset-label { animation: none !important; }
   .preset-button.selected { transform: none !important; }
   .preset-button.selected .preset-icon { transform: none !important; }
   .preset-button.selected .preset-label { transform: none !important; }
+  .meta-strip-inner { animation: none !important; }
 }

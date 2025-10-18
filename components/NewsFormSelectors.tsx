@@ -24,15 +24,16 @@ export default function NewsFormSelectors({ preferences, onPreferenceChange }: P
       </div>
 
       <div className="form-group">
-        <div className="row">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1 }}>
-            <label htmlFor="category" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '6px' }}><Folder size={16} /> Category</label>
-            <PresetCarousel options={CATEGORY_OPTIONS} value={preferences.category} onChange={(v) => onPreferenceChange('category', v)} />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1 }}>
-            <label htmlFor="style" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '6px' }}><PenTool size={16} /> Writing Style</label>
-            <PresetCarousel options={STYLE_OPTIONS} value={preferences.style} onChange={(v) => onPreferenceChange('style', v)} />
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1 }}>
+          <label htmlFor="category" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '6px' }}><Folder size={16} /> Category</label>
+          <PresetCarousel options={CATEGORY_OPTIONS} value={preferences.category} onChange={(v) => onPreferenceChange('category', v)} />
+        </div>
+      </div>
+
+      <div className="form-group">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1 }}>
+          <label htmlFor="style" style={{ marginBottom: 0, flexShrink: 0, fontSize: '14px', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '6px' }}><PenTool size={16} /> Writing Style</label>
+          <PresetCarousel options={STYLE_OPTIONS} value={preferences.style} onChange={(v) => onPreferenceChange('style', v)} />
         </div>
       </div>
     </>

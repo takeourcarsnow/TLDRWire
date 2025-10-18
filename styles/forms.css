@@ -221,6 +221,7 @@ button.danger {
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
 }
 
 /* Custom select/listbox styles */

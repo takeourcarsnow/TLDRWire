@@ -10,6 +10,33 @@
   overflow: hidden;
 }
 
+/* Summary container for proper scrolling */
+.summary-container {
+  max-height: calc(100vh - 300px); /* Adjust to leave space for meta, status, controls */
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(77,163,255,0.22) rgba(255,255,255,0.02);
+}
+
+.summary-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+.summary-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.summary-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(77,163,255,0.14), rgba(77,163,255,0.22));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.summary-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(77,163,255,0.20), rgba(77,163,255,0.30));
+}
+
 /* Enhanced loading states */
 .loading {
   display: inline-flex;
@@ -173,9 +200,9 @@
   gap: var(--preset-button-gap);
   overflow-x: auto;
   scroll-behavior: smooth;
-  /* limit the visible area so exactly 6 buttons fit in the viewport */
+  /* limit the visible area so exactly 7 buttons fit in the viewport */
   flex: 0 1 auto;
-  max-width: calc(var(--preset-button-width) * 6 + var(--preset-button-gap) * 5);
+  max-width: calc(var(--preset-button-width) * 7 + var(--preset-button-gap) * 6);
   scroll-snap-type: x mandatory;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */

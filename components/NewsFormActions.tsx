@@ -22,16 +22,11 @@ export default function NewsFormActions({ onGenerate, onPresetClick, isLoading, 
             disabled={isLoading || rateLimited}
             style={rateLimited ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
           >
-          {isLoading ? (
-            <>
-              <span className="btn-spinner" aria-hidden="true"></span>
-              <span>Analyzing latest news…</span>
-            </>
-          ) : rateLimited ? (
-            <span><Clock size={16} /> Wait {rateLimitCountdown}s…</span>
-          ) : (
-            <span><Sparkles size={16} /> Generate TLDR</span>
-          )}
+            {rateLimited ? (
+              <span><Clock size={16} /> Wait {rateLimitCountdown}s…</span>
+            ) : (
+              <span><Sparkles size={16} /> Generate TLDR</span>
+            )}
           </button>
         </div>
       </div>

@@ -101,9 +101,11 @@ export function NewsOutput({ isLoading, error, data, lastRequest, onHistory }: N
         <NewsStatus isLoading={isLoading} error={error} dataCached={!!data?.cached} />
       </div>
 
-      <SummaryRenderer summary={data?.summary || null} isLoading={isLoading} summaryRef={summaryRef} />
+      <div className="summary-container">
+        <SummaryRenderer summary={data?.summary || null} isLoading={isLoading} summaryRef={summaryRef} />
+      </div>
 
-      <NewsControls isHidden={isLoading || !!error} onCopy={copyToClipboard} onShare={shareContent} onHistory={onHistory || (() => {})} onPrint={printSummary} />
+      <NewsControls isHidden={!!error} onCopy={copyToClipboard} onShare={shareContent} onHistory={onHistory || (() => {})} onPrint={printSummary} />
     </>
   );
 }
