@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { renderMarkdownToElement } from '../utils/rendering';
 import Head from 'next/head';
 import { useTheme } from '../hooks/useTheme';
 import { usePreferences, type Preferences } from '../hooks/usePreferences';
@@ -24,46 +25,8 @@ export default function Home() {
   const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<any | null>(null);
   const selectedSummaryRef = useRef<HTMLDivElement | null>(null);
   const [activeTab, setActiveTab] = useState(0);
-  // Memoized markdown renderer so the function reference is stable across renders
-  const renderMarkdownToElement = useMemo(() => {
-    return (el: HTMLDivElement | null, markdown: string | undefined) => {
-      if (!el || !markdown) return;
-      try {
-        const mdLib = (window as any).marked;
-        const sanitizer = (window as any).DOMPurify;
-        const html = sanitizer ? sanitizer.sanitize(mdLib ? mdLib.parse(markdown) : markdown) : (mdLib ? mdLib.parse(markdown) : markdown);
-        const temp = document.createElement('div');
-        temp.innerHTML = html;
-        const children = Array.from(temp.children);
-        el.innerHTML = '';
-        children.forEach((child, idx) => {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'reveal-up';
-          wrapper.style.animationDelay = `${Math.min(idx * 60, 360)}ms`;
-          wrapper.appendChild(child);
-          el.appendChild(wrapper);
-        });
-
-        // Keep link processing lightweight; delegate complex behaviour to NewsOutput when available
-        el.querySelectorAll('a').forEach((link) => {
-          try {
-            link.setAttribute('target', '_blank');
-            link.setAttribute('rel', 'noopener noreferrer');
-            const rawHref = link.getAttribute('href') || '';
-            if (rawHref && !/^https?:/i.test(rawHref)) return;
-            const href = rawHref || '#';
-            const url = new URL(href, window.location.href);
-            const host = (url.hostname || '').replace(/^www\./, '');
-            link.title = `Open ${host || 'link'} in new tab`;
-          } catch (e) {
-            // ignore link processing errors
-          }
-        });
-      } catch (err) {
-        if (el) el.textContent = markdown || '';
-      }
-    };
-  }, []);
+  // Memoized reference to the shared markdown renderer so history and output look identical
+  const renderMarkdownToElementMemo = useMemo(() => renderMarkdownToElement, []);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const lastRequestRef = useRef<any>(null);
   const [lastGenerateTime, setLastGenerateTime] = useState<number>(0);
@@ -72,7 +35,7 @@ export default function Home() {
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
 
   // Memoized markdown renderer so the function reference is stable across renders
-  const memoizedRenderMarkdownToElement = renderMarkdownToElement;
+  const memoizedRenderMarkdownToElement = renderMarkdownToElementMemo;
 
   useEffect(() => {
     // Health check on mount - only run in non-localhost environments to avoid
