@@ -134,59 +134,96 @@
 }
 
 /* Preset Carousel */
+.preset-carousel-container {
+  display: flex;
+  padding: 8px;
+  margin: 16px 0;
+  position: relative;
+}
+
+.preset-carousel-container::before,
+.preset-carousel-container::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  width: 20px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.preset-carousel-container::before {
+  left: 40px;
+  background: linear-gradient(to right, var(--bg-primary), transparent);
+}
+
+.preset-carousel-container::after {
+  right: 40px;
+  background: linear-gradient(to left, var(--bg-primary), transparent);
+}
+
 .preset-carousel {
   display: flex;
-  gap: 6px;
   overflow-x: auto;
-  padding: 8px 16px;
-  margin: 16px auto;
-  max-width: 600px;
   scroll-behavior: smooth;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  flex: 1;
+  max-width: 160px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
 .preset-carousel::-webkit-scrollbar {
-  display: none;
+  display: none; /* Chrome, Safari, Opera */
 }
 
-.preset-button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 6px 8px;
-  min-height: 46px;
-  border-radius: 8px;
-  border: 1px solid transparent;
+.preset-button,
+.arrow-button {
+  border: 1px solid var(--border);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  outline: none;
   background: var(--bg-secondary);
-  color: var(--text);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 92px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
+  scroll-snap-align: start;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-.preset-button span {
-  font-size: 10px;
-  text-align: center;
-  line-height: 1.1;
-  max-width: 76px;
+@media (max-width: 600px) {
+  .arrow-button {
+    width: 24px;
+    height: 24px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
 }
 
-/* Visual highlight for the selected preset */
-.preset-button.preset-selected {
-  background: var(--accent);
-  color: white;
-}
-
-.preset-button:hover:not(:disabled) {
+.preset-button:hover,
+.preset-button:focus,
+.preset-button:active,
+.arrow-button:hover,
+.arrow-button:focus,
+.arrow-button:active {
   background: rgba(77,163,255,0.1);
+  border-color: rgba(77,163,255,0.3);
   transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(77,163,255,0.2);
 }
 
-.preset-button:active {
-  transform: translateY(0);
+.preset-button.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(77,163,255,0.4);
 }
 
 /* Panel headers */
