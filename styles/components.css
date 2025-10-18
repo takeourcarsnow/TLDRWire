@@ -164,11 +164,17 @@
 }
 
 .preset-carousel {
+  /* button geometry variables: change these to control how many fit */
+  --preset-button-width: 40px; /* total width reserved per button */
+  --preset-button-gap: 4px; /* gap between buttons (used for calc only) */
+
   display: flex;
+  gap: var(--preset-button-gap);
   overflow-x: auto;
   scroll-behavior: smooth;
-  flex: 1;
-  max-width: 160px;
+  /* limit the visible area so exactly 6 buttons fit in the viewport */
+  flex: 0 1 auto;
+  max-width: calc(var(--preset-button-width) * 6 + var(--preset-button-gap) * 5);
   scroll-snap-type: x mandatory;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
@@ -178,7 +184,6 @@
   display: none; /* Chrome, Safari, Opera */
 }
 
-.preset-button,
 .arrow-button {
   border: none;
   -webkit-appearance: none;
@@ -198,6 +203,125 @@
   cursor: pointer;
 }
 
+/* Preset buttons: stack icon + label vertically and allow wider buttons to
+   accommodate labels. Arrow buttons remain compact. */
+.preset-button {
+  border: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  outline: none;
+  background: var(--bg-secondary);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0px; /* minimal gap between icon and label */
+  padding: 1px 2px; /* very tight padding */
+  /* give each button a stable width so 6 always fit */
+  width: var(--preset-button-width);
+  flex: 0 0 var(--preset-button-width);
+  height: auto;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  /* subtle non-motion transitions: color and background only */
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+  cursor: pointer;
+}
+
+.preset-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+/* icon scaling animation when selected */
+.preset-button .preset-icon {
+  /* icon color/opacity can animate; avoid transforms */
+  transition: color 180ms ease, opacity 160ms ease;
+}
+
+.preset-label {
+  font-size: 10px;
+  line-height: 1;
+  color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  display: block;
+  max-width: 40px; /* much narrower for compact layout */
+  /* hidden by default; reveal using the .visible class */
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  /* animate opacity and color/letter-spacing subtly; avoid transform-based motion */
+  transition: max-height 180ms ease, opacity 180ms ease, color 200ms ease, letter-spacing 200ms ease;
+  letter-spacing: 0;
+}
+
+/* On very small screens, hide labels to keep the carousel compact and
+   allow more icons to fit in one row. */
+@media (max-width: 420px) {
+  /* hide labels by default on very small screens to keep icons dense */
+  .preset-label { display: none; }
+  /* but allow the selected / visible label to appear when active */
+  .preset-label.visible,
+  .preset-button.selected .preset-label {
+    display: block;
+    max-height: 40px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* use smaller button geometry on very small screens */
+  :root, .preset-carousel { --preset-button-width: 28px; --preset-button-gap: 2px; }
+  .preset-button { padding: 2px; width: var(--preset-button-width); flex: 0 0 var(--preset-button-width); }
+  .preset-icon { width: 14px; height: 14px; }
+}
+
+/* Backwards-compat: some code toggles 'hidden'/'visible' classes. Keep
+   hidden behavior available but show labels by default. */
+.preset-label.hidden {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  overflow: hidden;
+}
+
+/* label reveal uses max-height/opacity but also a tiny upward translation
+  to feel more like it's sliding into place */
+.preset-label.visible,
+.preset-button.selected > .preset-label,
+.preset-button.selected .preset-label {
+  /* reveal label when visible/selected - use important to override
+     other display rules (small-screen hiding, other styles). */
+  display: block !important;
+  max-height: 40px !important; /* enough for single line */
+  opacity: 1 !important;
+  /* keep position stable (no transform); use color/spacing for subtle emphasis */
+  color: var(--text) !important;
+  letter-spacing: 0.25px !important;
+}
+
+/* subtle lift + shadow for selected button */
+.preset-button.selected,
+.preset-button[aria-pressed="true"] {
+  /* color/background indicates selection */
+  background: var(--bg-secondary);
+  border-color: var(--border);
+  color: var(--text);
+  box-shadow: none !important;
+  animation: presetSelect 0.3s ease-out;
+}
+
+/* keyboard focus styles for accessibility */
+.preset-button:focus-visible {
+  outline: 2px solid rgba(77,163,255,0.18);
+  outline-offset: 2px;
+}
+
 @media (max-width: 600px) {
   .arrow-button {
     width: 24px;
@@ -209,14 +333,20 @@
 
 
 
-.preset-button.selected {
-  background: var(--bg-secondary);
-  border-color: var(--border);
-  color: var(--text);
-}
-
 .preset-button.selected svg {
   color: var(--accent);
+}
+
+/* subtle selected-state color for icon and label (no motion) */
+.preset-button.selected .preset-icon,
+.preset-button[aria-pressed="true"] .preset-icon {
+  color: var(--accent);
+  opacity: 1;
+  animation: presetIconPulse 0.4s ease-out;
+}
+.preset-button.selected .preset-label,
+.preset-button[aria-pressed="true"] .preset-label {
+  color: var(--text);
 }
 
 /* Panel headers */
@@ -570,4 +700,15 @@
 
 .modal .content p {
   margin: 0.6em 0;
+}
+
+/* Also reveal label when the button is marked as pressed (accessibility state).
+   This covers cases where JS toggles aria-pressed instead of adding classes. */
+.preset-button[aria-pressed="true"] .preset-label,
+.preset-button[aria-pressed="true"] > .preset-label {
+  display: block !important;
+  max-height: 40px !important;
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  color: var(--text) !important;
 }

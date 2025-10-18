@@ -62,7 +62,21 @@
   100% { transform: translateX(calc(var(--meta-marquee-translate, 50%) * -1)); }
 }
 
+@keyframes presetSelect {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes presetIconPulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 /* Respect reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   .meta-strip.meta-scroll .meta-strip-inner { animation: none !important; }
+  .preset-button.selected { animation: none !important; }
+  .preset-button.selected .preset-icon { animation: none !important; }
 }
