@@ -104,7 +104,7 @@ const PresetCarousel = (props: PresetCarouselProps) => {
   // Utility to center a given original value in the carousel. If possible
   // prefer the duplicate that lives in the middle segment (seg === '1') so
   // we remain in the middle tripled segment.
-  const centerSelected = (value?: string, behaviour: ScrollBehavior = 'smooth') => {
+  const centerSelected = (value?: string, behaviour: 'auto' | 'smooth' = 'smooth') => {
     const selectedValue = value || props.value || props.selectedPreset;
     const carousel = carouselRef.current;
     if (!selectedValue || !carousel) return;
@@ -187,52 +187,66 @@ const PresetCarousel = (props: PresetCarouselProps) => {
       scrollEndTimeoutRef.current = null;
     }
 
-    // Start drag tracking so mouse users can click-and-drag to scroll
+    // Begin tracking coordinates — don't mark as dragging yet. We'll
+    // promote to a drag when the pointer moves past a small threshold.
     const carousel = carouselRef.current;
-    isDraggingRef.current = true;
+    // ensure dragging state is reset for clicks
+    isDraggingRef.current = false;
     movedRef.current = false;
     dragStartXRef.current = e.clientX;
     dragStartScrollRef.current = carousel ? carousel.scrollLeft : 0;
-    // Try to capture the pointer so we continue receiving move/up events
-    try { (e.currentTarget as Element).setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-    // Prevent native gestures that could interfere
-    e.preventDefault();
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
     isInteractingRef.current = false;
-    // End drag
+    // If we were dragging, release capture and suppress the following click
+    // (so mouseup doesn't trigger a click on the element beneath).
     if (isDraggingRef.current) {
       try { (e.currentTarget as Element).releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+
+      if (movedRef.current) {
+        suppressClickUntilRef.current = Date.now() + 200; // ms
+        // reset moved flag now; click handler will check the timestamp
+        movedRef.current = false;
+        selectClosest();
+      }
+
+      isDraggingRef.current = false;
     }
-    // If a drag happened, suppress the next click briefly to avoid click-on-release
-    if (movedRef.current) {
-      suppressClickUntilRef.current = Date.now() + 200; // ms
-      // reset moved flag now; click handler will check the timestamp
-      movedRef.current = false;
-      selectClosest();
-    }
-    isDraggingRef.current = false;
-    // Autoselect disabled: do not pick the closest on pointer up.
+    // If we never promoted to a drag, this was a click — let the click handler run.
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDraggingRef.current) return;
+    // Only respond to pointermove when the pointer is down / interacting.
+    if (!isInteractingRef.current) return;
     const carousel = carouselRef.current;
     if (!carousel) return;
     const dx = e.clientX - dragStartXRef.current;
-    if (Math.abs(dx) > 3) movedRef.current = true;
+
+    // If we haven't started a drag yet, promote to dragging when movement
+    // exceeds a small threshold. When promoted, capture the pointer and
+    // prevent default to avoid text selection and native gestures.
+    if (!isDraggingRef.current) {
+      if (Math.abs(dx) <= 3) return; // still a potential click
+      // Start dragging
+      isDraggingRef.current = true;
+      try { (e.currentTarget as Element).setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+      // prevent text selection while dragging
+      try { e.preventDefault(); } catch (err) { /* ignore */ }
+    }
+
+    if (Math.abs(dx) > 0) movedRef.current = true;
     // Invert movement so dragging left moves content left (natural feel)
     carousel.scrollLeft = dragStartScrollRef.current - dx;
-    // prevent text selection while dragging
-    e.preventDefault();
   };
 
   const handlePointerCancel = (e: React.PointerEvent) => {
     // Treat cancel like pointer up
     isInteractingRef.current = false;
+    if (isDraggingRef.current) {
+      try { (e.currentTarget as Element).releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    }
     isDraggingRef.current = false;
-    try { (e.currentTarget as Element).releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
   };
 
   const usingOptions = Array.isArray(props.options) && props.options.length > 0;
