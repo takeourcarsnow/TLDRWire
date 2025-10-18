@@ -15,7 +15,6 @@ const HistoryPanel = dynamic(() => import('../components/HistoryPanel').then(m =
 const PresetCarousel = dynamic(() => import('../components/PresetCarousel').then(m => m.default), { ssr: false });
 import { SettingsPanel } from '../components/SettingsPanel';
 import { PRESET_CONFIGS } from '../constants/ui';
-import { renderMarkdownToElement } from '../utils/rendering';
 import { detectLanguage, detectRegionFromLanguage } from '../utils/language';
 
 export default function Home() {
@@ -72,7 +71,7 @@ export default function Home() {
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
 
   // Memoized markdown renderer so the function reference is stable across renders
-  const memoizedRenderMarkdownToElement = useMemo(() => renderMarkdownToElement, []);
+  const memoizedRenderMarkdownToElement = renderMarkdownToElement;
 
   useEffect(() => {
     // Health check on mount - only run in non-localhost environments to avoid
@@ -337,6 +336,15 @@ export default function Home() {
           name="description"
           content="AI-powered news summarizer providing quick, intelligent rundowns of current events across regions and categories."
         />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta property="og:title" content="TLDRWire — AI-powered news summaries" />
+        <meta property="og:description" content="AI-powered news summarizer providing quick, intelligent rundowns of current events across regions and categories." />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="TLDRWire — AI-powered news summaries" />
+        <meta name="twitter:description" content="AI-powered news summarizer providing quick, intelligent rundowns of current events across regions and categories." />
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E" />
       </Head>
 
       <header>
@@ -351,9 +359,9 @@ export default function Home() {
       </header>
 
       <main>
-        <PresetCarousel onPresetClick={handlePresetClick} selectedPreset={selectedPreset} />
         <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab}>
           <section className="panel">
+            <PresetCarousel onPresetClick={handlePresetClick} selectedPreset={selectedPreset} />
             <NewsForm
               preferences={preferences}
               onPreferenceChange={updatePreference}

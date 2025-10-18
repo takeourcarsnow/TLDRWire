@@ -15,7 +15,7 @@ interface NewsFormProps {
   selectedPreset?: string | null;
 }
 
-export function NewsForm(props: NewsFormProps) {
+export const NewsForm = React.memo(function NewsForm(props: NewsFormProps) {
   return (
     <>
       <NewsFormSelectors preferences={props.preferences} onPreferenceChange={props.onPreferenceChange} />
@@ -23,4 +23,4 @@ export function NewsForm(props: NewsFormProps) {
       <NewsFormActions onGenerate={props.onGenerate} onPresetClick={props.onPresetClick} isLoading={props.isLoading} rateLimited={props.rateLimited} rateLimitCountdown={props.rateLimitCountdown} />
     </>
   );
-}
+});
