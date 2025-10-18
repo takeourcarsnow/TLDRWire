@@ -37,7 +37,6 @@ interface PresetCarouselProps {
   onPresetClick?: (preset: string) => void;
   selectedPreset?: string | null;
 
-  // new API to replace VerticalSelectCarousel-style usage
   options?: Option[];
   value?: string;
   onChange?: (value: string) => void;
@@ -45,6 +44,13 @@ interface PresetCarouselProps {
 
 const PresetCarousel = (props: PresetCarouselProps) => {
   const carouselRef = useRef<HTMLDivElement>(null);
+  const scrollEndTimeoutRef = React.useRef<number | null>(null);
+  const isInteractingRef = React.useRef(false);
+  const isDraggingRef = React.useRef(false);
+  const dragStartXRef = React.useRef(0);
+  const dragStartScrollRef = React.useRef(0);
+  const movedRef = React.useRef(false);
+  const suppressClickUntilRef = React.useRef<number>(0);
 
   // Function to properly capitalize preset labels
   const capitalizeLabel = (label: string): string => {
@@ -156,6 +162,11 @@ const PresetCarousel = (props: PresetCarouselProps) => {
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.stopPropagation();
+    isInteractingRef.current = true;
+    if (scrollEndTimeoutRef.current) {
+      try { window.clearTimeout(scrollEndTimeoutRef.current); } catch (e) { /* ignore */ }
+      scrollEndTimeoutRef.current = null;
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -164,6 +175,64 @@ const PresetCarousel = (props: PresetCarouselProps) => {
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     e.stopPropagation();
+    isInteractingRef.current = false;
+    selectClosest();
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    // Mark that the user is interacting (prevents auto-selection)
+    isInteractingRef.current = true;
+    if (scrollEndTimeoutRef.current) {
+      try { window.clearTimeout(scrollEndTimeoutRef.current); } catch (err) { /* ignore */ }
+      scrollEndTimeoutRef.current = null;
+    }
+
+    // Start drag tracking so mouse users can click-and-drag to scroll
+    const carousel = carouselRef.current;
+    isDraggingRef.current = true;
+    movedRef.current = false;
+    dragStartXRef.current = e.clientX;
+    dragStartScrollRef.current = carousel ? carousel.scrollLeft : 0;
+    // Try to capture the pointer so we continue receiving move/up events
+    try { (e.currentTarget as Element).setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    // Prevent native gestures that could interfere
+    e.preventDefault();
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    isInteractingRef.current = false;
+    // End drag
+    if (isDraggingRef.current) {
+      try { (e.currentTarget as Element).releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    }
+    // If a drag happened, suppress the next click briefly to avoid click-on-release
+    if (movedRef.current) {
+      suppressClickUntilRef.current = Date.now() + 200; // ms
+      // reset moved flag now; click handler will check the timestamp
+      movedRef.current = false;
+      selectClosest();
+    }
+    isDraggingRef.current = false;
+    // Autoselect disabled: do not pick the closest on pointer up.
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+    const dx = e.clientX - dragStartXRef.current;
+    if (Math.abs(dx) > 3) movedRef.current = true;
+    // Invert movement so dragging left moves content left (natural feel)
+    carousel.scrollLeft = dragStartScrollRef.current - dx;
+    // prevent text selection while dragging
+    e.preventDefault();
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent) => {
+    // Treat cancel like pointer up
+    isInteractingRef.current = false;
+    isDraggingRef.current = false;
+    try { (e.currentTarget as Element).releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
   };
 
   const usingOptions = Array.isArray(props.options) && props.options.length > 0;
@@ -218,10 +287,79 @@ const PresetCarousel = (props: PresetCarouselProps) => {
       doInstantJump(left - seg);
       return;
     }
+
+    // If the user is actively interacting (pointer/touch down), skip
+    // auto-selection — we'll handle selection on release.
+    if (isInteractingRef.current) return;
+    // Autoselect disabled: don't automatically choose the closest item after
+    // scroll finishes. We still keep the edge-jump logic above for looping.
   };
 
+  // Helper to find the closest item to the carousel center and select it.
+  const selectClosest = (carouselParam?: HTMLDivElement | null) => {
+    const carousel = carouselParam || carouselRef.current;
+    if (!carousel) return;
+
+    const candidates = Array.from(carousel.querySelectorAll('[data-original-value]')) as HTMLElement[];
+    if (candidates.length === 0) return;
+
+    const carouselRect = carousel.getBoundingClientRect();
+    const carouselCenter = carouselRect.left + carouselRect.width / 2;
+
+    // Prefer items living in the middle tripled segment when possible
+    const midCandidates = candidates.filter(el => el.dataset.seg === '1');
+    const searchList = midCandidates.length ? midCandidates : candidates;
+
+    let closest: HTMLElement | null = null;
+    let closestDist = Number.POSITIVE_INFINITY;
+    for (const el of searchList) {
+      const r = el.getBoundingClientRect();
+      const center = r.left + r.width / 2;
+      const dist = Math.abs(center - carouselCenter);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closest = el;
+      }
+    }
+
+    if (closest && closest.dataset.originalValue) {
+      const val = closest.dataset.originalValue;
+      // If different than current selection, notify parent
+      const currentlySelected = props.value || props.selectedPreset;
+      if (val !== currentlySelected) {
+        if (props.onChange) props.onChange(val);
+        else if (props.onPresetClick) props.onPresetClick(val);
+      }
+
+      // Center the found item smoothly
+      centerSelected(val, 'smooth');
+    }
+  };
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollEndTimeoutRef.current) {
+        try { window.clearTimeout(scrollEndTimeoutRef.current); } catch (e) { /* ignore */ }
+        scrollEndTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   return (
-    <div className="preset-carousel-container" onKeyDown={handleKeyDown} tabIndex={0} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+    <div
+      className="preset-carousel-container"
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+      onPointerLeave={handlePointerCancel}
+    >
       <div className="arrow-button" onClick={scrollLeft} aria-label="Scroll left"><ChevronLeft size={16} /></div>
       <div className="preset-carousel" ref={carouselRef} onScroll={handleScroll}>
         {tripledItems.map((it, i) => {
@@ -241,7 +379,13 @@ const PresetCarousel = (props: PresetCarouselProps) => {
             <div
               key={`${it._seg}-${it._origIndex}-${i}`}
               className={`preset-button ${isSelected ? 'selected' : ''}`}
-              onClick={onClick}
+                  onClick={() => {
+                    // Ignore clicks that immediately follow a drag
+                    if (Date.now() < suppressClickUntilRef.current) {
+                      return;
+                    }
+                    onClick();
+                  }}
               title={it.label || capitalizeLabel(origValue)}
               aria-label={`Select ${it.label || capitalizeLabel(origValue)}`}
               aria-pressed={isSelected}

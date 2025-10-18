@@ -37,7 +37,10 @@ export function Modal({ isOpen, onClose, title, headerRight, children }: ModalPr
 
     if (isOpen) {
       previouslyFocused.current = document.activeElement as HTMLElement | null;
-      document.body.style.overflow = 'hidden';
+      // Use a class on the root element instead of writing inline styles to body.
+      // This avoids leaving inline styles behind if cleanup is missed and is
+      // easier to reason about in CSS. The class is removed on cleanup.
+      document.documentElement.classList.add('modal-open');
       document.addEventListener('keydown', handleKeyDown);
       // focus the modal container for screen readers
       setTimeout(() => {
@@ -46,11 +49,12 @@ export function Modal({ isOpen, onClose, title, headerRight, children }: ModalPr
         if (firstBtn) firstBtn.focus();
       }, 0);
     } else {
-      document.body.style.overflow = '';
+      document.documentElement.classList.remove('modal-open');
     }
 
     return () => {
-      document.body.style.overflow = '';
+      // Ensure the lock is removed when the modal unmounts/cleanup runs.
+      document.documentElement.classList.remove('modal-open');
       document.removeEventListener('keydown', handleKeyDown);
       if (previouslyFocused.current) previouslyFocused.current.focus();
     };

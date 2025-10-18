@@ -34,7 +34,7 @@ export default function NewsMeta({ data }: Props) {
     <div className="meta">
       <div className="meta-strip">
         <div className="meta-strip-inner" role="list">
-          {items.concat(items).map((item, idx) => (
+          {items.map((item, idx) => (
             <span key={idx} className="meta-item" role="listitem">
               {item!.icon} {item!.value}
             </span>

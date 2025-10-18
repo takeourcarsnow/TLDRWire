@@ -3,12 +3,13 @@
 }
 
 .output {
-  /* Keep a small visual minimum but allow the panel to collapse when empty */
-  min-height: 0; /* removed fixed 300px so output only takes needed space */
+  /* Simplified: allow the output panel to size naturally and use the
+     document/page scrollbar instead of an inner scrollbar. */
+  min-height: 0;
   position: relative;
-  max-height: calc(100vh - 160px);
-  overflow: hidden;
-  padding: 0; /* Remove padding to allow content to go edge to edge */
+  max-height: none;
+  overflow: visible;
+  padding: 0;
 }
 
 /* Clean wrapper for summary content to ensure edge-to-edge display */
@@ -16,7 +17,23 @@
   width: 100%;
   padding: 0;
   position: relative;
-  overflow-x: auto; /* Allow horizontal scrolling when content exceeds viewport */
+  /* Keep overflow visible so long content flows into the page and the
+     browser scrollbar is used instead of nested scrollbars. */
+  overflow: visible;
+}
+
+/* Limit width on wide screens for better readability */
+@media (min-width: 768px) {
+  .summary-wrapper {
+    max-width: 60ch;
+    margin: 0 auto;
+  }
+}
+
+/* Ensure rendered summaries don't create their own scroll container */
+.summary {
+  max-height: none !important;
+  overflow: visible !important;
 }
 
 /* Enhanced loading states */
@@ -696,6 +713,13 @@
 
 .modal-backdrop[aria-hidden="false"] {
   display: flex;
+}
+
+/* Class-based body lock for modals: applied to <html> by Modal.tsx. */
+:root.modal-open,
+html.modal-open {
+  /* prevent page scrolling while modal is open */
+  overflow: hidden !important;
 }
 
 .modal {

@@ -108,5 +108,6 @@
   align-items: center;
   padding: 8px 0;
   width: max-content;
-  animation: metaMarquee 20s linear infinite;
+  /* Disabled auto-scroll (was: metaMarquee 20s linear infinite) */
+  animation: none;
 }
