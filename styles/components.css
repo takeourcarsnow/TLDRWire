@@ -225,8 +225,9 @@
   flex-shrink: 0;
   scroll-snap-align: start;
   /* subtle non-motion transitions: color and background only */
-  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, transform 180ms ease;
   cursor: pointer;
+  transform: scale(1);
 }
 
 .preset-icon {
@@ -235,12 +236,13 @@
   justify-content: center;
   width: 16px;
   height: 16px;
+  transform: scale(1);
 }
 
 /* icon scaling animation when selected */
 .preset-button .preset-icon {
   /* icon color/opacity can animate; avoid transforms */
-  transition: color 180ms ease, opacity 160ms ease;
+  transition: color 180ms ease, opacity 160ms ease, transform 180ms ease;
 }
 
 .preset-label {
@@ -257,7 +259,7 @@
   opacity: 0;
   transform: translateY(-6px);
   /* animate opacity and color/letter-spacing subtly; avoid transform-based motion */
-  transition: max-height 180ms ease, opacity 180ms ease, color 200ms ease, letter-spacing 200ms ease;
+  transition: max-height 180ms ease, opacity 180ms ease, color 200ms ease, letter-spacing 200ms ease, transform 180ms ease;
   letter-spacing: 0;
 }
 
@@ -279,6 +281,16 @@
   :root, .preset-carousel { --preset-button-width: 28px; --preset-button-gap: 2px; }
   .preset-button { padding: 2px; width: var(--preset-button-width); flex: 0 0 var(--preset-button-width); }
   .preset-icon { width: 14px; height: 14px; }
+  .preset-button.selected .preset-icon,
+  .preset-button[aria-pressed="true"] .preset-icon {
+    width: 16px;
+    height: 16px;
+  }
+  .preset-button.selected,
+  .preset-button[aria-pressed="true"] {
+    width: 36px;
+    flex: 0 0 36px;
+  }
 }
 
 /* Backwards-compat: some code toggles 'hidden'/'visible' classes. Keep
@@ -313,6 +325,8 @@
   border-color: var(--border);
   color: var(--text);
   box-shadow: none !important;
+  width: 56px;
+  flex: 0 0 56px;
   animation: presetSelect 0.3s ease-out;
 }
 
@@ -342,11 +356,14 @@
 .preset-button[aria-pressed="true"] .preset-icon {
   color: var(--accent);
   opacity: 1;
+  width: 20px;
+  height: 20px;
   animation: presetIconPulse 0.4s ease-out;
 }
 .preset-button.selected .preset-label,
 .preset-button[aria-pressed="true"] .preset-label {
   color: var(--text);
+  animation: presetLabelFade 0.3s ease-out 0.1s both;
 }
 
 /* Panel headers */

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Sunrise, Monitor, TrendingUp, MapPin, Zap, Building, Microscope, Heart, Calendar, Globe, Briefcase, GraduationCap, Leaf, Palette, Gamepad2, Music, Cloud, Plane, DollarSign } from 'lucide-react';
 import TwEmoji from './TwEmoji';
 
@@ -45,6 +45,57 @@ interface PresetCarouselProps {
 
 const PresetCarousel = (props: PresetCarouselProps) => {
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  // Function to properly capitalize preset labels
+  const capitalizeLabel = (label: string): string => {
+    // Handle special cases
+    const specialCases: Record<string, string> = {
+      'lt-local': 'Local',
+      'breaking': 'Breaking',
+      'weekend': 'Weekend',
+      'arts': 'Arts',
+      'tech': 'Tech',
+      'sports': 'Sports',
+      'health': 'Health',
+      'business': 'Business',
+      'education': 'Education',
+      'environment': 'Environment',
+      'entertainment': 'Entertainment',
+      'international': 'International',
+      'politics': 'Politics',
+      'science': 'Science',
+      'weather': 'Weather',
+      'travel': 'Travel',
+      'finance': 'Finance',
+      'markets': 'Markets',
+      'morning': 'Morning'
+    };
+
+    return specialCases[label] || label.charAt(0).toUpperCase() + label.slice(1);
+  };
+
+  // Center the selected button when selection changes
+  useEffect(() => {
+    const selectedValue = props.value || props.selectedPreset;
+    if (selectedValue && carouselRef.current) {
+      const selectedButton = carouselRef.current.querySelector(`[aria-pressed="true"]`) as HTMLElement;
+      if (selectedButton) {
+        const carousel = carouselRef.current;
+        const carouselRect = carousel.getBoundingClientRect();
+        const buttonRect = selectedButton.getBoundingClientRect();
+        
+        // Calculate the center position
+        const carouselCenter = carouselRect.left + carouselRect.width / 2;
+        const buttonCenter = buttonRect.left + buttonRect.width / 2;
+        const scrollLeft = carousel.scrollLeft + (buttonCenter - carouselCenter);
+        
+        carousel.scrollTo({
+          left: scrollLeft,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [props.value, props.selectedPreset]);
 
   const scrollLeft = () => {
     if (carouselRef.current) {
@@ -99,16 +150,15 @@ const PresetCarousel = (props: PresetCarouselProps) => {
                   key={opt.value}
                   className={`preset-button ${isSelected ? 'selected' : ''}`}
                   onClick={onClick}
-                  title={opt.label || opt.value}
-                  aria-label={`Select ${opt.label || opt.value}`}
+                  title={opt.label || capitalizeLabel(opt.value)}
+                  aria-label={`Select ${opt.label || capitalizeLabel(opt.value)}`}
                   aria-pressed={isSelected}
                 >
                   <div className="preset-icon" aria-hidden="true">
                     {opt.icon ? (typeof opt.icon === 'string' ? <TwEmoji text={opt.icon} /> : React.createElement(opt.icon as React.ComponentType<any>, { size: 16 })) : null}
                   </div>
-                  {/* label is visually hidden unless selected */}
                   <div className={`preset-label ${isSelected ? 'visible' : 'hidden'}`}>
-                    {opt.label || opt.value}
+                    {opt.label || capitalizeLabel(opt.value)}
                   </div>
                 </div>
               );
@@ -118,12 +168,12 @@ const PresetCarousel = (props: PresetCarouselProps) => {
                   key={key}
                   className={`preset-button ${props.selectedPreset === key ? 'selected' : ''}`}
                   onClick={() => props.onPresetClick && props.onPresetClick(key)}
-                  title={key}
-                  aria-label={`Select ${key} preset`}
+                  title={capitalizeLabel(key)}
+                  aria-label={`Select ${capitalizeLabel(key)} preset`}
                   aria-pressed={props.selectedPreset === key}
                 >
                   <div className="preset-icon" aria-hidden="true"><Icon size={16} /></div>
-                  <div className={`preset-label ${props.selectedPreset === key ? 'visible' : 'hidden'}`}>{key}</div>
+                  <div className={`preset-label ${props.selectedPreset === key ? 'visible' : 'hidden'}`}>{capitalizeLabel(key)}</div>
                 </div>
             ))}
       </div>
