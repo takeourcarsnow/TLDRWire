@@ -136,6 +136,7 @@
 /* Preset Carousel */
 .preset-carousel-container {
   display: flex;
+  align-items: center;
   padding: 8px;
   margin: 16px 0;
   position: relative;
@@ -179,7 +180,7 @@
 
 .preset-button,
 .arrow-button {
-  border: 1px solid var(--border);
+  border: none;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -206,24 +207,16 @@
   }
 }
 
-.preset-button:hover,
-.preset-button:focus,
-.preset-button:active,
-.arrow-button:hover,
-.arrow-button:focus,
-.arrow-button:active {
-  background: rgba(77,163,255,0.1);
-  border-color: rgba(77,163,255,0.3);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(77,163,255,0.2);
-}
+
 
 .preset-button.selected {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: white;
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(77,163,255,0.4);
+  background: var(--bg-secondary);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.preset-button.selected svg {
+  color: var(--accent);
 }
 
 /* Panel headers */
