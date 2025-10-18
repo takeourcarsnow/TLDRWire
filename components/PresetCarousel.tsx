@@ -155,7 +155,7 @@ const PresetCarousel = (props: PresetCarouselProps) => {
                   aria-pressed={isSelected}
                 >
                   <div className="preset-icon" aria-hidden="true">
-                    {opt.icon ? (typeof opt.icon === 'string' ? <TwEmoji text={opt.icon} /> : React.createElement(opt.icon as React.ComponentType<any>, { size: 16 })) : null}
+                    {opt.icon ? (typeof opt.icon === 'string' ? <TwEmoji text={opt.icon} /> : React.createElement(opt.icon as React.ComponentType<any>, { size: 24 })) : null}
                   </div>
                   <div className={`preset-label ${isSelected ? 'visible' : 'hidden'}`}>
                     {opt.label || capitalizeLabel(opt.value)}
@@ -172,7 +172,7 @@ const PresetCarousel = (props: PresetCarouselProps) => {
                   aria-label={`Select ${capitalizeLabel(key)} preset`}
                   aria-pressed={props.selectedPreset === key}
                 >
-                  <div className="preset-icon" aria-hidden="true"><Icon size={16} /></div>
+                  <div className="preset-icon" aria-hidden="true"><Icon size={24} /></div>
                   <div className={`preset-label ${props.selectedPreset === key ? 'visible' : 'hidden'}`}>{capitalizeLabel(key)}</div>
                 </div>
             ))}

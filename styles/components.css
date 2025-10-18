@@ -153,42 +153,58 @@
   position: relative;
 }
 
-.preset-carousel-container::before,
-.preset-carousel-container::after {
-  content: '';
-  position: absolute;
-  top: 4px;
-  bottom: 4px;
-  width: 20px;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.preset-carousel-container::before {
-  left: 40px;
-  background: var(--bg);
-}
-
-.preset-carousel-container::after {
-  right: 40px;
-  background: var(--bg);
-}
-
 .preset-carousel {
   /* button geometry variables: change these to control how many fit */
-  --preset-button-width: 40px; /* total width reserved per button */
+  --preset-button-width: 60px; /* total width reserved per button */
   --preset-button-gap: 4px; /* gap between buttons (used for calc only) */
 
   display: flex;
   gap: var(--preset-button-gap);
   overflow-x: auto;
   scroll-behavior: smooth;
-  /* limit the visible area so exactly 7 buttons fit in the viewport */
+  /* limit the visible area so exactly 5 buttons fit in the viewport */
   flex: 0 1 auto;
-  max-width: calc(var(--preset-button-width) * 7 + var(--preset-button-gap) * 6);
+  max-width: calc(var(--preset-button-width) * 5 + var(--preset-button-gap) * 4);
   scroll-snap-type: x mandatory;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Fade the left and right edges so partially-visible icons soften out.
+   Use mask-image for modern browsers and a pseudo-element gradient as a
+   fallback for WebKit engines that need -webkit-mask-image. This keeps the
+   scrollable area interactive while visually fading items near the edges. */
+.preset-carousel {
+  /* mask that fades the first and last 24% of the carousel viewport */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 24%, black 76%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, black 24%, black 76%, transparent 100%);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* Fallback for browsers that don't support mask-image: add a pointer-events:none
+   pseudo-element overlay that visually fades the edges without blocking clicks
+   on controls (pseudo-element itself doesn't accept pointer events). */
+.preset-carousel::before,
+.preset-carousel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 24%;
+  pointer-events: none; /* allow clicks to pass through to buttons */
+}
+.preset-carousel::before {
+  left: 0;
+  background: linear-gradient(to right, var(--panel), rgba(0,0,0,0));
+  mix-blend-mode: normal;
+}
+.preset-carousel::after {
+  right: 0;
+  background: linear-gradient(to left, var(--panel), rgba(0,0,0,0));
+  mix-blend-mode: normal;
 }
 
 .preset-carousel::-webkit-scrollbar {
@@ -212,6 +228,15 @@
   scroll-snap-align: start;
   transition: all 0.2s ease;
   cursor: pointer;
+  margin-top: -8px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Show arrows on hover */
+.preset-carousel-container:hover .arrow-button {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* Preset buttons: stack icon + label vertically and allow wider buttons to
@@ -228,106 +253,61 @@
   align-items: center;
   justify-content: center;
   gap: 0px; /* minimal gap between icon and label */
-  padding: 1px 2px; /* very tight padding */
+  padding: 4px 6px; /* comfortable padding */
   /* give each button a stable width so 6 always fit */
   width: var(--preset-button-width);
   flex: 0 0 var(--preset-button-width);
   height: auto;
   flex-shrink: 0;
   scroll-snap-align: start;
-  /* subtle non-motion transitions: color and background only */
-  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, transform 180ms ease;
   cursor: pointer;
-  transform: scale(1);
 }
 
 .preset-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
-  transform: scale(1);
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
 }
 
-/* icon scaling animation when selected */
-.preset-button .preset-icon {
-  /* icon color/opacity can animate; avoid transforms */
-  transition: color 180ms ease, opacity 160ms ease, transform 180ms ease;
+.preset-icon .twemoji img {
+  width: 1em;
+  height: 1em;
 }
 
+
+
+/* By default hide labels to keep the carousel compact. Reveal only for
+   the selected item (or when aria-pressed is true). Use opacity and
+   max-width to smoothly reveal/hide without reflowing surrounding items. */
 .preset-label {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1;
   color: var(--muted);
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
   display: block;
-  max-width: 40px; /* much narrower for compact layout */
-  /* hidden by default; reveal using the .visible class */
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-6px);
-  /* animate opacity and color/letter-spacing subtly; avoid transform-based motion */
-  transition: max-height 180ms ease, opacity 180ms ease, color 200ms ease, letter-spacing 200ms ease, transform 180ms ease;
+  max-width: 0; /* collapsed by default */
+  transition: max-width 220ms ease, opacity 180ms ease, color 180ms ease;
   letter-spacing: 0;
-}
-
-/* On very small screens, hide labels to keep the carousel compact and
-   allow more icons to fit in one row. */
-@media (max-width: 420px) {
-  /* hide labels by default on very small screens to keep icons dense */
-  .preset-label { display: none; }
-  /* but allow the selected / visible label to appear when active */
-  .preset-label.visible,
-  .preset-button.selected .preset-label {
-    display: block;
-    max-height: 40px;
-    opacity: 1;
-    transform: translateY(0);
-    max-width: none; /* allow full width within selected button on small screens */
-  }
-
-  /* use smaller button geometry on very small screens */
-  :root, .preset-carousel { --preset-button-width: 28px; --preset-button-gap: 2px; }
-  .preset-button { padding: 2px; width: var(--preset-button-width); flex: 0 0 var(--preset-button-width); }
-  .preset-icon { width: 14px; height: 14px; }
-  .preset-button.selected .preset-icon,
-  .preset-button[aria-pressed="true"] .preset-icon {
-    width: 16px;
-    height: 16px;
-  }
-  .preset-button.selected,
-  .preset-button[aria-pressed="true"] {
-    width: 36px;
-    flex: 0 0 36px;
-  }
-}
-
-/* Backwards-compat: some code toggles 'hidden'/'visible' classes. Keep
-   hidden behavior available but show labels by default. */
-.preset-label.hidden {
-  max-height: 0;
+  max-height: 20px; /* keep a small height for measurement */
   opacity: 0;
-  transform: translateY(-6px);
-  overflow: hidden;
 }
 
 /* label reveal uses max-height/opacity but also a tiny upward translation
   to feel more like it's sliding into place */
 .preset-label.visible,
 .preset-button.selected > .preset-label,
-.preset-button.selected .preset-label {
-  /* reveal label when visible/selected - use important to override
-     other display rules (small-screen hiding, other styles). */
-  display: block !important;
-  max-height: 40px !important; /* enough for single line */
-  opacity: 1 !important;
-  /* keep position stable (no transform); use color/spacing for subtle emphasis */
-  color: var(--text) !important;
-  letter-spacing: 0.25px !important;
-  max-width: none !important; /* allow full width within selected button */
+.preset-button.selected .preset-label,
+.preset-button[aria-pressed="true"] .preset-label {
+  /* reveal label for selected/pressed buttons */
+  color: var(--text);
+  letter-spacing: 0.25px;
+  max-width: 200px; /* allow the label to expand (constrained by button width) */
+  opacity: 1;
 }
 
 /* subtle lift + shadow for selected button */
@@ -338,9 +318,8 @@
   border-color: var(--border);
   color: var(--text);
   box-shadow: none !important;
-  width: 56px;
-  flex: 0 0 56px;
-  animation: presetSelect 0.3s ease-out;
+  width: 76px;
+  flex: 0 0 76px;
 }
 
 /* keyboard focus styles for accessibility */
@@ -358,6 +337,12 @@
   }
 }
 
+/* In dark theme, don't show background under arrow icons */
+[data-theme="dark"] .arrow-button {
+  background: transparent;
+  border: none;
+}
+
 
 
 .preset-button.selected svg {
@@ -369,14 +354,19 @@
 .preset-button[aria-pressed="true"] .preset-icon {
   color: var(--accent);
   opacity: 1;
-  width: 20px;
-  height: 20px;
-  animation: presetIconPulse 0.4s ease-out;
+  width: 28px;
+  height: 28px;
+  font-size: 28px;
+}
+
+.preset-button.selected .preset-icon .twemoji img,
+.preset-button[aria-pressed="true"] .preset-icon .twemoji img {
+  width: 1em;
+  height: 1em;
 }
 .preset-button.selected .preset-label,
 .preset-button[aria-pressed="true"] .preset-label {
   color: var(--text);
-  animation: presetLabelFade 0.3s ease-out 0.1s both;
 }
 
 /* Panel headers */
@@ -743,10 +733,6 @@
    This covers cases where JS toggles aria-pressed instead of adding classes. */
 .preset-button[aria-pressed="true"] .preset-label,
 .preset-button[aria-pressed="true"] > .preset-label {
-  display: block !important;
-  max-height: 40px !important;
-  opacity: 1 !important;
-  transform: translateY(0) !important;
-  color: var(--text) !important;
-  max-width: none !important; /* allow full width within selected button */
+  color: var(--text);
+  max-width: none; /* allow full width within selected button */
 }

@@ -1,15 +1,15 @@
 /* Theme toggle */
 .theme-toggle {
   position: absolute !important;
-  top: 16px !important;
-  right: 16px !important;
+  top: 4px !important;
+  right: 12px !important;
   background: transparent !important;
   border: none !important;
   border-radius: var(--radius) !important;
-  padding: 8px !important;
+  padding: 6px !important;
   cursor: pointer !important;
   transition: none !important;
-  font-size: 18px !important;
+  font-size: 16px !important;
   box-shadow: none !important;
   color: var(--text) !important;
   outline: none !important;
@@ -30,15 +30,18 @@
 }
 
 header {
-  padding: 16px 24px;
+  padding: 4px 12px;
   display: flex;
   justify-content: center;
   align-items: center;
   position: sticky;
   top: 0;
-  background: var(--bg);
+  background: linear-gradient(135deg, var(--bg-glass) 0%, var(--panel-glass) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   z-index: 100;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-glass);
+  box-shadow: 0 4px 20px var(--shadow-glass), 0 2px 8px rgba(0,0,0,0.1);
   transition: all 0.2s ease;
   animation: slideDown 0.3s ease-out;
 }
@@ -66,16 +69,16 @@ header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
 }
 
 header h1 {
   margin: 0;
-  font-size: clamp(2rem, 6vw, 2.5rem);
+  font-size: clamp(1.2rem, 3vw, 1.5rem);
   letter-spacing: -0.025em;
   font-weight: 900;
   color: var(--text);
-  line-height: 1.1;
+  line-height: 1.0;
   transition: transform 0.2s ease;
 }
 
@@ -84,7 +87,7 @@ header h1:hover {
 }
 
 header .tag {
-  font-size: 1rem;
+  font-size: 0.75rem;
   color: var(--muted);
   font-weight: 400;
   opacity: 0.75;
@@ -189,12 +192,15 @@ footer {
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--panel);
-  border-top: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--panel-glass) 0%, var(--bg-glass) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-glass);
   display: flex;
   justify-content: space-around;
   padding: 8px 0;
   z-index: 1000;
+  box-shadow: 0 -4px 20px var(--shadow-glass), 0 -2px 8px rgba(0,0,0,0.1);
 }
 
 /* Make output panel go edge to edge */

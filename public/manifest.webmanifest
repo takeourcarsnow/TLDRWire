@@ -4,7 +4,7 @@
   "description": "AI-powered news summarizer providing quick, intelligent rundowns of current events.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b0f14",
+  "background_color": "#0f161b",
   "theme_color": "#4da3ff",
   "lang": "en",
   "icons": [
