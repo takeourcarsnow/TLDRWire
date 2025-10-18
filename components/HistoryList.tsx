@@ -10,6 +10,24 @@ interface Props {
   renderMarkdownToElement: (el: HTMLDivElement | null, markdown: string | undefined) => void;
 }
 
+function formatTimeAgo(timestamp: string | number): string {
+  const now = new Date();
+  const date = new Date(timestamp);
+  const diffMs = now.getTime() - date.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSeconds < 60) return 'just now';
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
+  return `${Math.floor(diffDays / 365)}y ago`;
+}
+
 function HistorySnippet({ markdown }: { markdown: string }) {
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -59,6 +77,7 @@ function HistoryFull({ id, markdown, renderTo }: { id: number; markdown: string;
 export function HistoryList({ history, onApply, onDelete, onClear, renderMarkdownToElement }: Props) {
   const [q, setQ] = useState('');
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedTimestamps, setExpandedTimestamps] = useState<Set<number>>(new Set());
   const expandedRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   // when a card expands, render the full markdown into its element
@@ -118,8 +137,24 @@ export function HistoryList({ history, onApply, onDelete, onClear, renderMarkdow
         {filtered.map((h) => (
           <div key={h.id} className={`history-card ${expandedId === h.id ? 'expanded' : ''}`}>
             <div className="history-card-header">
-              <div className="history-timestamp">
-                {new Date(h.timestamp).toLocaleDateString()} at {new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              <div 
+                className="history-timestamp"
+                onClick={() => {
+                  const newExpanded = new Set(expandedTimestamps);
+                  if (newExpanded.has(h.id)) {
+                    newExpanded.delete(h.id);
+                  } else {
+                    newExpanded.add(h.id);
+                  }
+                  setExpandedTimestamps(newExpanded);
+                }}
+                style={{ cursor: 'pointer' }}
+                title="Click to toggle date format"
+              >
+                {expandedTimestamps.has(h.id) 
+                  ? `${new Date(h.timestamp).toLocaleDateString()} at ${new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  : formatTimeAgo(h.timestamp)
+                }
               </div>
               <div className="history-tags">
                 <span className="history-tag region-tag">{h.payload.region}</span>

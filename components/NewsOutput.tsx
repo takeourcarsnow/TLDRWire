@@ -101,7 +101,7 @@ export function NewsOutput({ isLoading, error, data, lastRequest, onHistory }: N
         <NewsStatus isLoading={isLoading} error={error} dataCached={!!data?.cached} />
       </div>
 
-      <div className="summary-container">
+      <div className="summary-wrapper">
         <SummaryRenderer summary={data?.summary || null} isLoading={isLoading} summaryRef={summaryRef} />
       </div>
 
