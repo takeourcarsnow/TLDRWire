@@ -179,11 +179,15 @@ export const FALLBACK_FEEDS: { [key: string]: string[] } = {
     'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml',
     'https://www.theguardian.com/science/rss'
   ],
-  sports: [
-    'https://feeds.bbci.co.uk/sport/rss.xml?edition=uk',
-    'https://www.theguardian.com/uk/sport/rss'
-  ]
-  ,
+  health: [
+    'https://feeds.bbci.co.uk/news/health/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/Health.xml',
+    'https://www.theguardian.com/society/health/rss',
+    'https://www.reuters.com/news/archive/health/rss.xml',
+    'https://www.statnews.com/feed/',
+    'https://www.healthnewsreview.org/feed/',
+    'https://www.kff.org/feed/'
+  ],
   // Culture-specific fallback feeds (arts, culture, reviews)
   culture: [
     'https://www.theguardian.com/culture/rss',

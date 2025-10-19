@@ -36,6 +36,24 @@
   overflow: visible !important;
 }
 
+/* Image styles for article images in summaries */
+.summary img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 8px 0;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.summary h2 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-size: 1.2rem;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
 /* Enhanced loading states */
 .loading {
   display: inline-flex;

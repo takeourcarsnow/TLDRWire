@@ -217,7 +217,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     // Pass the requested timeframe (in hours) to processArticles so it filters by the
     // user's desired window. processArticles will cap this to the default maximum (7 days).
-    const processed = await processArticles({ feedsResult: feeds, maxArticles: limit, region, category, query: '', loggerContext: { uiLocale }, maxAgeHours: timeframeHours });
+    const processed = await processArticles({ feedsResult: feeds, maxArticles: limit, region, category, query: '', loggerContext: { uiLocale }, maxAgeHours: timeframeHours, enableImageScraping: process.env.ENABLE_IMAGE_SCRAPING === 'true' });
   const { topItems, cleanTopItems, maxAge } = processed;
   // processArticles returns maxAge in milliseconds (used for filtering). Convert to hours
   // for use in prompts and API metadata so the UI shows a human-friendly hours value.
@@ -282,6 +282,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
       // Append source attribution to the summary
       let finalSummary = dedupeSummaryBullets(summary);
+
+      // Add images from articles (failsafe - not sent to LLM)
+      const imagesWithTitles = cleanTopItems
+        .filter((item: any) => item.imageUrl)
+        .slice(0, 6) // Limit to 6 images to avoid overwhelming the UI
+        .map((item: any) => `![${item.title}](${item.imageUrl})`);
+
+      if (imagesWithTitles.length > 0) {
+        console.log('DEBUG: Adding images to summary:', imagesWithTitles.length);
+        finalSummary += '\n\n## Images\n\n' + imagesWithTitles.join('\n\n');
+      } else {
+        console.log('DEBUG: No images found in articles');
+      }
+
       // Compute sources from the final articles used
       const hostCounts: Record<string, number> = {};
       for (const a of cleanTopItems) {

@@ -146,6 +146,19 @@ export const renderMarkdownToElement = (
         link.title = 'Open link in new tab';
       }
     });
+
+    // Handle image loading errors gracefully
+    el.querySelectorAll<HTMLImageElement>('img').forEach((img: HTMLImageElement) => {
+      if (img.src && !img.src.includes('favicon')) { // Skip favicon images
+        img.onerror = () => {
+          console.log('DEBUG: Image failed to load:', img.src);
+          img.style.display = 'none'; // Hide broken images
+        };
+        img.onload = () => {
+          console.log('DEBUG: Image loaded successfully:', img.src);
+        };
+      }
+    });
   } catch (err) {
     if (el) el.textContent = markdown || '';
   }

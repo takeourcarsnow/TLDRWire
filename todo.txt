@@ -1,1 +1,32 @@
-make sure every section isnt longer than it needs to be (scrolling down towards no content) check individually how long each section needs to be
+Scheduled & Automated Summaries
+
+Email digests: Users can subscribe to daily/weekly summaries via email (integrate with services like SendGrid or Resend).
+Push notifications: Browser push notifications for breaking news alerts (using the existing service worker).
+Cron-job summaries: Server-side scheduled generation for premium users.
+
+Personalization & Accounts
+
+User accounts (via NextAuth.js or similar) to sync preferences, history, and custom presets across devices.
+"Favorite" summaries and create reading lists or bookmarks.
+
+Better Mobile & PWA Experience
+
+Progressive Web App (PWA) enhancements: Offline article caching, install prompts, and background sync for offline reading.
+Swipe gestures for navigation (build on your existing SwipeableContainer).
+
+Interactive summaries: Clickable links to full articles, expandable sections, or highlight key quotes.
+
+Premium Features
+
+Unlimited summaries (remove rate limiting for paid users).
+
+Social & Sharing Features
+
+Social sharing: One-click share to Twitter, LinkedIn, or Reddit with pre-formatted summaries.
+Community features: User-generated summaries, voting, or comment threads.
+
+Data & AI Enhancements
+
+Trend analysis: Use Gemini to identify emerging topics or sentiment trends over time.
+Fact-checking integration: Cross-reference summaries with fact-check APIs (e.g., Google Fact Check Tools).
+!!! Include images/charts from articles in the output.

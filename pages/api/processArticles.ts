@@ -1,4 +1,5 @@
 import logger from './logger';
+import { scrapeArticleImage } from '../../utils/scraper';
 
 export type ProcessArticlesResult = {
   topItems: any[];
@@ -15,16 +16,95 @@ export async function processArticles(opts: {
   query?: string;
   loggerContext?: any;
   maxAgeHours?: number;
+  enableImageScraping?: boolean;
 }): Promise<ProcessArticlesResult> {
-  const { feedsResult, maxArticles = 20, preferLatest = false, region, category, query, loggerContext, maxAgeHours } = opts;
+  const { feedsResult, maxArticles = 20, preferLatest = false, region, category, query, loggerContext, maxAgeHours, enableImageScraping = false } = opts;
   const log = logger.child({ route: '/api/tldr/processArticles', region, category, maxArticles, query, ...(loggerContext || {}) });
+
+  // Track if we've logged sample fields
+  let loggedSampleFields = false;
+
+  // Helper function to extract image URLs from RSS item
+  const extractImageUrl = (item: any): string | null => {
+    try {
+      // Debug: log available fields in the first few items
+      if (!loggedSampleFields) {
+        console.log('DEBUG: Sample RSS item fields:', Object.keys(item));
+        console.log('DEBUG: Sample RSS item content fields:', {
+          title: item.title,
+          enclosure: item.enclosure,
+          'media:content': item['media:content'],
+          'media:thumbnail': item['media:thumbnail'],
+          content: item.content?.substring(0, 200),
+          'content:encoded': item['content:encoded']?.substring(0, 200),
+          contentSnippet: item.contentSnippet?.substring(0, 200),
+          image: item.image
+        });
+        loggedSampleFields = true;
+      }
+
+      // Check enclosure (common for podcasts/media)
+      if (item.enclosure && item.enclosure.url && item.enclosure.type && item.enclosure.type.startsWith('image/')) {
+        const url = item.enclosure.url;
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+          console.log('DEBUG: Found image in enclosure:', url);
+          return url;
+        }
+      }
+
+      // Check media content/thumbnail
+      if (item['media:content'] && item['media:content'].url) {
+        const url = item['media:content'].url;
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+          console.log('DEBUG: Found image in media:content:', url);
+          return url;
+        }
+      }
+      if (item['media:thumbnail'] && item['media:thumbnail'].url) {
+        const url = item['media:thumbnail'].url;
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+          console.log('DEBUG: Found image in media:thumbnail:', url);
+          return url;
+        }
+      }
+
+      // Check for img tags in content
+      const content = item.content || item['content:encoded'] || item.contentSnippet || '';
+      if (content) {
+        const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i);
+        if (imgMatch && imgMatch[1]) {
+          const url = imgMatch[1];
+          if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            console.log('DEBUG: Found image in content HTML:', url);
+            return url;
+          }
+        }
+      }
+
+      // Check for image field
+      if (item.image && item.image.url) {
+        const url = item.image.url;
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+          console.log('DEBUG: Found image in image field:', url);
+          return url;
+        }
+      }
+
+      console.log('DEBUG: No valid image found for article:', item.title?.substring(0, 50));
+      return null;
+    } catch (e) {
+      console.log('DEBUG: Error extracting image:', e);
+      return null;
+    }
+  };
 
   const rawItems: any[] = (feedsResult?.items || []).map((it: any) => {
     const title = it.title || it['dc:title'] || it.description || '';
     const link = it.link || it.guid || (it.enclosure && it.enclosure.url) || '';
     const pubDate = it.pubDate ? new Date(it.pubDate).getTime() : (it.isoDate ? new Date(it.isoDate).getTime() : Date.now());
     const source = it.creator || it.author || (it['dc:creator']) || (it.feedTitle) || '';
-    return { title: String(title || '').trim(), link: String(link || '').trim(), pubDate: Number(pubDate || Date.now()), source, raw: it };
+    const imageUrl = extractImageUrl(it);
+    return { title: String(title || '').trim(), link: String(link || '').trim(), pubDate: Number(pubDate || Date.now()), source, imageUrl, raw: it };
   });
 
   // Basic dedupe by normalized title + link
@@ -201,7 +281,50 @@ export async function processArticles(opts: {
     log && log.debug && log.debug('lithuania source-mix enforcement failed', { message: String(e) });
     topItems = withinWindow.slice(0, maxArticles);
   }
-  const cleanTopItems = topItems.map((it:any) => ({ title: it.title, url: it.link, publishedAt: it.pubDate, source: it.source }));
+  const cleanTopItems = topItems.map((it:any) => ({ title: it.title, url: it.link, publishedAt: it.pubDate, source: it.source, imageUrl: it.imageUrl }));
+
+  // Optional: Scrape articles for images if RSS didn't provide them
+  if (enableImageScraping && cleanTopItems.some(item => !item.imageUrl)) {
+    console.log('DEBUG: Starting article scraping for missing images');
+
+    // Scrape articles that don't have images (limit to avoid overwhelming)
+    const articlesToScrape = cleanTopItems
+      .filter(item => !item.imageUrl)
+      .slice(0, 3); // Limit scraping to first 3 articles without images
+
+    if (articlesToScrape.length > 0) {
+      console.log(`DEBUG: Scraping ${articlesToScrape.length} articles for images`);
+
+      // Scrape in parallel but with a small delay between requests
+      const scrapePromises = articlesToScrape.map(async (item, index) => {
+        // Add small delay between requests to be respectful
+        if (index > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * index));
+        }
+
+        try {
+          const scrapedImageUrl = await scrapeArticleImage(item.url);
+          if (scrapedImageUrl) {
+            item.imageUrl = scrapedImageUrl;
+            console.log(`DEBUG: Successfully scraped image for article: ${item.title.substring(0, 50)}`);
+          }
+        } catch (error) {
+          console.log(`DEBUG: Failed to scrape image for article: ${item.title.substring(0, 50)} - ${error}`);
+        }
+      });
+
+      // Wait for all scraping to complete (with timeout)
+      try {
+        await Promise.race([
+          Promise.all(scrapePromises),
+          new Promise(resolve => setTimeout(resolve, 15000)) // 15 second timeout for all scraping
+        ]);
+        console.log('DEBUG: Article scraping completed');
+      } catch (error) {
+        console.log('DEBUG: Article scraping timed out or failed:', error);
+      }
+    }
+  }
 
   log.info('processed articles', { rawCount: rawItems.length, deduped: normalized.length, selected: topItems.length });
   return { topItems, cleanTopItems, maxAge };
