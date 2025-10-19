@@ -175,7 +175,7 @@ export const responseHandler = {
         let bestMatch = null;
         let bestScore = 0;
         
-        for (const article of cleanTopItems) {
+        for (const article of contextItems) {
           if (!article.imageUrl || usedImages.has(article.imageUrl)) continue;
           
           // Calculate similarity score based on title overlap
@@ -191,7 +191,7 @@ export const responseHandler = {
           
           const score = overlap / Math.max(bulletWords.length, titleWords.length);
           
-          if (score > bestScore && score > 0.3) { // Minimum threshold
+          if (score > bestScore && score > 0.2) { // Minimum threshold
             bestScore = score;
             bestMatch = article;
           }
