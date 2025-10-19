@@ -7,6 +7,8 @@ import { getRegionConfig } from '../pages/api/feeds';
 import { LENGTH_CONFIGS } from '../pages/api/uiConstants';
 import { ApiResponse } from '../types/tldr';
 import { cacheManager, NEGATIVE_CACHE_TTL } from './cacheManager';
+import { buildContextItemsAndLines, insertImagesIntoSummary, computeTopSources, createFallbackPayload } from './responseUtils';
+import { summarizeWithPossibleFallback } from './llmWrapper';
 
 export const responseHandler = {
   checkCache: (cacheKey: string): ApiResponse | null => {
@@ -84,25 +86,7 @@ export const responseHandler = {
         perFeedErrors: feeds.perFeedErrors
       });
 
-      const fallbackLines = feeds.urls.slice(0, 20).map((u: string, i: number) => `- ${u}`);
-      const summary = `TL;DR: Could not reliably fetch recent items for that selection. Showing attempted feed URLs instead (first 20):\n\n${fallbackLines.join('\n')}`;
-
-      const payloadFallback: ApiResponse = {
-        ok: true,
-        meta: {
-          region: region,
-          category: (category || 'Top'),
-          style,
-          timeframeHours: maxAgeHours,
-          language,
-          locale: uiLocale,
-          usedArticles: 0,
-          model: GEMINI_MODEL,
-          length: (typeof length === 'string' ? length : 'medium')
-        },
-        summary
-      };
-
+      const payloadFallback = createFallbackPayload(feeds, region, category, style, uiLocale, language, length, GEMINI_MODEL);
       cacheManager.set(cacheKey, { ts: Date.now(), payload: payloadFallback });
       return { status: 200, payload: payloadFallback };
     }
@@ -112,112 +96,22 @@ export const responseHandler = {
     const regionName = regionCfg.name;
     const catName = (category || 'Top').replace(/^\w/, (c) => c.toUpperCase());
 
-    const MAX_CONTEXT_ITEMS = 8;
-    const contextItems = topItems.slice(0, Math.min(MAX_CONTEXT_ITEMS, topItems.length));
-    const contextLines = contextItems.map((a: any, idx: number) => {
-      const dateStr = a.isoDate ? new Date(a.isoDate).toLocaleString(uiLocale, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-      const snip = (a.snippet || '').replace(/\s+/g, ' ');
-      let line = `#${idx + 1} ${a.title}\nSource: ${a.source} | Published: ${dateStr}\nLink: ${a.link}\nSummary: ${snip}`;
-      if (a.imageUrl) {
-        line += `\n![${a.title}](${a.imageUrl})`;
-      }
-      return line;
-    });
+    const { contextItems, contextLines } = buildContextItemsAndLines(topItems, uiLocale);
 
     const lengthPreset = (typeof length === 'string' ? length : 'medium').toLowerCase();
     const lengthConfig = LENGTH_CONFIGS[lengthPreset as keyof typeof LENGTH_CONFIGS] || LENGTH_CONFIGS.medium;
 
-    // Check LLM availability
-    const llmCacheKey = 'gemini_quota';
-    const now = Date.now();
-    const negativeExpire = cacheManager.getNegativeCache(llmCacheKey) || 0;
-    let summary: string = '';
-    let payloadErrorForLogs: string | undefined;
-    let usedLLM = true;
-
-    if (process.env.SERVER_DISABLE_LLM === 'true' || negativeExpire > now) {
-      usedLLM = false;
-      const fallbackLines = (contextLines || []).slice(0, Math.max(3, Math.min(Math.round(Math.min(lengthConfig.bulletsMax, Math.max(lengthConfig.bulletsMin, 6))), 6))).map((l) => `- ${l.split('\n')[0]}`);
-      summary = `TL;DR: LLM unavailable or temporarily disabled. Showing top headlines instead:\n\n${fallbackLines.join('\n\n')}`;
-    } else {
-      const summaryTimer = requestLog.startTimer('summary generation', { region, category, style, usedLLM: true });
-      const res = await summarizeWithLLM({ regionName, catName, maxAge: maxAgeHours, style, language, uiLocale, lengthPreset, lengthConfig, contextLines });
-      summary = res.summary;
-      if (res.llmError) payloadErrorForLogs = res.llmError;
-      summaryTimer();
-    }
+    const { summary, usedLLM, llmError } = await summarizeWithPossibleFallback({ regionName, catName, maxAge: maxAgeHours, style, language, uiLocale, lengthPreset, lengthConfig, contextLines, requestLog });
+    let payloadErrorForLogs = llmError;
 
     // Finalize summary with deduplication and sources
     const finalizeTimer = requestLog.startTimer('summary finalization', { region, category });
     let finalSummary = dedupeSummaryBullets(summary);
 
-    // Collect existing images in the summary to avoid duplicates
-    const existingImages = new Set<string>();
-    const imageRegex = /!\[.*?\]\((.*?)\)/g;
-    let match;
-    while ((match = imageRegex.exec(finalSummary)) !== null) {
-      existingImages.add(match[1]);
-    }
+    finalSummary = insertImagesIntoSummary(finalSummary, contextItems);
 
-    // Insert images inline after bullet headlines
-    // Parse the summary to find bullets and insert images for articles that have them
-    const lines = finalSummary.split('\n');
-    const result: string[] = [];
-    const usedImages = new Set<string>(); // Track used images to prevent duplicates
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      result.push(line);
-      
-      // Check if this line is a bullet
-      if (line.match(/^(\s*[-*]\s+)(.+)$/)) {
-        // Find the best matching article with an image that hasn't been used yet
-        let bestMatch = null;
-        let bestScore = 0;
-        
-        for (const article of contextItems) {
-          if (!article.imageUrl || usedImages.has(article.imageUrl)) continue;
-          
-          // Calculate similarity score based on title overlap
-          const bulletText = line.replace(/^(\s*[-*]\s+)/, '').toLowerCase();
-          const articleTitle = (article.title || '').toLowerCase();
-          
-          // Simple word overlap score
-          const bulletWords = bulletText.split(/\s+/);
-          const titleWords = articleTitle.split(/\s+/);
-          const overlap = bulletWords.filter(word => 
-            word.length > 3 && titleWords.some(titleWord => titleWord.includes(word) || word.includes(titleWord))
-          ).length;
-          
-          const score = overlap / Math.max(bulletWords.length, titleWords.length);
-          
-          if (score > bestScore && score > 0.2) { // Minimum threshold
-            bestScore = score;
-            bestMatch = article;
-          }
-        }
-        
-        if (bestMatch && !existingImages.has(bestMatch.imageUrl!)) {
-          // Insert image after the bullet and mark it as used
-          result.push(`![${bestMatch.title.replace(/[\[\]]/g, '')}](${bestMatch.imageUrl})`);
-          usedImages.add(bestMatch.imageUrl!);
-        }
-      }
-    }
-    
-    finalSummary = result.join('\n');
-
-    const hostCounts: Record<string, number> = {};
-    for (const a of cleanTopItems) {
-      let host = '';
-      try { host = new URL(a.url).hostname; } catch { host = 'unknown'; }
-      host = host.toLowerCase().replace(/^www\./, '');
-      hostCounts[host] = (hostCounts[host] || 0) + 1;
-    }
-    const topSources = Object.entries(hostCounts).sort((a,b) => b[1] - a[1]).slice(0, 5).map(([host,count]) => `${host} (${count})`).join(', ');
-    if (topSources) {
-      finalSummary += `\n\nSources: ${topSources}`;
-    }
+    const topSources = computeTopSources(cleanTopItems);
+    if (topSources) finalSummary += `\n\nSources: ${topSources}`;
     finalizeTimer();
 
     const payload: ApiResponse = {

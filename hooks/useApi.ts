@@ -7,6 +7,7 @@ import {
   HISTORY_LIMIT,
   CLIENT_CACHE_SIZE
 } from '../constants/clientConstants';
+import { postTldr } from '../utils/apiClient';
 
 export interface ApiRequestPayload {
   region: string;
@@ -142,43 +143,7 @@ export function useApi() {
     // Create the network promise and store it so concurrent callers reuse it
     const networkPromise: Promise<ApiResponse> = (async () => {
       try {
-        const response = await fetch('/api/tldr', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal
-        });
-
-        const contentType = response.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) {
-          const text = await response.text();
-          const msg = `Invalid response format. ${text.slice(0, 200)}`;
-          setError(msg);
-          return { ok: false, error: msg } as ApiResponse;
-        }
-
-        const responseData = await response.json();
-
-        if (!response.ok) {
-          console.warn('API returned non-OK HTTP status', response.status, responseData);
-          const baseErr = responseData?.error || `HTTP ${response.status}: ${response.statusText}`;
-          const details = responseData?.details ? ` Details: ${responseData.details}` : '';
-          const msg = baseErr + details;
-          setError(msg);
-          return { ok: false, error: msg } as ApiResponse;
-        }
-
-        if (!responseData.ok) {
-          console.warn('API returned ok=false payload', responseData);
-          const baseErr = responseData?.error || 'Request failed';
-          const details = responseData?.details ? ` Details: ${responseData.details}` : '';
-          const msg = baseErr + details;
-          setError(msg);
-          return { ok: false, error: msg } as ApiResponse;
-        }
+        const responseData = await postTldr(payload, controller.signal);
 
         // Cache the response
         cache.current.set(cacheKey, { data: responseData, timestamp: Date.now() });
@@ -207,7 +172,7 @@ export function useApi() {
           });
         } catch {}
 
-        return responseData;
+        return responseData as ApiResponse;
       } finally {
         clearTimeout(timeoutId);
       }

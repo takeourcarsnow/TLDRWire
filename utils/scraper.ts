@@ -2,51 +2,7 @@
 
 import * as cheerio from 'cheerio';
 import logger from '../pages/api/logger';
-
-// Cache for scraped articles to avoid re-scraping
-const SCRAPE_CACHE = new Map<string, { ts: number; imageUrl?: string; error?: string }>();
-const SCRAPE_CACHE_TTL_MS = 1000 * 60 * 60; // 1 hour cache for scraped images
-
-// Rate limiting for article scraping
-const SCRAPE_REQUESTS = new Map<string, number[]>(); // hostname -> timestamps
-const MAX_REQUESTS_PER_MINUTE = 10;
-const MAX_REQUESTS_PER_HOUR = 50;
-
-/**
- * Check if we're within rate limits for a hostname
- */
-function checkRateLimit(hostname: string): boolean {
-  const now = Date.now();
-  const requests = SCRAPE_REQUESTS.get(hostname) || [];
-
-  // Clean old requests (older than 1 hour)
-  const recentRequests = requests.filter(ts => now - ts < 3600000);
-  SCRAPE_REQUESTS.set(hostname, recentRequests);
-
-  // Check per-minute limit (last 60 seconds)
-  const lastMinute = recentRequests.filter(ts => now - ts < 60000);
-  if (lastMinute.length >= MAX_REQUESTS_PER_MINUTE) {
-    console.log(`DEBUG: Rate limit exceeded for ${hostname} (per minute)`);
-    return false;
-  }
-
-  // Check per-hour limit
-  if (recentRequests.length >= MAX_REQUESTS_PER_HOUR) {
-    console.log(`DEBUG: Rate limit exceeded for ${hostname} (per hour)`);
-    return false;
-  }
-
-  return true;
-}
-
-/**
- * Record a request for rate limiting
- */
-function recordRequest(hostname: string): void {
-  const requests = SCRAPE_REQUESTS.get(hostname) || [];
-  requests.push(Date.now());
-  SCRAPE_REQUESTS.set(hostname, requests);
-}
+import { SCRAPE_CACHE, SCRAPE_CACHE_TTL_MS, checkRateLimit, recordRequest, isValidImageUrl, getScrapingStats as _getScrapingStats } from './scrapeHelpers';
 
 /**
  * Extract the best image from an article page
@@ -115,7 +71,7 @@ export async function scrapeArticleImage(articleUrl: string): Promise<string | n
     }
 
     const html = await response.text();
-    recordRequest(hostname);
+  recordRequest(hostname);
 
     // Parse HTML with cheerio
     const $ = cheerio.load(html);
@@ -229,46 +185,6 @@ export async function scrapeArticleImage(articleUrl: string): Promise<string | n
   }
 }
 
-/**
- * Validate if a URL is a valid image URL
- */
-function isValidImageUrl(url: string, baseUrl: string): boolean {
-  try {
-    // Convert relative URLs to absolute
-    const absoluteUrl = url.startsWith('http') ? url : new URL(url, baseUrl).href;
-
-    // Check if it's a valid HTTP/HTTPS URL
-    const parsedUrl = new URL(absoluteUrl);
-    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-      return false;
-    }
-
-    // Check for common image extensions
-    const pathname = parsedUrl.pathname.toLowerCase();
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
-    const hasImageExtension = imageExtensions.some(ext => pathname.includes(ext));
-
-    // Allow URLs without extensions if they contain image-related keywords
-    const hasImageKeywords = /\/image|\.image|img|photo|picture|media/i.test(pathname + parsedUrl.search);
-
-    return hasImageExtension || hasImageKeywords;
-  } catch (e) {
-    console.log(`DEBUG: Invalid image URL: ${url}`);
-    return false;
-  }
-}
-
-/**
- * Get scraping statistics for monitoring
- */
 export function getScrapingStats(): { cacheSize: number; rateLimits: Record<string, number> } {
-  const rateLimits: Record<string, number> = {};
-  for (const [hostname, requests] of SCRAPE_REQUESTS.entries()) {
-    rateLimits[hostname] = requests.length;
-  }
-
-  return {
-    cacheSize: SCRAPE_CACHE.size,
-    rateLimits
-  };
+  return _getScrapingStats();
 }

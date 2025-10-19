@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { centerSelected, centerNeighbor, selectClosest } from '../utils/carouselUtils';
+import { initScrollToMiddle, doInstantJump } from './carouselHandlers';
 
 interface UseCarouselProps {
   options?: Array<{ value: string; label?: string; icon?: string | React.ComponentType<any> }>;
@@ -29,18 +30,7 @@ export const useCarousel = ({
   // so the user can scroll endlessly. When near either edge we'll jump the scroll position
   // by one segment width to maintain the illusion of infinite looping.
   useEffect(() => {
-    const initScrollToMiddle = () => {
-      const carousel = carouselRef.current;
-      if (!carousel) return;
-      const seg = carousel.scrollWidth / 3;
-      if (seg && isFinite(seg)) {
-        // Jump to the middle segment without animation
-        carousel.scrollLeft = seg;
-      }
-    };
-
-    // Wait for layout to settle
-    requestAnimationFrame(() => requestAnimationFrame(initScrollToMiddle));
+    initScrollToMiddle(carouselRef);
   }, [options, value, selectedPreset]);
 
   // Center on mount/when options change (use instant on init to avoid jump animations)
@@ -180,31 +170,17 @@ export const useCarousel = ({
 
     // When we need to jump, disable smooth scrolling and scroll-snap so the
     // reposition is instantaneous and not visibly animated or snapped.
-    const doInstantJump = (newLeft: number) => {
-      const prevBehavior = carousel.style.scrollBehavior;
-      const prevSnap = carousel.style.scrollSnapType;
-      try {
-        carousel.style.scrollBehavior = 'auto';
-        carousel.style.scrollSnapType = 'none';
-        carousel.scrollLeft = newLeft;
-      } finally {
-        // Restore on next frame so subsequent user scrolls still feel smooth
-        requestAnimationFrame(() => {
-          carousel.style.scrollBehavior = prevBehavior || 'smooth';
-          carousel.style.scrollSnapType = prevSnap || 'x mandatory';
-        });
-      }
-    };
+    const doInstantJumpLocal = (newLeft: number) => doInstantJump(carousel, newLeft);
 
     // if we've scrolled past the left edge into the first segment, jump right
     if (left <= THRESHOLD) {
-      doInstantJump(left + seg);
+      doInstantJumpLocal(left + seg);
       return;
     }
 
     // if we've scrolled into/after the last segment, jump left
     if (left >= seg * 2 - THRESHOLD) {
-      doInstantJump(left - seg);
+      doInstantJumpLocal(left - seg);
       return;
     }
 
