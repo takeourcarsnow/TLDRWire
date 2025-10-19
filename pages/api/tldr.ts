@@ -255,7 +255,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const contextLines = contextItems.map((a: any, idx: number) => {
     const dateStr = a.isoDate ? new Date(a.isoDate).toLocaleString(uiLocale, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
         const snip = (a.snippet || '').replace(/\s+/g, ' ');
-        return `#${idx + 1} ${a.title}\nSource: ${a.source} | Published: ${dateStr}\nLink: ${a.link}\nSummary: ${snip}`;
+        let line = `#${idx + 1} ${a.title}\nSource: ${a.source} | Published: ${dateStr}\nLink: ${a.link}\nSummary: ${snip}`;
+        if (a.imageUrl) {
+          line += `\nImage: ![${a.title}](${a.imageUrl})`;
+        }
+        return line;
       });
 
       const lengthPreset = (typeof length === 'string' ? length : 'medium').toLowerCase();
@@ -282,19 +286,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
       // Append source attribution to the summary
       let finalSummary = dedupeSummaryBullets(summary);
-
-      // Add images from articles (failsafe - not sent to LLM)
-      const imagesWithTitles = cleanTopItems
-        .filter((item: any) => item.imageUrl)
-        .slice(0, 6) // Limit to 6 images to avoid overwhelming the UI
-        .map((item: any) => `![${item.title}](${item.imageUrl})`);
-
-      if (imagesWithTitles.length > 0) {
-        console.log('DEBUG: Adding images to summary:', imagesWithTitles.length);
-        finalSummary += '\n\n## Images\n\n' + imagesWithTitles.join('\n\n');
-      } else {
-        console.log('DEBUG: No images found in articles');
-      }
 
       // Compute sources from the final articles used
       const hostCounts: Record<string, number> = {};
