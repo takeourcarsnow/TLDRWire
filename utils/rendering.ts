@@ -150,9 +150,21 @@ export const renderMarkdownToElement = (
     // Handle image loading errors gracefully
     el.querySelectorAll<HTMLImageElement>('img').forEach((img: HTMLImageElement) => {
       if (img.src && !img.src.includes('favicon')) { // Skip favicon images
+        // Wrap the image in a centered paragraph
+        const wrapper = document.createElement('p');
+        wrapper.style.textAlign = 'center';
+        wrapper.style.margin = '10px 0';
+        wrapper.style.clear = 'both'; // Ensure it doesn't float with text
+        img.parentNode?.insertBefore(wrapper, img);
+        wrapper.appendChild(img);
+        img.style.maxWidth = '100%';
+        img.style.height = 'auto';
+        img.style.display = 'block';
+        img.style.margin = '0 auto';
+        
         img.onerror = () => {
           console.log('DEBUG: Image failed to load:', img.src);
-          img.style.display = 'none'; // Hide broken images
+          wrapper.style.display = 'none'; // Hide the wrapper if image fails
         };
         img.onload = () => {
           console.log('DEBUG: Image loaded successfully:', img.src);

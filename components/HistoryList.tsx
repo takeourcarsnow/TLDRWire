@@ -117,6 +117,7 @@ export function HistoryList({ history, onApply, onDelete, onClear, renderMarkdow
         <div className="history-search-input-wrapper">
           <Search size={16} className="search-icon" />
           <input
+            type="text"
             placeholder="Search history (region, category, style, text)"
             value={q}
             onChange={(e) => setQ(e.target.value)}

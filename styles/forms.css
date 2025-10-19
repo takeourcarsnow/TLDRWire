@@ -67,7 +67,7 @@ label {
 }
 
 /* Prefer emoji-capable fonts on form controls so country flags render in Chromium on Windows */
-select, input[type="text"], input[type="number"] {
+select, input[type="text"]:not(.history-search-input), input[type="number"] {
   width: 100%;
   padding: 12px 14px;
   border-radius: 8px;
