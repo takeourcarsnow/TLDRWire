@@ -71,7 +71,7 @@
     "testEnvironment": "node",
     "collectCoverageFrom": [
       "*.js",
-      "api/*.js",
+      "src/pages/api/*.js",
       "!node_modules/**"
     ],
     "testTimeout": 10000

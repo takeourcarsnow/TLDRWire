@@ -1,3 +1,4 @@
+import React from 'react';
 import { Sunrise, Monitor, TrendingUp, MapPin, Zap, Building, Microscope, Heart, Calendar, Globe, Briefcase, GraduationCap, Leaf, Palette, Gamepad2, Music, Cloud, Plane, DollarSign } from 'lucide-react';
 
 export type DefaultPreset = readonly [string, React.ComponentType<any>];

@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { centerSelected, centerNeighbor, selectClosest } from '../utils/carouselUtils';
 import { initScrollToMiddle, doInstantJump } from './carouselHandlers';
 
