@@ -290,7 +290,7 @@ export async function processArticles(opts: {
     // Scrape articles that don't have images (limit to avoid overwhelming)
     const articlesToScrape = cleanTopItems
       .filter(item => !item.imageUrl)
-      .slice(0, 3); // Limit scraping to first 3 articles without images
+      .slice(0, 10); // Limit scraping to first 10 articles without images
 
     if (articlesToScrape.length > 0) {
       console.log(`DEBUG: Scraping ${articlesToScrape.length} articles for images`);
@@ -306,6 +306,11 @@ export async function processArticles(opts: {
           const scrapedImageUrl = await scrapeArticleImage(item.url);
           if (scrapedImageUrl) {
             item.imageUrl = scrapedImageUrl;
+            // Propagate back to the original topItems for summary generation
+            const index = cleanTopItems.indexOf(item);
+            if (index !== -1) {
+              topItems[index].imageUrl = scrapedImageUrl;
+            }
             console.log(`DEBUG: Successfully scraped image for article: ${item.title.substring(0, 50)}`);
           }
         } catch (error) {

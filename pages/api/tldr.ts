@@ -52,6 +52,7 @@ interface ApiResponse {
     length: string;
   };
   summary?: string;
+  images?: { title: string; url: string; imageUrl: string }[];
 }
 
 interface CacheEntry {
@@ -252,7 +253,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   const MAX_CONTEXT_ITEMS = 8;
       const contextItems = topItems.slice(0, Math.min(MAX_CONTEXT_ITEMS, topItems.length));
-  const contextLines = contextItems.map((a: any, idx: number) => {
+      const contextLines = contextItems.map((a: any, idx: number) => {
     const dateStr = a.isoDate ? new Date(a.isoDate).toLocaleString(uiLocale, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
         const snip = (a.snippet || '').replace(/\s+/g, ' ');
         let line = `#${idx + 1} ${a.title}\nSource: ${a.source} | Published: ${dateStr}\nLink: ${a.link}\nSummary: ${snip}`;
@@ -260,9 +261,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           line += `\nImage: ![${a.title}](${a.imageUrl})`;
         }
         return line;
-      });
-
-      const lengthPreset = (typeof length === 'string' ? length : 'medium').toLowerCase();
+      });      const lengthPreset = (typeof length === 'string' ? length : 'medium').toLowerCase();
       const lengthConfig = LENGTH_CONFIGS[lengthPreset as keyof typeof LENGTH_CONFIGS] || LENGTH_CONFIGS.medium;
 
       // If LLM usage is temporarily disabled via env or negative-cache (quota hit),
@@ -314,7 +313,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           fallback: !usedLLM,
           length: lengthPreset
         },
-        summary: finalSummary
+        summary: finalSummary,
+        images: cleanTopItems.filter(a => a.imageUrl).map(a => ({ title: a.title, url: a.url, imageUrl: a.imageUrl }))
       };
       if (payloadErrorForLogs) {
         (payload as any).llmError = payloadErrorForLogs;
