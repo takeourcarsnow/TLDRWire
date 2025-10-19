@@ -106,6 +106,12 @@ At minimum set:
 
 - GEMINI_API_KEY — API key for Google Gemini (server-side only)
 
+Optional client-side variables:
+
+- NEXT_PUBLIC_DISABLE_RATE_LIMIT — Set to 'true' to disable the 60-second cooldown between summary generations. WARNING: This may increase server costs and API usage. Default: false
+- NEXT_PUBLIC_ENABLE_SW — Set to 'true' to enable the Service Worker for background caching. WARNING: May cause background network activity. Default: false
+- NEXT_PUBLIC_ALLOWED_ORIGIN — Restrict API calls to requests from this origin (for production security). Example: https://tldrwire.xyz
+
 Other environment variables may be used by deployment platforms (for example Vercel secrets or functions timeout settings).
 
 ## Caching, rate-limits and costs

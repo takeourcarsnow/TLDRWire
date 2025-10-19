@@ -109,7 +109,7 @@ export default function Home() {
   const RATE_LIMIT_SECONDS = 60;
   const RATE_LIMIT_KEY = 'tldrwire:rateLimitExpires';
   useEffect(() => {
-    if (rateLimitCountdown > 0) {
+    if (!process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT && rateLimitCountdown > 0) {
       const timer = setTimeout(() => {
         setRateLimitCountdown((c) => {
           const next = Math.max(0, c - 1);
@@ -127,6 +127,8 @@ export default function Home() {
 
   // Restore rate limit state from localStorage on mount and sync across tabs
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT) return;
+    
     try {
       const raw = localStorage.getItem(RATE_LIMIT_KEY);
       if (raw) {
@@ -179,16 +181,18 @@ export default function Home() {
   const generateSummary = useCallback(async (overridePayload?: any) => {
     const now = Date.now();
     if (isLoading) return;
-    if (lastGenerateTime && now - lastGenerateTime < RATE_LIMIT_SECONDS * 1000) {
+    if (!process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT && lastGenerateTime && now - lastGenerateTime < RATE_LIMIT_SECONDS * 1000) {
       // Already rate limited
       return;
     }
-    setLastGenerateTime(now);
-    setRateLimitCountdown(RATE_LIMIT_SECONDS);
-    try {
-      const expires = now + RATE_LIMIT_SECONDS * 1000;
-      localStorage.setItem(RATE_LIMIT_KEY, String(expires));
-    } catch (e) {}
+    if (!process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT) {
+      setLastGenerateTime(now);
+      setRateLimitCountdown(RATE_LIMIT_SECONDS);
+      try {
+        const expires = now + RATE_LIMIT_SECONDS * 1000;
+        localStorage.setItem(RATE_LIMIT_KEY, String(expires));
+      } catch (e) {}
+    }
     clearError();
 
     const payload = {
@@ -331,7 +335,7 @@ export default function Home() {
               onPresetClick={handlePresetClick}
               selectedPreset={selectedPreset}
               isLoading={isLoading}
-              rateLimited={rateLimitCountdown > 0}
+              rateLimited={!process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT && rateLimitCountdown > 0}
               rateLimitCountdown={rateLimitCountdown}
               onSliderDrag={setIsDraggingSlider}
             />
