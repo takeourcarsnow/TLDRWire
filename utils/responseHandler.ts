@@ -142,6 +142,15 @@ export const responseHandler = {
     // Finalize summary with deduplication and sources
     let finalSummary = dedupeSummaryBullets(summary);
 
+    // Append images if available
+    const imagesWithUrls = cleanTopItems.filter(a => a.imageUrl);
+    if (imagesWithUrls.length > 0) {
+      finalSummary += '\n\n## Images\n';
+      imagesWithUrls.slice(0, 10).forEach(a => { // Limit to 10 images
+        finalSummary += `![${a.title.replace(/[\[\]]/g, '')}](${a.imageUrl})\n`;
+      });
+    }
+
     const hostCounts: Record<string, number> = {};
     for (const a of cleanTopItems) {
       let host = '';
