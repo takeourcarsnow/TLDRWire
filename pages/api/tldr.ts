@@ -62,8 +62,8 @@ interface CacheEntry {
 
 const CACHE = new Map<string, CacheEntry>();
 // Increase server-side cache TTL to reduce LLM/function invocations from frequent identical requests.
-// 15 minutes is a reasonable tradeoff between freshness and cost.
-const SERVER_CACHE_TTL = SERVER_CACHE_TTL_MS; // 15 minutes
+// 20 minutes is a reasonable tradeoff between freshness and cost.
+const SERVER_CACHE_TTL = SERVER_CACHE_TTL_MS; // 20 minutes
 
 const INFLIGHT = new Map<string, Promise<{ status: number; payload: ApiResponse }>>();
 // Simple in-memory negative-cache to avoid repeated LLM calls when quota is hit.

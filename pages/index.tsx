@@ -4,7 +4,7 @@ import Head from 'next/head';
 import { useTheme } from '../hooks/useTheme';
 import { usePreferences, type Preferences } from '../hooks/usePreferences';
 import { useApi } from '../hooks/useApi';
-import HistoryList from '../components/HistoryList';
+import { usePerformanceMonitoring } from '../hooks/usePerformance';
 import dynamic from 'next/dynamic';
 const NewsForm = dynamic(() => import('../components/NewsForm').then(m => m.NewsForm), { ssr: false });
 const NewsOutput = dynamic(() => import('../components/NewsOutput').then(m => m.NewsOutput), { ssr: false });
@@ -15,6 +15,7 @@ import { BottomNavbar } from '../components/BottomNavbar';
 const HistoryPanel = dynamic(() => import('../components/HistoryPanel').then(m => m.HistoryPanel), { ssr: false });
 const PresetCarousel = dynamic(() => import('../components/PresetCarousel').then(m => m.default), { ssr: false });
 import { SettingsPanel } from '../components/SettingsPanel';
+const HistoryList = dynamic(() => import('../components/HistoryList').then(m => m.HistoryList), { ssr: false });
 import { PRESET_CONFIGS } from '../constants/ui';
 import { detectLanguage, detectRegionFromLanguage } from '../utils/language';
 
@@ -22,6 +23,7 @@ export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const { preferences, updatePreference, resetPreferences } = usePreferences();
   const { makeRequest, isLoading, error, data, clearError, history, clearHistory, removeHistoryItem } = useApi();
+  usePerformanceMonitoring();
   const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<any | null>(null);
   const selectedSummaryRef = useRef<HTMLDivElement | null>(null);
   const [activeTab, setActiveTab] = useState(0);
@@ -322,7 +324,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className={isLoading ? 'blurred' : ''}>
+      <main className={isLoading ? 'blurred' : ''} id="main-content">
         <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab} disabled={isDraggingSlider}>
           <section className="panel">
             <h2 style={{ margin: 0, flexShrink: 0, fontSize: '18px', fontWeight: 'normal', color: 'var(--text)' }}>Presets</h2>

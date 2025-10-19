@@ -1,3 +1,21 @@
+/* Skip link for accessibility */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--primary);
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: var(--radius);
+  z-index: 1000;
+  font-weight: 500;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
 /* Theme toggle */
 .theme-toggle {
   position: absolute !important;

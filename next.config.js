@@ -2,6 +2,14 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  // Optimize images
+  images: {
+    formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  },
+  // Enable compression
+  compress: true,
   // Allow building even if ESLint reports problems. This prevents dev-time lint
   // rules from blocking production builds (useful during development or CI).
   // If you prefer to keep strict linting, remove or set to false and fix the
@@ -9,8 +17,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: false,
   },
-  // Do not expose sensitive secrets here. Server-side code should read process.env.GEMINI_API_KEY directly.
-  // If you must expose a model selection to the client, prefix it with NEXT_PUBLIC_. Avoid embedding API keys.
+  // Optimize headers for better performance
   headers: async () => {
     return [
       {
@@ -44,6 +51,15 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 's-maxage=180, stale-while-revalidate=300',
+          },
+        ],
+      },
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },
