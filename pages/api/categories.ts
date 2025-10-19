@@ -29,7 +29,9 @@ export const CATEGORY_FILTERS: { [key: string]: string[] } = {
   ],
   sports: [
     'sport', 'game', 'match', 'tournament', 'championship', 'league', 'team', 'player',
-    'football', 'soccer', 'basketball', 'baseball', 'tennis', 'golf', 'olympics', 'fifa'
+    'football', 'soccer', 'basketball', 'baseball', 'tennis', 'golf', 'olympics', 'fifa',
+    'sportas', 'žaidimas', 'rungtynės', 'turnyras', 'čempionatas', 'lyga', 'komanda', 'žaidėjas',
+    'futbolas', 'krepšinis', 'beisbolas', 'tenisas', 'golfas', 'olimpinės', 'fifa'
   ],
   technology: [
     'technology', 'tech', 'ai', 'artificial intelligence', 'software', 'app', 'digital',
@@ -37,7 +39,9 @@ export const CATEGORY_FILTERS: { [key: string]: string[] } = {
   ],
   business: [
     'business', 'economy', 'market', 'stock', 'financial', 'company', 'corporation',
-    'investment', 'trading', 'profit', 'revenue', 'gdp', 'inflation', 'banking'
+    'investment', 'trading', 'profit', 'revenue', 'gdp', 'inflation', 'banking',
+    'verslas', 'ekonomika', 'rinka', 'akcijos', 'finansai', 'kompanija', 'korporacija',
+    'investicijos', 'prekyba', 'pelnas', 'pajamos', 'bvp', 'infliacija', 'bankas'
   ],
   health: [
     'health', 'medical', 'medicine', 'hospital', 'doctor', 'patient', 'disease',

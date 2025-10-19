@@ -43,7 +43,10 @@ export const responseHandler = {
   }): Promise<{ status: number; payload: ApiResponse }> => {
     const { region, category, style, timeframeHours, limit, language, uiLocale, length, cacheKey, requestLog } = params;
 
+    const totalTimer = requestLog.startTimer('total summary generation', { region, category, style });
+
     // Fetch feeds
+    const fetchTimer = requestLog.startTimer('feed fetching', { region, category });
     const feeds = await fetchFeeds({
       region,
       category,
@@ -54,8 +57,10 @@ export const responseHandler = {
       maxFeeds: 16,
       desiredItems: Math.max(8, limit)
     });
+    fetchTimer();
 
     // Process articles
+    const processTimer = requestLog.startTimer('article processing', { region, category, enableImageScraping: process.env.ENABLE_IMAGE_SCRAPING === 'true' });
     const processed = await processArticles({
       feedsResult: feeds,
       maxArticles: limit,
@@ -66,6 +71,7 @@ export const responseHandler = {
       maxAgeHours: timeframeHours,
       enableImageScraping: process.env.ENABLE_IMAGE_SCRAPING === 'true'
     });
+    processTimer();
 
     const { topItems, cleanTopItems, maxAge } = processed;
     const maxAgeHours = Math.max(1, Math.round(Number(maxAge || 0) / (1000 * 60 * 60)));
@@ -134,18 +140,22 @@ export const responseHandler = {
       const fallbackLines = (contextLines || []).slice(0, Math.max(3, Math.min(Math.round(Math.min(lengthConfig.bulletsMax, Math.max(lengthConfig.bulletsMin, 6))), 6))).map((l) => `- ${l.split('\n')[0]}`);
       summary = `TL;DR: LLM unavailable or temporarily disabled. Showing top headlines instead:\n\n${fallbackLines.join('\n\n')}`;
     } else {
+      const summaryTimer = requestLog.startTimer('summary generation', { region, category, style, usedLLM: true });
       const res = await summarizeWithLLM({ regionName, catName, maxAge: maxAgeHours, style, language, uiLocale, lengthPreset, lengthConfig, contextLines });
       summary = res.summary;
       if (res.llmError) payloadErrorForLogs = res.llmError;
+      summaryTimer();
     }
 
     // Finalize summary with deduplication and sources
+    const finalizeTimer = requestLog.startTimer('summary finalization', { region, category });
     let finalSummary = dedupeSummaryBullets(summary);
 
     // Insert images inline after bullet headlines
     // Parse the summary to find bullets and insert images for articles that have them
     const lines = finalSummary.split('\n');
     const result: string[] = [];
+    const usedImages = new Set<string>(); // Track used images to prevent duplicates
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -153,12 +163,12 @@ export const responseHandler = {
       
       // Check if this line is a bullet
       if (line.match(/^(\s*[-*]\s+)(.+)$/)) {
-        // Find the best matching article with an image
+        // Find the best matching article with an image that hasn't been used yet
         let bestMatch = null;
         let bestScore = 0;
         
         for (const article of cleanTopItems) {
-          if (!article.imageUrl) continue;
+          if (!article.imageUrl || usedImages.has(article.imageUrl)) continue;
           
           // Calculate similarity score based on title overlap
           const bulletText = line.replace(/^(\s*[-*]\s+)/, '').toLowerCase();
@@ -180,8 +190,9 @@ export const responseHandler = {
         }
         
         if (bestMatch) {
-          // Insert image after the bullet
+          // Insert image after the bullet and mark it as used
           result.push(`![${bestMatch.title.replace(/[\[\]]/g, '')}](${bestMatch.imageUrl})`);
+          usedImages.add(bestMatch.imageUrl!);
         }
       }
     }
@@ -199,6 +210,7 @@ export const responseHandler = {
     if (topSources) {
       finalSummary += `\n\nSources: ${topSources}`;
     }
+    finalizeTimer();
 
     const payload: ApiResponse = {
       ok: true,
@@ -233,6 +245,7 @@ export const responseHandler = {
     requestLog.info('response ready', { usedArticles: cleanTopItems.length, model: GEMINI_MODEL, cached: false });
     requestLog.info('final articles used for summary', { count: cleanTopItems.length });
 
+    totalTimer();
     return { status: 200, payload };
   },
 

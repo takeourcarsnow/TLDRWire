@@ -4,6 +4,7 @@ import { deduplicateArticles } from './deduplication';
 import { sortAndFilterArticles } from './sortingAndFiltering';
 import { enforceSourceDiversity } from './sourceDiversity';
 import { performImageScraping, CleanArticle } from './imageScraping';
+import { CATEGORY_FILTERS } from './categories';
 
 export type ProcessArticlesResult = {
   topItems: any[];
@@ -50,8 +51,11 @@ export async function processArticles(opts: {
   // Basic dedupe by normalized title + link
   const normalized = deduplicateArticles(rawItems);
 
+  // Filter by category for regions with general feeds
+  const categoryFiltered = filterArticlesByCategory(normalized, category || '', region || '');
+
   // Sort by pub date and filter by age
-  const { filteredArticles: withinWindow, maxAge } = sortAndFilterArticles(normalized, preferLatest, maxAgeHours);
+  const { filteredArticles: withinWindow, maxAge } = sortAndFilterArticles(categoryFiltered, preferLatest, maxAgeHours);
 
   // Enforce source diversity
   let topItems: any[];
@@ -108,8 +112,50 @@ export async function processArticles(opts: {
   }));
 
   // Optional: Scrape articles for images if RSS didn't provide them
-  await performImageScraping(topItems, cleanTopItems, enableImageScraping);
+  await performImageScraping(topItems, cleanTopItems, enableImageScraping, {
+    maxConcurrent: 3, // Allow 3 concurrent requests
+    delayBetweenRequests: 500, // 500ms delay between requests
+    lazyLoad: false // Wait for scraping to complete before returning
+  });
 
   log.info('processed articles', { rawCount: rawItems.length, deduped: normalized.length, selected: topItems.length });
   return { topItems, cleanTopItems, maxAge };
+}
+
+function filterArticlesByCategory(articles: any[], category: string, region: string): any[] {
+  if (!category || category === 'top' || category === 'world') {
+    return articles;
+  }
+
+  // Only apply filtering for regions that use general feeds, like Lithuania
+  if (region !== 'lithuania') {
+    return articles;
+  }
+
+  const filters = CATEGORY_FILTERS[category];
+  if (!filters || filters.length === 0) {
+    return articles;
+  }
+
+  // Lithuanian hosts that publish general news
+  const lithuanianHosts = ['lrt.lt', 'delfi.lt', '15min.lt', 'lrytas.lt'];
+
+  return articles.filter(article => {
+    let host = '';
+    try { host = new URL(article.link).hostname.toLowerCase(); } catch { host = ''; }
+    const isLithuanian = lithuanianHosts.some(h => host.includes(h));
+
+    // If not from Lithuanian source, keep it (assume international feeds are already category-specific)
+    if (!isLithuanian) {
+      return true;
+    }
+
+    // For Lithuanian sources, apply category filtering
+    const title = (article.title || '').toLowerCase();
+    const content = (article.contentSnippet || article.content || '').toLowerCase();
+    const text = `${title} ${content}`;
+
+    // Check if any filter keyword is present in title or content
+    return filters.some(keyword => text.includes(keyword.toLowerCase()));
+  });
 }

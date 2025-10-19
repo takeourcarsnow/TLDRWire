@@ -87,9 +87,12 @@ export async function scrapeArticleImage(articleUrl: string): Promise<string | n
 
     console.log(`DEBUG: Scraping article for image: ${articleUrl}`);
 
-    // Fetch the article page
+    // Fetch the article page with improved timeout handling
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      console.log(`DEBUG: Scraping timed out for ${articleUrl}`);
+    }, 8000); // Reduced timeout to 8 seconds for better responsiveness
 
     const response = await fetch(articleUrl, {
       signal: controller.signal,
