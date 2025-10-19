@@ -119,7 +119,7 @@ export const responseHandler = {
       const snip = (a.snippet || '').replace(/\s+/g, ' ');
       let line = `#${idx + 1} ${a.title}\nSource: ${a.source} | Published: ${dateStr}\nLink: ${a.link}\nSummary: ${snip}`;
       if (a.imageUrl) {
-        line += `\nImage: ![${a.title}](${a.imageUrl})`;
+        line += `\n![${a.title}](${a.imageUrl})`;
       }
       return line;
     });
@@ -150,6 +150,14 @@ export const responseHandler = {
     // Finalize summary with deduplication and sources
     const finalizeTimer = requestLog.startTimer('summary finalization', { region, category });
     let finalSummary = dedupeSummaryBullets(summary);
+
+    // Collect existing images in the summary to avoid duplicates
+    const existingImages = new Set<string>();
+    const imageRegex = /!\[.*?\]\((.*?)\)/g;
+    let match;
+    while ((match = imageRegex.exec(finalSummary)) !== null) {
+      existingImages.add(match[1]);
+    }
 
     // Insert images inline after bullet headlines
     // Parse the summary to find bullets and insert images for articles that have them
@@ -189,7 +197,7 @@ export const responseHandler = {
           }
         }
         
-        if (bestMatch) {
+        if (bestMatch && !existingImages.has(bestMatch.imageUrl!)) {
           // Insert image after the bullet and mark it as used
           result.push(`![${bestMatch.title.replace(/[\[\]]/g, '')}](${bestMatch.imageUrl})`);
           usedImages.add(bestMatch.imageUrl!);
