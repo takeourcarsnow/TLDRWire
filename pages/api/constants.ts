@@ -15,8 +15,33 @@ export {
 } from './storage';
 
 // Re-export all other constants for server-side use
-export * from './regions';
-export * from './categories';
-export * from './feedConstants';
-export * from './uiConstants';
-export * from './sports';
+export type { RegionConfig } from './regions';
+export {
+  REGION_MAP,
+  FEED_LANG_MAP
+} from './regions';
+
+export {
+  CATEGORY_QUERIES,
+  CATEGORY_FILTERS,
+  TOPIC_MAP
+} from './categories';
+
+export {
+  GLOBAL_GLS,
+  FALLBACK_FEEDS
+} from './feedConstants';
+
+export {
+  SUPPORTED_LANGUAGES,
+  LENGTH_OPTIONS,
+  LENGTH_CONFIGS,
+  TIMEFRAME_MIN,
+  TIMEFRAME_MAX,
+  ARTICLES_MIN,
+  ARTICLES_MAX
+} from './uiConstants';
+
+export {
+  SPORT_TYPES
+} from './sports';
