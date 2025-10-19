@@ -1,4 +1,6 @@
-import { REGION_MAP, FEED_LANG_MAP, CATEGORY_QUERIES, TOPIC_MAP, GLOBAL_GLS, FALLBACK_FEEDS } from './constants';
+import { REGION_MAP, FEED_LANG_MAP } from './regions';
+import { CATEGORY_QUERIES, TOPIC_MAP } from './categories';
+import { GLOBAL_GLS, FALLBACK_FEEDS } from './feedConstants';
 
 export interface FeedUrlParams {
   gl: string;

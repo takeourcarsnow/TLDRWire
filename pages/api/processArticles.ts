@@ -1,9 +1,13 @@
 import logger from './logger';
-import { scrapeArticleImage } from '../../utils/scraper';
+import { normalizeArticles } from './articleNormalization';
+import { deduplicateArticles } from './deduplication';
+import { sortAndFilterArticles } from './sortingAndFiltering';
+import { enforceSourceDiversity } from './sourceDiversity';
+import { performImageScraping, CleanArticle } from './imageScraping';
 
 export type ProcessArticlesResult = {
   topItems: any[];
-  cleanTopItems: any[];
+  cleanTopItems: CleanArticle[];
   maxAge: number;
 };
 
@@ -24,203 +28,58 @@ export async function processArticles(opts: {
   // Track if we've logged sample fields
   let loggedSampleFields = false;
 
-  // Helper function to extract image URLs from RSS item
-  const extractImageUrl = (item: any): string | null => {
-    try {
-      // Debug: log available fields in the first few items
-      if (!loggedSampleFields) {
-        console.log('DEBUG: Sample RSS item fields:', Object.keys(item));
-        console.log('DEBUG: Sample RSS item content fields:', {
-          title: item.title,
-          enclosure: item.enclosure,
-          'media:content': item['media:content'],
-          'media:thumbnail': item['media:thumbnail'],
-          content: item.content?.substring(0, 200),
-          'content:encoded': item['content:encoded']?.substring(0, 200),
-          contentSnippet: item.contentSnippet?.substring(0, 200),
-          image: item.image
-        });
-        loggedSampleFields = true;
-      }
+  // Debug: log available fields in the first few items
+  if (!loggedSampleFields && feedsResult?.items?.length > 0) {
+    const firstItem = feedsResult.items[0];
+    console.log('DEBUG: Sample RSS item fields:', Object.keys(firstItem));
+    console.log('DEBUG: Sample RSS item content fields:', {
+      title: firstItem.title,
+      enclosure: firstItem.enclosure,
+      'media:content': firstItem['media:content'],
+      'media:thumbnail': firstItem['media:thumbnail'],
+      content: firstItem.content?.substring(0, 200),
+      'content:encoded': firstItem['content:encoded']?.substring(0, 200),
+      contentSnippet: firstItem.contentSnippet?.substring(0, 200),
+      image: firstItem.image
+    });
+    loggedSampleFields = true;
+  }
 
-      // Check enclosure (common for podcasts/media)
-      if (item.enclosure && item.enclosure.url && item.enclosure.type && item.enclosure.type.startsWith('image/')) {
-        const url = item.enclosure.url;
-        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-          console.log('DEBUG: Found image in enclosure:', url);
-          return url;
-        }
-      }
-
-      // Check media content/thumbnail
-      if (item['media:content'] && item['media:content'].url) {
-        const url = item['media:content'].url;
-        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-          console.log('DEBUG: Found image in media:content:', url);
-          return url;
-        }
-      }
-      if (item['media:thumbnail'] && item['media:thumbnail'].url) {
-        const url = item['media:thumbnail'].url;
-        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-          console.log('DEBUG: Found image in media:thumbnail:', url);
-          return url;
-        }
-      }
-
-      // Check for img tags in content
-      const content = item.content || item['content:encoded'] || item.contentSnippet || '';
-      if (content) {
-        const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i);
-        if (imgMatch && imgMatch[1]) {
-          const url = imgMatch[1];
-          if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-            console.log('DEBUG: Found image in content HTML:', url);
-            return url;
-          }
-        }
-      }
-
-      // Check for image field
-      if (item.image && item.image.url) {
-        const url = item.image.url;
-        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-          console.log('DEBUG: Found image in image field:', url);
-          return url;
-        }
-      }
-
-      console.log('DEBUG: No valid image found for article:', item.title?.substring(0, 50));
-      return null;
-    } catch (e) {
-      console.log('DEBUG: Error extracting image:', e);
-      return null;
-    }
-  };
-
-  const rawItems: any[] = (feedsResult?.items || []).map((it: any) => {
-    const title = it.title || it['dc:title'] || it.description || '';
-    const link = it.link || it.guid || (it.enclosure && it.enclosure.url) || '';
-    const pubDate = it.pubDate ? new Date(it.pubDate).getTime() : (it.isoDate ? new Date(it.isoDate).getTime() : Date.now());
-    const source = it.creator || it.author || (it['dc:creator']) || (it.feedTitle) || '';
-    const imageUrl = extractImageUrl(it);
-    return { title: String(title || '').trim(), link: String(link || '').trim(), pubDate: Number(pubDate || Date.now()), source, imageUrl, raw: it };
-  });
+  const rawItems = normalizeArticles(feedsResult);
 
   // Basic dedupe by normalized title + link
-  const seen = new Set<string>();
-  const normalized = [] as any[];
-  for (const it of rawItems) {
-    const key = (it.title || '') + '::' + (it.link || '');
-    const k = key.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-    if (seen.has(k)) continue;
-    seen.add(k);
-    normalized.push(it);
-  }
+  const normalized = deduplicateArticles(rawItems);
 
-  // Sort by pub date desc or ascend depending on preferLatest
-  normalized.sort((a,b) => (preferLatest ? a.pubDate - b.pubDate : b.pubDate - a.pubDate));
+  // Sort by pub date and filter by age
+  const { filteredArticles: withinWindow, maxAge } = sortAndFilterArticles(normalized, preferLatest, maxAgeHours);
 
-  const DEFAULT_CAP_MS = 1000 * 60 * 60 * 24 * 7; // default cap 7 days
-  let maxAge = DEFAULT_CAP_MS;
+  // Enforce source diversity
+  let topItems: any[];
   try {
-    if (typeof maxAgeHours === 'number' && !isNaN(maxAgeHours)) {
-      // Ensure at least 1 hour and round to integer hours
-      const hrs = Math.max(1, Math.round(Number(maxAgeHours)));
-      const requestedMs = hrs * 1000 * 60 * 60;
-      // Don't allow requested window to exceed the default cap
-      maxAge = Math.min(DEFAULT_CAP_MS, requestedMs);
-    }
-  } catch (e) {
-    maxAge = DEFAULT_CAP_MS;
-  }
-  const now = Date.now();
-  const withinWindow = normalized.filter(it => (now - (it.pubDate || now)) <= maxAge);
-  // If region is Lithuania, enforce a source-mix rule: don't let delfi.lt dominate.
-  // At most floor(maxArticles / 3) items may be from delfi.lt. Prefer other LT outlets
-  // such as lrt.lt, lrytas.lt, 15min.lt when available.
-  let topItems = withinWindow.slice(0, maxArticles);
-  try {
+    topItems = enforceSourceDiversity(withinWindow, maxArticles, region);
+
+    // Diagnostic logging for Lithuania
     if ((region || '').toString().toLowerCase() === 'lithuania' && withinWindow.length > 0) {
-      const maxDelfi = Math.floor(maxArticles / 3);
+      const sampleHosts = withinWindow.slice(0, 30).map(it => {
+        try { return { link: it.link, host: new URL(it.link).hostname }; } catch { return { link: it.link, host: String(it.source || '') }; }
+      });
       const preferredLtHosts = ['lrt.lt', 'lrytas.lt', '15min.lt'];
-
-  const preferredLt: any[] = [];
-  const delfi: any[] = [];
-  const others: any[] = [];
-
-      for (const it of withinWindow) {
+      const preferredLt = withinWindow.filter(it => {
         let host = '';
         try { host = new URL(it.link).hostname || ''; } catch { host = String(it.source || '').toLowerCase(); }
-        host = (host || '').toLowerCase();
-
-        // More permissive Delfi detection: check host, link and source for 'delfi' or 'delfi.lt'
+        return preferredLtHosts.some(h => host.includes(h) || String(it.source || '').toLowerCase().includes(h));
+      });
+      const delfi = withinWindow.filter(it => {
+        let host = '';
+        try { host = new URL(it.link).hostname || ''; } catch { host = String(it.source || '').toLowerCase(); }
         const linkLower = String(it.link || '').toLowerCase();
         const sourceLower = String(it.source || '').toLowerCase();
-        const isDelfi = host.includes('delfi') || linkLower.includes('delfi.lt') || sourceLower.includes('delfi');
-        const isPreferredLt = preferredLtHosts.some(h => host.includes(h) || String(it.source || '').toLowerCase().includes(h));
-
-        if (isDelfi) delfi.push(it);
-        else if (isPreferredLt) preferredLt.push(it);
-        else others.push(it);
-      }
-
-      const selected: any[] = [];
-
-      // Diagnostic logging: counts so you can see what's available before selection
-      try {
-        const sampleHosts = withinWindow.slice(0, 30).map(it => {
-          try { return { link: it.link, host: new URL(it.link).hostname }; } catch { return { link: it.link, host: String(it.source || '') }; }
-        });
-        log.info('lithuania source pools before selection', { total: withinWindow.length, preferredLt: preferredLt.length, delfi: delfi.length, others: others.length, sampleHosts: sampleHosts.slice(0, 12) });
-      } catch (e) {
-        log.debug('failed to log lithuania pools', { message: String(e) });
-      }
-
-      // Reserve a small number of slots for Delfi so we always include a couple when available.
-      // Reserve up to 2 but never exceed the overall delfi cap.
-      const reserveForDelfi = Math.min(2, maxDelfi, delfi.length);
-      const nonDelfiLimit = Math.max(0, maxArticles - reserveForDelfi);
-
-      // 1) take preferred Lithuanian non-delfi up to the non-delfi limit
-      for (const it of preferredLt) {
-        if (selected.length >= nonDelfiLimit) break;
-        selected.push(it);
-      }
-
-      // 2) take other non-delfi sources (global or local) up to the non-delfi limit
-      for (const it of others) {
-        if (selected.length >= nonDelfiLimit) break;
-        selected.push(it);
-      }
-
-      // 3) add Delfi items respecting the overall cap (maxDelfi)
-      let addedDelfi = 0;
-      for (const it of delfi) {
-        if (selected.length >= maxArticles) break;
-        if (addedDelfi >= maxDelfi) break;
-        selected.push(it);
-        addedDelfi++;
-      }
-
-      // 4) if we still have slots, fill from remaining pools while respecting the delfi cap
-      if (selected.length < maxArticles) {
-        const remaining = [...preferredLt, ...others, ...delfi].filter(it => !selected.includes(it));
-        for (const it of remaining) {
-          if (selected.length >= maxArticles) break;
-          const host = (() => { try { return new URL(it.link).hostname || ''; } catch { return String(it.source || '').toLowerCase(); } })().toLowerCase();
-          const isD = host.includes('delfi.') || String(it.source || '').toLowerCase().includes('delfi');
-          const currentDelfiCount = selected.filter(s => { try { return (new URL(s.link).hostname || '').toLowerCase().includes('delfi.'); } catch { return String(s.source || '').toLowerCase().includes('delfi'); } }).length;
-          if (isD && currentDelfiCount >= maxDelfi) continue;
-          selected.push(it);
-        }
-      }
-
-      topItems = selected.slice(0, maxArticles);
-    }
-    else {
-      // General host-diversity enforcement for other regions:
-      // Build buckets of items per host (preserve withinWindow order which is date-sorted)
+        return host.includes('delfi') || linkLower.includes('delfi.lt') || sourceLower.includes('delfi');
+      });
+      const others = withinWindow.filter(it => !preferredLt.includes(it) && !delfi.includes(it));
+      log.info('lithuania source pools before selection', { total: withinWindow.length, preferredLt: preferredLt.length, delfi: delfi.length, others: others.length, sampleHosts: sampleHosts.slice(0, 12) });
+    } else {
+      // General host-diversity logging
       const hostBuckets: Record<string, any[]> = {};
       for (const it of withinWindow) {
         let host = '';
@@ -229,107 +88,27 @@ export async function processArticles(opts: {
         if (!hostBuckets[host]) hostBuckets[host] = [];
         hostBuckets[host].push(it);
       }
-
       const hosts = Object.keys(hostBuckets);
-      // If there's only one host available, fallback to the naive slice
-      if (hosts.length <= 1) {
-        topItems = withinWindow.slice(0, maxArticles);
-      } else {
-        // Cap per-host items to enforce diversity: at least 1, at most 3 or 40% of requested
-        const maxPerHost = Math.max(1, Math.min(3, Math.floor(maxArticles * 0.4)));
-
-        try {
-          const hostCounts: Record<string, number> = {};
-          hosts.forEach(h => hostCounts[h] = hostBuckets[h].length);
-          log.info('host pools before diversity selection', { total: withinWindow.length, hosts: hosts.length, hostCounts });
-        } catch (e) { /* ignore logging errors */ }
-
-        const selected: any[] = [];
-
-        // Round-robin selection: pick newest available from each host while respecting per-host cap
-        let progress = true;
-        while (selected.length < maxArticles && progress) {
-          progress = false;
-          for (const h of hosts) {
-            if (selected.length >= maxArticles) break;
-            const bucket = hostBuckets[h];
-            if (!bucket || bucket.length === 0) continue;
-            const countForHost = selected.filter(s => {
-              try { return (new URL(s.link).hostname || '').toLowerCase() === h; } catch { return String(s.source || '').toLowerCase() === h; }
-            }).length;
-            if (countForHost >= maxPerHost) continue;
-            // take the next item from this host
-            selected.push(bucket.shift() as any);
-            progress = true;
-          }
-        }
-
-        // If we still have slots, fill from remaining items regardless of host cap
-        if (selected.length < maxArticles) {
-          const remaining = hosts.flatMap(h => hostBuckets[h] || []);
-          for (const it of remaining) {
-            if (selected.length >= maxArticles) break;
-            selected.push(it);
-          }
-        }
-
-        topItems = selected.slice(0, maxArticles);
-      }
+      const hostCounts: Record<string, number> = {};
+      hosts.forEach(h => hostCounts[h] = hostBuckets[h].length);
+      log.info('host pools before diversity selection', { total: withinWindow.length, hosts: hosts.length, hostCounts });
     }
   } catch (e) {
     // on any error fall back to default selection
-    log && log.debug && log.debug('lithuania source-mix enforcement failed', { message: String(e) });
+    log && log.debug && log.debug('source diversity enforcement failed', { message: String(e) });
     topItems = withinWindow.slice(0, maxArticles);
   }
-  const cleanTopItems = topItems.map((it:any) => ({ title: it.title, url: it.link, publishedAt: it.pubDate, source: it.source, imageUrl: it.imageUrl }));
+
+  const cleanTopItems: CleanArticle[] = topItems.map((it: any) => ({
+    title: it.title,
+    url: it.link,
+    publishedAt: it.pubDate,
+    source: it.source,
+    imageUrl: it.imageUrl
+  }));
 
   // Optional: Scrape articles for images if RSS didn't provide them
-  if (enableImageScraping && cleanTopItems.some(item => !item.imageUrl)) {
-    console.log('DEBUG: Starting article scraping for missing images');
-
-    // Scrape articles that don't have images (limit to avoid overwhelming)
-    const articlesToScrape = cleanTopItems
-      .filter(item => !item.imageUrl)
-      .slice(0, 10); // Limit scraping to first 10 articles without images
-
-    if (articlesToScrape.length > 0) {
-      console.log(`DEBUG: Scraping ${articlesToScrape.length} articles for images`);
-
-      // Scrape in parallel but with a small delay between requests
-      const scrapePromises = articlesToScrape.map(async (item, index) => {
-        // Add small delay between requests to be respectful
-        if (index > 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * index));
-        }
-
-        try {
-          const scrapedImageUrl = await scrapeArticleImage(item.url);
-          if (scrapedImageUrl) {
-            item.imageUrl = scrapedImageUrl;
-            // Propagate back to the original topItems for summary generation
-            const index = cleanTopItems.indexOf(item);
-            if (index !== -1) {
-              topItems[index].imageUrl = scrapedImageUrl;
-            }
-            console.log(`DEBUG: Successfully scraped image for article: ${item.title.substring(0, 50)}`);
-          }
-        } catch (error) {
-          console.log(`DEBUG: Failed to scrape image for article: ${item.title.substring(0, 50)} - ${error}`);
-        }
-      });
-
-      // Wait for all scraping to complete (with timeout)
-      try {
-        await Promise.race([
-          Promise.all(scrapePromises),
-          new Promise(resolve => setTimeout(resolve, 15000)) // 15 second timeout for all scraping
-        ]);
-        console.log('DEBUG: Article scraping completed');
-      } catch (error) {
-        console.log('DEBUG: Article scraping timed out or failed:', error);
-      }
-    }
-  }
+  await performImageScraping(topItems, cleanTopItems, enableImageScraping);
 
   log.info('processed articles', { rawCount: rawItems.length, deduped: normalized.length, selected: topItems.length });
   return { topItems, cleanTopItems, maxAge };

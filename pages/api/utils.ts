@@ -1,4 +1,4 @@
-import { CATEGORY_FILTERS } from './constants';
+import { CATEGORY_FILTERS } from './categories';
 import type { FeedUrlParams } from './feeds';
 
 export interface Article {

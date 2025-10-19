@@ -1,6 +1,6 @@
 // Utility functions for language and locale detection
 
-import { SUPPORTED_LANGUAGES } from '../pages/api/constants';
+import { SUPPORTED_LANGUAGES } from '../pages/api/uiConstants';
 
 /**
  * Detects the user's preferred language from browser settings

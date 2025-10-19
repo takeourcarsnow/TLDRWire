@@ -6,7 +6,7 @@ import {
   HISTORY_KEY,
   HISTORY_LIMIT,
   CLIENT_CACHE_SIZE
-} from '../pages/api/constants';
+} from '../constants/clientConstants';
 
 export interface ApiRequestPayload {
   region: string;

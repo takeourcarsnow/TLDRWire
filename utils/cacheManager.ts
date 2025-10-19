@@ -3,7 +3,7 @@ import {
   SERVER_CACHE_TTL_MS,
   LLM_NEGATIVE_CACHE_MS,
   IP_THROTTLE_MS
-} from '../pages/api/constants';
+} from '../constants/clientConstants';
 
 // Server-side cache to reduce LLM/function invocations from frequent identical requests
 export const CACHE = new Map<string, CacheEntry>();
