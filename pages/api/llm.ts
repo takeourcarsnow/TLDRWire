@@ -86,7 +86,7 @@ Constraints:
 - Then provide exactly ${lengthConfig.bulletsMax} bulleted key takeaways (each with a short 1–2 sentence expansion; keep bullets crisp for short length, add slightly more context for long length). If there are fewer clearly distinct stories, split key developments into distinct angles (e.g., policy decision, market reaction, international response, domestic politics) to reach the requested bullet count while avoiding repetition.
 - Where relevant, include a Markdown link to ONE representative source in each bullet using the links provided.
 - Format links with concise labels: use the source name or domain (e.g., [Reuters](...)), not the raw URL as link text.
-- If an article has an Image provided, include the image markdown immediately after the bullet headline, before any expansion text.
+- For each bullet, if the corresponding article in the context has an "Image:" line, copy that image markdown (without the "Image:" prefix) immediately after the bullet headline, before any expansion text.
 - Do NOT repeat the same story: each bullet must cover a distinct development; if multiple sources report the same event, merge into one bullet.
 - If there is "no news" for a focus (e.g., selected region/language), state that ONCE only; do not repeat similar "no updates" bullets.
 - Avoid speculation and sensationalism.

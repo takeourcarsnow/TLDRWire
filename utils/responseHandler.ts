@@ -142,14 +142,51 @@ export const responseHandler = {
     // Finalize summary with deduplication and sources
     let finalSummary = dedupeSummaryBullets(summary);
 
-    // Append images if available
-    const imagesWithUrls = cleanTopItems.filter(a => a.imageUrl);
-    if (imagesWithUrls.length > 0) {
-      finalSummary += '\n\n## Images\n';
-      imagesWithUrls.slice(0, 10).forEach(a => { // Limit to 10 images
-        finalSummary += `![${a.title.replace(/[\[\]]/g, '')}](${a.imageUrl})\n`;
-      });
+    // Insert images inline after bullet headlines
+    // Parse the summary to find bullets and insert images for articles that have them
+    const lines = finalSummary.split('\n');
+    const result: string[] = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      result.push(line);
+      
+      // Check if this line is a bullet
+      if (line.match(/^(\s*[-*]\s+)(.+)$/)) {
+        // Find the best matching article with an image
+        let bestMatch = null;
+        let bestScore = 0;
+        
+        for (const article of cleanTopItems) {
+          if (!article.imageUrl) continue;
+          
+          // Calculate similarity score based on title overlap
+          const bulletText = line.replace(/^(\s*[-*]\s+)/, '').toLowerCase();
+          const articleTitle = (article.title || '').toLowerCase();
+          
+          // Simple word overlap score
+          const bulletWords = bulletText.split(/\s+/);
+          const titleWords = articleTitle.split(/\s+/);
+          const overlap = bulletWords.filter(word => 
+            word.length > 3 && titleWords.some(titleWord => titleWord.includes(word) || word.includes(titleWord))
+          ).length;
+          
+          const score = overlap / Math.max(bulletWords.length, titleWords.length);
+          
+          if (score > bestScore && score > 0.3) { // Minimum threshold
+            bestScore = score;
+            bestMatch = article;
+          }
+        }
+        
+        if (bestMatch) {
+          // Insert image after the bullet
+          result.push(`![${bestMatch.title.replace(/[\[\]]/g, '')}](${bestMatch.imageUrl})`);
+        }
+      }
     }
+    
+    finalSummary = result.join('\n');
 
     const hostCounts: Record<string, number> = {};
     for (const a of cleanTopItems) {
