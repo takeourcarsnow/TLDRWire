@@ -66,6 +66,11 @@ main {
      prevents large empty areas and avoids extra scrolling on short pages. */
 }
 
+.blurred {
+  filter: blur(2px);
+  transition: filter 0.3s ease-in-out;
+}
+
 .panel {
   padding: 12px;
   position: relative;

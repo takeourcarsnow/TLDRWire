@@ -169,12 +169,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (selectedHistoryEntry) {
-      // Render the saved summaryFull (or snippet) into the modal's div
-      const md = selectedHistoryEntry.summaryFull || selectedHistoryEntry.summarySnippet || '';
-      memoizedRenderMarkdownToElement(selectedSummaryRef.current, md);
+    if (data && !isLoading) {
+      setActiveTab(1);
     }
-  }, [selectedHistoryEntry, memoizedRenderMarkdownToElement]);
+  }, [data, isLoading]);
   
   // Keep the browser tab title stable; avoid tying it to changing preferences.
 
@@ -280,7 +278,6 @@ export default function Home() {
         (async () => {
           try {
             await generateSummary();
-            setActiveTab(1);
           } catch (err) {
             console.warn('generateSummary failed via keyboard', err);
           }
@@ -321,7 +318,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main>
+      <main className={isLoading ? 'blurred' : ''}>
         <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab} disabled={isDraggingSlider}>
           <section className="panel">
             <h2 style={{ margin: 0, flexShrink: 0, fontSize: '18px', fontWeight: 'normal', color: 'var(--text)' }}>Presets</h2>
@@ -330,7 +327,7 @@ export default function Home() {
             <NewsForm
               preferences={preferences}
               onPreferenceChange={updatePreference}
-              onGenerate={async () => { await generateSummary(); setActiveTab(1); }}
+              onGenerate={generateSummary}
               onPresetClick={handlePresetClick}
               selectedPreset={selectedPreset}
               isLoading={isLoading}

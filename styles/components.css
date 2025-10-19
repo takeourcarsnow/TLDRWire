@@ -441,6 +441,14 @@
   padding-top: 20px;
 }
 
+/* Limit width on wide screens for better readability */
+@media (min-width: 768px) {
+  .history-list-container {
+    max-width: 60ch;
+    margin: 0 auto;
+  }
+}
+
 .history-search-wrapper {
   margin-bottom: 20px;
 }
