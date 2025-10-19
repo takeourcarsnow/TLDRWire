@@ -36,7 +36,7 @@ export async function fetchFeedsConcurrently(
         const ctrl = new AbortController();
         controllers[i] = ctrl;
         const result = await fetchWithRetries(u, requestLog, { signal: ctrl.signal });
-        results[i] = { status: 'fulfilled', value: result };
+        results[i] = result as FetchResult;
       } catch (e: any) {
         results[i] = { status: 'rejected', reason: e };
       }

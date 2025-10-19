@@ -49,6 +49,11 @@ export function prioritizeAndFilterUrls(urls: string[], region: string): string[
   const regionFallbacks = regionKey && FALLBACK_FEEDS[regionKey] ? FALLBACK_FEEDS[regionKey] : [];
 
   for (const u of urls) {
+    // Skip empty or non-string entries which can be produced by disabled
+    // Google News builders that intentionally return an empty string.
+    if (!u || typeof u !== 'string' || u.trim() === '') {
+      continue;
+    }
     // Skip Google News feeds (removed)
     try {
       const h = new URL(u).hostname;
