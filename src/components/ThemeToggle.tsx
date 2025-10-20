@@ -8,11 +8,13 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
   return (
-    <button 
-      className="theme-toggle" 
-      onClick={onToggle} 
+    <button
+      type="button"
+      className="theme-toggle"
+      onClick={onToggle}
       title="Toggle theme"
       aria-label="Toggle theme"
+      aria-pressed={theme === 'dark'}
     >
       <span>{theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</span>
     </button>
