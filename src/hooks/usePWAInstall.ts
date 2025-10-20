@@ -20,9 +20,11 @@ export function usePWAInstall() {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
       const isInWebAppiOS = (window.navigator as any).standalone === true;
       setIsInstalled(isStandalone || isInWebAppiOS);
+      console.log('PWA Install Check - isStandalone:', isStandalone, 'isInWebAppiOS:', isInWebAppiOS, 'isInstalled:', isStandalone || isInWebAppiOS);
     }
 
     const handleBeforeInstallPrompt = (e: Event) => {
+      console.log('PWA: beforeinstallprompt event fired');
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
       // Stash the event so it can be triggered later
@@ -31,6 +33,7 @@ export function usePWAInstall() {
     };
 
     const handleAppInstalled = () => {
+      console.log('PWA: appinstalled event fired');
       // Hide the install button
       setIsInstallable(false);
       setIsInstalled(true);
@@ -48,6 +51,7 @@ export function usePWAInstall() {
         if (isStandalone || isInWebAppiOS) {
           setIsInstalled(true);
           setIsInstallable(false);
+          console.log('PWA: App detected as already installed');
         }
       };
 
@@ -95,6 +99,7 @@ export function usePWAInstall() {
   return {
     isInstallable,
     isInstalled,
-    installApp
+    installApp,
+    hasDeferredPrompt: !!deferredPrompt
   };
 }

@@ -20,7 +20,7 @@ const LOADING_MESSAGES = [
 
 export default function Home() {
   const h = useHome();
-  const { isInstallable, isInstalled, installApp } = usePWAInstall();
+  const { isInstallable, isInstalled, installApp, hasDeferredPrompt } = usePWAInstall();
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [hasShownInstallPrompt, setHasShownInstallPrompt] = useState(false);
 
@@ -37,23 +37,23 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [h.isLoading]);
 
-  // Show install prompt on first visit if installable and not installed
+  // Show install prompt on first visit if not installed
   useEffect(() => {
-    if (isInstallable && !isInstalled && !hasShownInstallPrompt) {
-      // Check if this is the first visit
-      const hasVisited = localStorage.getItem('tldrwire-has-visited');
-      if (!hasVisited) {
-        // Delay showing the prompt to avoid showing it immediately on page load
-        const timer = setTimeout(() => {
-          setShowInstallPrompt(true);
-          setHasShownInstallPrompt(true);
-          localStorage.setItem('tldrwire-has-visited', 'true');
-        }, 3000); // Show after 3 seconds
+    if (isInstalled || hasShownInstallPrompt) return;
+    
+    // Check if this is the first visit
+    const hasVisited = localStorage.getItem('tldrwire-has-visited');
+    if (!hasVisited) {
+      // Delay showing the prompt to avoid showing it immediately on page load
+      const timer = setTimeout(() => {
+        setShowInstallPrompt(true);
+        setHasShownInstallPrompt(true);
+        localStorage.setItem('tldrwire-has-visited', 'true');
+      }, 3000); // Show after 3 seconds
 
-        return () => clearTimeout(timer);
-      }
+      return () => clearTimeout(timer);
     }
-  }, [isInstallable, isInstalled, hasShownInstallPrompt]);
+  }, [isInstalled, hasShownInstallPrompt]);
 
   const handleInstall = () => {
     installApp();
@@ -137,6 +137,7 @@ export default function Home() {
         isVisible={showInstallPrompt}
         onInstall={handleInstall}
         onDismiss={handleDismissInstall}
+        hasDeferredPrompt={hasDeferredPrompt}
       />
     </>
   );
