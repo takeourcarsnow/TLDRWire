@@ -79,7 +79,7 @@ export function HomeMain({
               </div>
             </div>
             {/* Theme toggle moved to the header so it sits in the upper-right corner */}
-            <h2 style={{ margin: 0, flexShrink: 0, fontSize: '18px', fontWeight: 'normal', color: 'var(--text)', opacity: showPresetsLabel ? 1 : 0, transition: 'opacity 0.3s ease' }}>Presets</h2>
+            <h2 style={{ margin: 0, flexShrink: 0, fontSize: '16px', fontWeight: 'normal', color: 'var(--text)', opacity: showPresetsLabel ? 1 : 0, transition: 'opacity 0.3s ease' }}>Presets</h2>
             <PresetCarousel onPresetClick={onPresetClick} selectedPreset={selectedPreset} onMouseEnter={() => setShowPresetsLabel(true)} onMouseLeave={() => setShowPresetsLabel(false)} />
             <div className="form-divider"></div>
             <NewsForm

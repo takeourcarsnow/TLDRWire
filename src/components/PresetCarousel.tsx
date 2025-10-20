@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { presets, Option, presetColors } from '../constants/presets';
 import { capitalizeLabel } from '../utils/carouselUtils';
 import { useCarousel } from '../hooks/useCarousel';
 import PresetButton from './PresetButton';
-import CarouselArrows from './CarouselArrows';
 
 interface PresetCarouselProps {
   // legacy API used on the homepage
@@ -18,6 +17,7 @@ interface PresetCarouselProps {
 }
 
 const PresetCarousel = (props: PresetCarouselProps) => {
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const {
     carouselRef,
     scrollLeft,
@@ -59,12 +59,27 @@ const PresetCarousel = (props: PresetCarouselProps) => {
   return (
     <div
       className="preset-carousel-container"
-      onKeyDown={handleKeyDown}
+      onKeyDown={(e) => { 
+        handleKeyDown(e); 
+        if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+        props.onMouseEnter?.();
+        hideTimeoutRef.current = setTimeout(() => { props.onMouseLeave?.(); hideTimeoutRef.current = null; }, 2000);
+      }}
       tabIndex={0}
-      onTouchStart={handleTouchStart}
+      onTouchStart={(e) => { 
+        handleTouchStart(e); 
+        if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+        props.onMouseEnter?.();
+        hideTimeoutRef.current = setTimeout(() => { props.onMouseLeave?.(); hideTimeoutRef.current = null; }, 2000);
+      }}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      onPointerDown={handlePointerDown}
+      onPointerDown={(e) => { 
+        handlePointerDown(e); 
+        if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+        props.onMouseEnter?.();
+        hideTimeoutRef.current = setTimeout(() => { props.onMouseLeave?.(); hideTimeoutRef.current = null; }, 2000);
+      }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
@@ -77,9 +92,13 @@ const PresetCarousel = (props: PresetCarouselProps) => {
       onMouseDown={(e) => { e.stopPropagation(); }}
       onMouseMove={(e) => { e.stopPropagation(); }}
       onMouseUp={(e) => { e.stopPropagation(); }}
-      onWheel={(e) => { e.stopPropagation(); }}
+      onWheel={(e) => { 
+        e.stopPropagation(); 
+        if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+        props.onMouseEnter?.();
+        hideTimeoutRef.current = setTimeout(() => { props.onMouseLeave?.(); hideTimeoutRef.current = null; }, 2000);
+      }}
     >
-      <CarouselArrows onScrollLeft={scrollLeft} onScrollRight={scrollRight} />
       <div className="preset-carousel" ref={carouselRef} onScroll={handleScroll}>
         {items.map((it, i) => {
           const origValue = it.value as string;
