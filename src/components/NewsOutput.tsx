@@ -4,6 +4,7 @@ import SummaryRenderer from './SummaryRenderer';
 import NewsMeta from './NewsMeta';
 import NewsStatus from './NewsStatus';
 import NewsControls from './NewsControls';
+import ArticlesList from './ArticlesList';
 import Toast from './Toast';
 
 interface NewsOutputProps {
@@ -100,6 +101,10 @@ export const NewsOutput = memo(function NewsOutput({ isLoading, error, data, las
       <div id="status" role="alert" aria-live="assertive">
         <NewsStatus isLoading={isLoading} error={error} dataCached={!!data?.cached} />
       </div>
+
+      {data?.articles && data.articles.length > 0 && (
+        <ArticlesList articles={data.articles} />
+      )}
 
       <div className="summary-wrapper">
         <SummaryRenderer summary={data?.summary || null} isLoading={isLoading} summaryRef={summaryRef} />

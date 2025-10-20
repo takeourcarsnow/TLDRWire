@@ -35,6 +35,7 @@ export interface ApiResponse {
   };
   cached?: boolean;
   error?: string;
+  articles?: { title: string; url: string; publishedAt: number; source: string; imageUrl: string | null }[];
 }
 
 export interface HistoryEntry {

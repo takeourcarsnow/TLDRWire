@@ -53,31 +53,31 @@ export function buildPrompt({ regionName, catName, maxAge, style, language, uiLo
 
   const base = `Summarize key news developments for ${regionName} ${catName} in the last ${maxAge} hours.
 
-For each article, use this exact format:
-TL;DR: [brief summary of this specific article]
+IMPORTANT: Start with a main TL;DR that summarizes all the key developments across the articles. Then provide a separate summary for each of the ${lengthConfig.bulletsMax} most important articles. For each article, use this exact format:
 
-[Article title/caption]
+**[Article Headline]** [Article title/caption from the provided context]
 
-[Detailed summary of this article]
+[Detailed summary paragraph of this article]
 
 ![image](image_url_if_available)
 
-Source: [source_name](source_url)
+**Source:** [source_name](source_url)
 
 ---
 
-Repeat this format for each of the ${lengthConfig.bulletsMax} most important articles.
+Do not combine articles into a single summary. Repeat this exact format for each article.
 
 Output in ${language} (${uiLocale} locale). Use Markdown.
 - Style: ${styleNote}
 - Avoid repetition, speculation, sensationalism
 - Respectful tone only
 - Include images where available in the articles
+- Use the article titles exactly as provided in the context
 
 Articles to summarize:
 ${contextLines.join("\n\n")}
 
-Apply style consistently across all summaries.`;
+Apply style consistently across all individual article summaries.`;
 
   return base;
 }

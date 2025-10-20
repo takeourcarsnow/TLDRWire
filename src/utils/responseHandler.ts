@@ -113,7 +113,15 @@ export const responseHandler = {
     // finalSummary = insertImagesIntoSummary(finalSummary, contextItems);
 
     const topSources = computeTopSources(cleanTopItems);
-    if (topSources) finalSummary += `\n\nSources: ${topSources}`;
+    if (topSources) {
+      const sourcesWithLinks = topSources.split(', ').map(s => {
+        const parts = s.split(' ');
+        const host = parts[0];
+        const count = parts.slice(1).join(' ');
+        return `[${host}](https://${host}) ${count}`;
+      }).join(', ');
+      finalSummary += `\n\nSources: ${sourcesWithLinks}`;
+    }
     finalizeTimer();
 
     const payload: ApiResponse = {
@@ -131,7 +139,14 @@ export const responseHandler = {
         length: lengthPreset
       },
       summary: finalSummary,
-      images: cleanTopItems.filter(a => a.imageUrl !== null).map(a => ({ title: a.title, url: a.url, imageUrl: a.imageUrl! }))
+      images: cleanTopItems.filter(a => a.imageUrl !== null).map(a => ({ title: a.title, url: a.url, imageUrl: a.imageUrl! })),
+      articles: cleanTopItems.map(a => ({
+        title: a.title,
+        url: a.url,
+        publishedAt: a.publishedAt,
+        source: a.source,
+        imageUrl: a.imageUrl
+      }))
     };
 
     if (payloadErrorForLogs) {

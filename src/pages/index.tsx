@@ -11,17 +11,17 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>TLDRWire — AI-powered news summaries</title>
+        <title>TLDRWire — Get the news, minus the noise</title>
         <meta
           name="description"
           content="AI-powered news summarizer providing quick, intelligent rundowns of current events across regions and categories."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta property="og:title" content="TLDRWire — AI-powered news summaries" />
+        <meta property="og:title" content="TLDRWire — Get the news, minus the noise" />
         <meta property="og:description" content="AI-powered news summarizer providing quick, intelligent rundowns of current events across regions and categories." />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="TLDRWire — AI-powered news summaries" />
+        <meta name="twitter:title" content="TLDRWire — Get the news, minus the noise" />
         <meta name="twitter:description" content="AI-powered news summarizer providing quick, intelligent rundowns of current events across regions and categories." />
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E" />

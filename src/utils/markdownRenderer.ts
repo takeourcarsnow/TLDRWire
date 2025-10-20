@@ -37,6 +37,35 @@ export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: str
     // Enhanced link processing
     el.querySelectorAll<HTMLAnchorElement>('a').forEach((link: HTMLAnchorElement) => {
       try {
+        // Helper: remove a single surrounding '(' before the node and ')' after the node
+        // if they exist as adjacent text nodes (or are the trailing/leading part of such nodes).
+        const removeSurroundingParens = (node: Node | null) => {
+          try {
+            if (!node || !node.parentNode) return;
+            const prev = node.previousSibling as Node | null;
+            const next = node.nextSibling as Node | null;
+
+            if (prev && prev.nodeType === Node.TEXT_NODE) {
+              const txt = String(prev.textContent || '');
+              // If previous text ends with '(' optionally followed by whitespace, strip it
+              if (/\(\s*$/.test(txt)) {
+                const newTxt = txt.replace(/\(\s*$/, '');
+                if (newTxt.trim().length === 0) prev.parentNode?.removeChild(prev);
+                else prev.textContent = newTxt;
+              }
+            }
+
+            if (next && next.nodeType === Node.TEXT_NODE) {
+              const txt2 = String(next.textContent || '');
+              // If next text begins with ')' optionally preceded by whitespace, strip it
+              if (/^\s*\)/.test(txt2)) {
+                const newTxt2 = txt2.replace(/^\s*\)/, '');
+                if (newTxt2.trim().length === 0) next.parentNode?.removeChild(next);
+                else next.textContent = newTxt2;
+              }
+            }
+          } catch (_) { /** ignore */ }
+        };
         link.setAttribute('target', '_blank');
         link.setAttribute('rel', 'noopener noreferrer');
         const rawHref = link.getAttribute('href') || '';
@@ -79,7 +108,10 @@ export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: str
                 img.style.height = '16px';
                 img.style.verticalAlign = 'middle';
                 img.style.marginRight = '6px';
+                img.onerror = () => { img.style.display = 'none'; };
                 parentEl.insertBefore(img, parentEl.firstChild);
+                // Remove stray parentheses that were surrounding the link in the original text
+                removeSurroundingParens(link);
               }
             } else {
               const wrapper = document.createElement('div');
@@ -96,9 +128,13 @@ export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: str
               img.style.height = '16px';
               img.style.verticalAlign = 'middle';
               img.style.marginRight = '6px';
+              img.onerror = () => { img.style.display = 'none'; };
 
               applyThemeToFavicon(img);
               ensureThemeObserver();
+
+              // Remove parens from the original location around the link before moving it
+              removeSurroundingParens(link);
 
               link.parentNode?.insertBefore(wrapper, link);
               wrapper.appendChild(img);

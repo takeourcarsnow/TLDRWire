@@ -9,6 +9,14 @@ export interface RequestBody {
   length?: string;
 }
 
+export interface Article {
+  title: string;
+  url: string;
+  publishedAt: number;
+  source: string;
+  imageUrl: string | null;
+}
+
 export interface ApiResponse {
   ok: boolean;
   cached?: boolean;
@@ -28,6 +36,7 @@ export interface ApiResponse {
   };
   summary?: string;
   images?: { title: string; url: string; imageUrl: string }[];
+  articles?: Article[];
 }
 
 export interface CacheEntry {
