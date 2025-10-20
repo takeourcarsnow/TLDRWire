@@ -14,7 +14,12 @@ export const normalizeArticles = (feedsResult: any): NormalizedArticle[] => {
     const title = it.title || it['dc:title'] || it.description || '';
     const link = it.link || it.guid || (it.enclosure && it.enclosure.url) || '';
     const pubDate = it.pubDate ? new Date(it.pubDate).getTime() : (it.isoDate ? new Date(it.isoDate).getTime() : Date.now());
-    const source = it.creator || it.author || (it['dc:creator']) || (it.feedTitle) || '';
+    let source = '';
+    try {
+      source = new URL(link).hostname.replace(/^www\./, '');
+    } catch {
+      source = it.creator || it.author || (it['dc:creator']) || (it.feedTitle) || '';
+    }
     const imageUrl = extractImageUrl(it);
     return {
       title: String(title || '').trim(),

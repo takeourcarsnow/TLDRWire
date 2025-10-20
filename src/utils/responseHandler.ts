@@ -112,16 +112,16 @@ export const responseHandler = {
     // Images are now included directly in the LLM response, no need to insert them
     // finalSummary = insertImagesIntoSummary(finalSummary, contextItems);
 
-    const topSources = computeTopSources(cleanTopItems);
-    if (topSources) {
-      const sourcesWithLinks = topSources.split(', ').map(s => {
-        const parts = s.split(' ');
-        const host = parts[0];
-        const count = parts.slice(1).join(' ');
-        return `[${host}](https://${host}) ${count}`;
-      }).join(', ');
-      finalSummary += `\n\nSources: ${sourcesWithLinks}`;
-    }
+    // const topSources = computeTopSources(cleanTopItems);
+    // if (topSources) {
+    //   const sourcesWithLinks = topSources.split(', ').map(s => {
+    //     const parts = s.split(' ');
+    //     const host = parts[0];
+    //     const count = parts.slice(1).join(' ');
+    //     return `[${host}](https://${host}) ${count}`;
+    //   }).join(', ');
+    //   finalSummary += `\n\nSources: ${sourcesWithLinks}`;
+    // }
     finalizeTimer();
 
     const payload: ApiResponse = {

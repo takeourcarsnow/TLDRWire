@@ -53,19 +53,19 @@ export function buildPrompt({ regionName, catName, maxAge, style, language, uiLo
 
   const base = `Summarize key news developments for ${regionName} ${catName} in the last ${maxAge} hours.
 
-IMPORTANT: Start with a main TL;DR that summarizes all the key developments across the articles. Then provide a separate summary for each of the ${lengthConfig.bulletsMax} most important articles. For each article, use this exact format:
+IMPORTANT: Start with a main TL;DR that summarizes all the key developments across the articles. Then provide a separate summary for each of the ${lengthConfig.bulletsMax} most important articles. For each article, use this exact format and preserve the provided metadata lines (Source and Link):
 
-**[Article Headline]** [Article title/caption from the provided context]
+**article_title**
 
 [Detailed summary paragraph of this article]
 
 ![image](image_url_if_available)
 
-**Source:** [source_name](source_url)
+[<source>](<url>)
 
 ---
 
-Do not combine articles into a single summary. Repeat this exact format for each article.
+Do not combine articles into a single summary. Repeat this exact format for each article. Do not add extra information like dates, authors, or publication details unless they are part of the title or summary.
 
 Output in ${language} (${uiLocale} locale). Use Markdown.
 - Style: ${styleNote}
