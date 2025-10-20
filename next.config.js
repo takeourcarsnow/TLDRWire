@@ -10,10 +10,6 @@ const nextConfig = {
   },
   // Enable compression
   compress: true,
-  // Enable service worker
-  env: {
-    NEXT_PUBLIC_ENABLE_SW: 'true'
-  },
   // Allow building even if ESLint reports problems. This prevents dev-time lint
   // rules from blocking production builds (useful during development or CI).
   // If you prefer to keep strict linting, remove or set to false and fix the

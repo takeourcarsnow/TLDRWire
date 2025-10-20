@@ -4,7 +4,6 @@ import { usePreferences } from './usePreferences';
 import { useApi } from './useApi';
 import { usePerformanceMonitoring } from './usePerformance';
 import { useRateLimit } from './useRateLimit';
-import { useServiceWorker } from './useServiceWorker';
 import { useHealthCheck } from './useHealthCheck';
 import { useKeyboardShortcuts } from '../utils/keyboardShortcuts';
 import { PRESET_CONFIGS } from '../constants/ui';
@@ -16,7 +15,6 @@ export function useHome() {
   const { preferences, updatePreference, resetPreferences } = usePreferences();
   const { makeRequest, isLoading, error, data, clearError, history, clearHistory, removeHistoryItem } = useApi();
   usePerformanceMonitoring();
-  useServiceWorker();
   useHealthCheck();
 
   const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<any | null>(null);
