@@ -19,12 +19,12 @@ export default function PwaInstall() {
       setVisible(false);
     }
 
-    window.addEventListener('beforeinstallprompt', onBeforeInstall as EventListener);
-    window.addEventListener('appinstalled', onAppInstalled as EventListener);
+    window.addEventListener('beforeinstallprompt', onBeforeInstall as any);
+    window.addEventListener('appinstalled', onAppInstalled as any);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', onBeforeInstall as EventListener);
-      window.removeEventListener('appinstalled', onAppInstalled as EventListener);
+      window.removeEventListener('beforeinstallprompt', onBeforeInstall as any);
+      window.removeEventListener('appinstalled', onAppInstalled as any);
     };
   }, []);
 
