@@ -5,9 +5,10 @@ import { Home, Newspaper, History } from 'lucide-react';
 interface BottomNavbarProps {
   activeIndex: number;
   onTabChange: (index: number) => void;
+  isLoading: boolean;
 }
 
-export function BottomNavbar({ activeIndex, onTabChange }: BottomNavbarProps) {
+export function BottomNavbar({ activeIndex, onTabChange, isLoading }: BottomNavbarProps) {
   const tabs = [
     { icon: Home, label: 'Home' },
     { icon: Newspaper, label: 'Results' },
@@ -34,6 +35,12 @@ export function BottomNavbar({ activeIndex, onTabChange }: BottomNavbarProps) {
       setContainer(null);
     };
   }, []);
+
+  useEffect(() => {
+    if (container) {
+      container.className = `bottom-navbar-portal ${isLoading ? 'blurred' : ''}`;
+    }
+  }, [container, isLoading]);
 
   const nav = (
     <nav className="bottom-navbar" role="tablist" aria-label="Main navigation">

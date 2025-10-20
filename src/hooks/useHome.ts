@@ -8,6 +8,7 @@ import { useServiceWorker } from './useServiceWorker';
 import { useHealthCheck } from './useHealthCheck';
 import { useKeyboardShortcuts } from '../utils/keyboardShortcuts';
 import { PRESET_CONFIGS } from '../constants/ui';
+import { presets as DEFAULT_PRESETS } from '../constants/presets';
 import { detectLanguage, detectRegionFromLanguage } from '../utils/language';
 
 export function useHome() {
@@ -28,6 +29,24 @@ export function useHome() {
   const { lastGenerateTime, rateLimitCountdown, startRateLimit, isRateLimited } = useRateLimit();
 
   useEffect(() => {
+    // On first mount, if no preset is selected, choose one at random.
+    // We check localStorage for an explicit preset selection to avoid
+    // overriding a user's previous choice.
+    try {
+      const stored = localStorage.getItem('tldrwire:selectedPreset');
+      if (!stored && DEFAULT_PRESETS && DEFAULT_PRESETS.length > 0) {
+        const idx = Math.floor(Math.random() * DEFAULT_PRESETS.length);
+        const key = DEFAULT_PRESETS[idx][0];
+        // apply the preset using the existing handler so side-effects run
+        // (it will also call setSelectedPreset)
+        handlePresetClick(key);
+      } else if (stored) {
+        setSelectedPreset(stored);
+      }
+    } catch (e) {
+      // ignore localStorage errors (e.g., SSR or privacy modes)
+    }
+
     if (data && !isLoading) {
       setActiveTab(1);
     }
@@ -103,6 +122,11 @@ export function useHome() {
     });
 
     setSelectedPreset(preset);
+    try {
+      localStorage.setItem('tldrwire:selectedPreset', preset);
+    } catch (e) {
+      // ignore storage errors
+    }
   }, [updatePreference, preferences]);
 
   useKeyboardShortcuts(generateSummary);

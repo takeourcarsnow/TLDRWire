@@ -108,7 +108,7 @@ export function HomeMain({
         </SwipeableContainer>
       </main>
 
-      <BottomNavbar activeIndex={activeTab} onTabChange={setActiveTab} />
+      <BottomNavbar activeIndex={activeTab} onTabChange={setActiveTab} isLoading={isLoading} />
     </>
   );
 }

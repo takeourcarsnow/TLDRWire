@@ -953,3 +953,7 @@ body.loader-active .bottom-navbar-portal {
   bottom: 0;
   z-index: 1000;
 }
+
+.bottom-navbar-portal.blurred {
+  filter: blur(2px);
+}
