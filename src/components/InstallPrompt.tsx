@@ -33,7 +33,7 @@ export function InstallPrompt({ isVisible, onInstall, onDismiss, hasDeferredProm
             </div>
             <div className="install-prompt-text">
               <h3>Install TLDRWire on iOS</h3>
-              <p>Tap the share button <Smartphone size={16} style={{display: 'inline'}} /> below, then "Add to Home Screen"</p>
+              <p>Tap the share button <Smartphone size={16} style={{display: 'inline'}} /> below, then &quot;Add to Home Screen&quot;</p>
             </div>
           </div>
 
@@ -65,9 +65,9 @@ export function InstallPrompt({ isVisible, onInstall, onDismiss, hasDeferredProm
             <div className="install-prompt-icon">
               📱
             </div>
-            <div className="install-prompt-text">
+              <div className="install-prompt-text">
               <h3>Install TLDRWire</h3>
-              <p>Use your browser's menu to install the app</p>
+              <p>Use your browser&#39;s menu to install the app</p>
             </div>
           </div>
 
