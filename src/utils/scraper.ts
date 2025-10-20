@@ -3,6 +3,7 @@
 import * as cheerio from 'cheerio';
 import logger from '../pages/api/logger';
 import { SCRAPE_CACHE, SCRAPE_CACHE_TTL_MS, checkRateLimit, recordRequest, isValidImageUrl, getScrapingStats as _getScrapingStats } from './scrapeHelpers';
+import { errorToString } from './errorUtils';
 
 /**
  * Extract the best image from an article page
@@ -29,7 +30,7 @@ export async function scrapeArticleImage(articleUrl: string): Promise<string | n
     let hostname = '';
     try {
       hostname = new URL(articleUrl).hostname;
-    } catch (e) {
+    } catch (e: unknown) {
       console.log(`DEBUG: Invalid URL for scraping: ${articleUrl}`);
       SCRAPE_CACHE.set(articleUrl, { ts: Date.now(), error: 'Invalid URL' });
       return null;
@@ -144,8 +145,8 @@ export async function scrapeArticleImage(articleUrl: string): Promise<string | n
             }
           }
         }
-      } catch (e) {
-        console.log(`DEBUG: Error with selector ${selector}:`, e);
+      } catch (e: unknown) {
+        console.log(`DEBUG: Error with selector ${selector}:`, errorToString(e));
         continue;
       }
     }
@@ -169,16 +170,16 @@ export async function scrapeArticleImage(articleUrl: string): Promise<string | n
           return src;
         }
       }
-    } catch (e) {
-      console.log(`DEBUG: Error in fallback image search:`, e);
+    } catch (e: unknown) {
+      console.log(`DEBUG: Error in fallback image search:`, errorToString(e));
     }
 
     console.log(`DEBUG: No suitable image found for article: ${articleUrl}`);
     SCRAPE_CACHE.set(articleUrl, { ts: Date.now(), error: 'No image found' });
     return null;
 
-  } catch (error: any) {
-    const errorMsg = error?.message || String(error);
+  } catch (error: unknown) {
+    const errorMsg = errorToString(error);
     console.log(`DEBUG: Scrape error for ${articleUrl}: ${errorMsg}`);
     SCRAPE_CACHE.set(articleUrl, { ts: Date.now(), error: errorMsg });
     return null;

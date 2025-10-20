@@ -1,5 +1,7 @@
 import React, { useRef, useState, memo } from 'react';
 import { ApiResponse } from '../hooks/useApi';
+import { RequestBody } from '../types/tldr';
+import { errorToString, isAbortError } from '../utils/errorUtils';
 import SummaryRenderer from './SummaryRenderer';
 import NewsMeta from './NewsMeta';
 import NewsStatus from './NewsStatus';
@@ -10,13 +12,14 @@ interface NewsOutputProps {
   isLoading: boolean;
   error: string | null;
   data: ApiResponse | null;
-  lastRequest: any;
+  lastRequest?: RequestBody | null;
   onHistory?: () => void;
 }
 
 export const NewsOutput = memo(function NewsOutput({ isLoading, error, data, lastRequest, onHistory }: NewsOutputProps) {
   const summaryRef = useRef<HTMLDivElement>(null);
-  const [toast, setToast] = useState<{ message: string; type?: any } | null>(null);
+  type ToastType = 'success' | 'danger' | 'warning' | 'info';
+  const [toast, setToast] = useState<{ message: string; type?: ToastType } | null>(null);
 
   const copyToClipboard = async () => {
     const text = summaryRef.current?.innerText || '';
@@ -27,8 +30,8 @@ export const NewsOutput = memo(function NewsOutput({ isLoading, error, data, las
 
     try {
       await navigator.clipboard.writeText(text);
-    } catch (error) {
-      console.error('Copy failed:', error);
+    } catch (err: unknown) {
+      console.error('Copy failed:', errorToString(err));
       setToast({ message: 'Copy failed — try selecting text manually', type: 'danger' });
     }
   };
@@ -53,9 +56,9 @@ export const NewsOutput = memo(function NewsOutput({ isLoading, error, data, las
         await navigator.clipboard.writeText(window.location.href);
         setToast({ message: 'Link copied to clipboard!', type: 'success' });
       }
-    } catch (error: any) {
-      if (error?.name !== 'AbortError') {
-        console.error('Share failed:', error);
+    } catch (err: unknown) {
+      if (!isAbortError(err)) {
+        console.error('Share failed:', errorToString(err));
         setToast({ message: 'Sharing failed', type: 'danger' });
       }
     }

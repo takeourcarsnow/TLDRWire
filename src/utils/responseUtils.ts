@@ -1,13 +1,27 @@
-import { ApiResponse } from '../types/tldr';
+import { ApiResponse, TopItem, Article } from '../types/tldr';
 
-export function buildContextItemsAndLines(topItems: any[], uiLocale: string, maxContextItems = 8) {
+export function buildContextItemsAndLines(topItems: TopItem[], uiLocale: string, maxContextItems = 8) {
   const contextItems = topItems.slice(0, Math.min(maxContextItems, topItems.length));
-  const contextLines = contextItems.map((a: any, idx: number) => {
-    const dateStr = a.isoDate ? new Date(a.isoDate).toLocaleString(uiLocale, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-    const snip = (a.snippet || '').replace(/\s+/g, ' ');
-    let line = `#${idx + 1} ${a.title}\nSource: ${a.source} | Published: ${dateStr}\nLink: ${a.link}\nSummary: ${snip}`;
-    if (a.imageUrl) {
-      line += `\n![${a.title}](${a.imageUrl})`;
+  const contextLines = contextItems.map((item: TopItem, idx: number) => {
+    // Prefer ISO date if present, otherwise try numeric pubDate
+    let dateStr = '';
+    try {
+      const d = item.isoDate ? new Date(item.isoDate) : (typeof item.pubDate === 'number' ? new Date(item.pubDate) : (item.pubDate ? new Date(String(item.pubDate)) : null));
+      if (d) {
+        dateStr = d.toLocaleString(uiLocale, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      }
+    } catch (_) {
+      dateStr = '';
+    }
+
+    const snippet = (item.snippet || item.content || '').replace(/\s+/g, ' ');
+    const link = item.link || item.url || '';
+    const title = item.title || 'Untitled';
+    const source = item.source || '';
+
+    let line = `#${idx + 1} ${title}\nSource: ${source} | Published: ${dateStr}\nLink: ${link}\nSummary: ${snippet}`;
+    if (item.imageUrl) {
+      line += `\n![${title}](${item.imageUrl})`;
     }
     return line;
   });
@@ -24,7 +38,7 @@ export function buildContextItemsAndLines(topItems: any[], uiLocale: string, max
   return { contextItems, contextLines };
 }
 
-export function insertImagesIntoSummary(finalSummary: string, contextItems: any[]) {
+export function insertImagesIntoSummary(finalSummary: string, contextItems: TopItem[]) {
   // Collect existing images to avoid duplicates
   const existingImages = new Set<string>();
   const imageRegex = /!\[.*?\]\((.*?)\)/g;
@@ -42,22 +56,22 @@ export function insertImagesIntoSummary(finalSummary: string, contextItems: any[
     result.push(line);
 
     if (line.match(/^(\s*[-*]\s+)(.+)$/)) {
-      let bestMatch: any = null;
+      let bestMatch: TopItem | null = null;
       let bestScore = 0;
 
       for (const article of contextItems) {
-        if (!article.imageUrl || usedImages.has(article.imageUrl)) continue;
+        if (!article.imageUrl || usedImages.has(String(article.imageUrl))) continue;
 
         const bulletText = line.replace(/^(\s*[-*]\s+)/, '').toLowerCase();
         const articleTitle = (article.title || '').toLowerCase();
 
-        const bulletWords = bulletText.split(/\s+/);
-        const titleWords = articleTitle.split(/\s+/);
-        const overlap = bulletWords.filter((word: string) => 
+        const bulletWords = bulletText.split(/\s+/).filter(Boolean);
+        const titleWords = articleTitle.split(/\s+/).filter(Boolean);
+        const overlap = bulletWords.filter((word: string) =>
           word.length > 3 && titleWords.some((titleWord: string) => titleWord.includes(word) || word.includes(titleWord))
         ).length;
 
-        const score = overlap / Math.max(bulletWords.length, titleWords.length);
+        const score = overlap / Math.max(bulletWords.length || 1, titleWords.length || 1);
 
         if (score > bestScore && score > 0.2) {
           bestScore = score;
@@ -65,9 +79,10 @@ export function insertImagesIntoSummary(finalSummary: string, contextItems: any[
         }
       }
 
-      if (bestMatch && !existingImages.has(bestMatch.imageUrl!)) {
-        result.push(`![${bestMatch.title.replace(/[\[\]]/g, '')}](${bestMatch.imageUrl})`);
-        usedImages.add(bestMatch.imageUrl!);
+      if (bestMatch && bestMatch.imageUrl && !existingImages.has(bestMatch.imageUrl)) {
+        const safeTitle = (bestMatch.title || '').replace(/[\[\]]/g, '');
+        result.push(`![${safeTitle}](${bestMatch.imageUrl})`);
+        usedImages.add(bestMatch.imageUrl);
       }
     }
   }
@@ -75,19 +90,19 @@ export function insertImagesIntoSummary(finalSummary: string, contextItems: any[
   return result.join('\n');
 }
 
-export function computeTopSources(cleanTopItems: any[], maxSources = 5) {
+export function computeTopSources(cleanTopItems: Article[], maxSources = 5) {
   const hostCounts: Record<string, number> = {};
   for (const a of cleanTopItems) {
     let host = '';
-    try { host = new URL(a.url).hostname; } catch { host = 'unknown'; }
+    try { host = new URL(a.url).hostname; } catch { host = String(a.url || 'unknown'); }
     host = host.toLowerCase().replace(/^www\./, '');
     hostCounts[host] = (hostCounts[host] || 0) + 1;
   }
   return Object.entries(hostCounts).sort((a,b) => b[1] - a[1]).slice(0, maxSources).map(([host,count]) => `${host} (${count})`).join(', ');
 }
 
-export function createFallbackPayload(feeds: any, region: string, category: string | undefined, style: string, uiLocale: string, language: string, length: string | undefined, GEMINI_MODEL: string): ApiResponse {
-  const fallbackLines = feeds.urls.slice(0, 20).map((u: string) => `- ${u}`);
+export function createFallbackPayload(feeds: { urls: string[] }, region: string, category: string | undefined, style: string, uiLocale: string, language: string, length: string | undefined, GEMINI_MODEL: string): ApiResponse {
+  const fallbackLines = (feeds?.urls || []).slice(0, 20).map((u: string) => `- ${u}`);
   const summary = `TL;DR: Could not reliably fetch recent items for that selection. Showing attempted feed URLs instead (first 20):\n\n${fallbackLines.join('\n')}`;
 
   const payloadFallback: ApiResponse = {

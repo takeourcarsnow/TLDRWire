@@ -167,7 +167,7 @@ export const responseHandler = {
     };
 
     if (payloadErrorForLogs) {
-      (payload as any).llmError = payloadErrorForLogs;
+      payload.llmError = payloadErrorForLogs;
       // Handle quota issues
       try {
         if (/quota|too many requests|429/i.test(payloadErrorForLogs)) {
