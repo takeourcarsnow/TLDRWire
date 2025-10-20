@@ -677,19 +677,9 @@
   box-shadow: 0 4px 12px var(--shadow);
 }
 
-.apply-btn {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-}
-
 .apply-btn:hover {
-  background: rgba(77,163,255,0.9);
-  border-color: rgba(77,163,255,0.9);
-}
-
-.view-btn {
   background: rgba(255,255,255,0.05);
+  border-color: var(--accent);
 }
 
 .view-btn:hover {
@@ -697,15 +687,9 @@
   border-color: var(--accent);
 }
 
-.delete-btn {
-  background: var(--danger);
-  color: white;
-  border-color: var(--danger);
-}
-
 .delete-btn:hover {
-  background: rgba(255,107,107,0.9);
-  border-color: rgba(255,107,107,0.9);
+  background: rgba(255,255,255,0.05);
+  border-color: var(--accent);
 }
 
 /* History list -> detail animations */

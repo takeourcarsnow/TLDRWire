@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { RotateCcw, Eye, Trash2, MapPin, Folder, PenTool } from 'lucide-react';
+import { RotateCcw, ChevronDown, ChevronUp, Trash2, MapPin, Folder, PenTool } from 'lucide-react';
 import { HistoryEntry } from '../hooks/useApi';
 import { formatTimeAgo } from '../utils/historyUtils';
 import HistorySnippet from './HistorySnippet';
@@ -93,9 +93,9 @@ function HistoryCard({
         <button
           className="history-action-btn view-btn"
           onClick={onToggleExpand}
-          title="View full summary"
+          title={isExpanded ? "Collapse summary" : "Expand summary"}
         >
-          <Eye size={16} />
+          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
         <button
           className="history-action-btn delete-btn"
