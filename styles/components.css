@@ -464,6 +464,40 @@
   margin-bottom: 20px; /* small spacer so grid doesn't collide with navbar on small screens */
 }
 
+/* Prevent scrolling/marquee text from one slide bleeding into neighboring slides
+   (e.g. when NewsOutput is animating and the user navigates to History). Ensure
+   slides clip overflowing children and pause marquee animations when a slide
+   is not active. Also make the history panel opaque so underlying content is
+   never visible through empty areas. */
+.swiper-slide {
+  overflow: hidden; /* clip any animated content so it can't cross slide bounds */
+  position: relative;
+  isolation: isolate; /* create a new stacking context */
+}
+
+/* Stop marquee animation on slides that aren't active to avoid visual bleed
+   and improve performance while off-screen. */
+.swiper-slide:not(.swiper-slide-active) .meta-strip-inner {
+  animation-play-state: paused;
+}
+
+/* Ensure the history slide has an opaque panel background so content from
+   other slides (including animated text) cannot be seen through empty areas. */
+.panel.history-panel {
+  background: var(--panel);
+  /* make sure history establishes its own stacking context */
+  position: relative;
+  z-index: 1;
+}
+
+/* Hide any meta-strip markup if it lands inside the saved history snippet
+   so stored summaries can't display a scrolling marquee inside history cards. */
+.history-snippet .meta-strip,
+.history-snippet .meta-strip-inner {
+  display: none !important;
+  animation: none !important;
+}
+
 .history-card {
   background: var(--panel);
   border: 1px solid var(--border);

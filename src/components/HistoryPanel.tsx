@@ -22,7 +22,7 @@ export const HistoryPanel = memo(function HistoryPanel({
   onNavigate
 }: HistoryPanelProps) {
   return (
-    <div className="history-panel">
+    <section className="panel history-panel">
       <HistoryList
         history={history}
         onApply={(payload) => {
@@ -35,6 +35,6 @@ export const HistoryPanel = memo(function HistoryPanel({
         onClear={onClear}
         renderMarkdownToElement={renderMarkdownToElement}
       />
-    </div>
+    </section>
   );
 });
