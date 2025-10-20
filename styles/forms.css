@@ -143,6 +143,16 @@ button.primary {
   font-weight: 500;
 }
 
+/* Ensure primary action has extra bottom spacing on small viewports so it's
+   not obscured by the fixed bottom navbar. We use margin instead of padding
+   so the visual size of the button remains consistent. */
+@media (max-width: 640px) {
+  .actions > .btn-group > .primary,
+  .actions > button.primary {
+    margin-bottom: 24px;
+  }
+}
+
 button {
   appearance: none;
   border: 1px solid var(--border);

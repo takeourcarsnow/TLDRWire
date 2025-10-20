@@ -78,7 +78,8 @@ header .tag {
 main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 16px 60px; /* Add bottom padding for navbar */
+  /* Reserve space for the fixed bottom navbar and device safe-area insets */
+  padding: 0 16px calc(72px + env(safe-area-inset-bottom)); /* increased from 60px */
   /* Allow page flow to determine height so sections don't stretch to full
      viewport height when content is short. Removing the forced min-height
      prevents large empty areas and avoids extra scrolling on short pages. */
@@ -170,6 +171,9 @@ main {
 
 .panel:first-child .actions {
   display: flex; /* ensure actions container is a flexbox for proper centering */
+  /* add extra bottom spacing so primary actions aren't covered by the fixed navbar */
+  padding-bottom: 18px;
+  margin-bottom: 8px;
 }
 
 .panel:first-child .row > div {
