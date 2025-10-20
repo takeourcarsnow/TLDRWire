@@ -4,6 +4,11 @@ import { wrapImageInParagraph } from './imageHelpers';
 export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: string | undefined): void {
   if (!el || !markdown) return;
   try {
+    // Log raw markdown for local debugging (will show in browser console).
+    // Trim to avoid extremely long logs.
+    console.debug && console.debug('renderMarkdownToElement - raw markdown', String(markdown).slice(0, 2000));
+  } catch (_) {}
+  try {
     const mdLib = (window as any).marked;
     const sanitizer = (window as any).DOMPurify;
     const html = sanitizer ? sanitizer.sanitize(mdLib ? mdLib.parse(markdown) : markdown) : (mdLib ? mdLib.parse(markdown) : markdown);
@@ -15,9 +20,19 @@ export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: str
     children.forEach((child, idx) => {
       if (child.tagName === 'UL') {
         try {
+          // Clone the UL and remove any trailing empty <li> nodes only.
           const ulClone = child.cloneNode(true) as HTMLElement;
-          const lis = ulClone.querySelectorAll('li');
-          if (lis.length > 0) lis[lis.length - 1].remove();
+          const lis = Array.from(ulClone.querySelectorAll('li')) as HTMLLIElement[];
+          // Remove only if the last li is empty or whitespace-only. Do not remove the last real item.
+          if (lis.length > 0) {
+            const last = lis[lis.length - 1];
+            // If last li is empty, remove it and log for debugging so we can see
+            // when the renderer strips a trailing empty bullet.
+            if (!last.textContent || last.textContent.trim().length === 0) {
+              try { console.warn && console.warn('markdownRenderer: removing trailing empty <li>'); } catch (_) {}
+              last.remove();
+            }
+          }
           const wrapper = document.createElement('div');
           wrapper.className = 'reveal-up';
           wrapper.style.animationDelay = `${Math.min(idx * 60, 360)}ms`;

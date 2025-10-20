@@ -29,6 +29,10 @@ export async function summarizeWithLLM(opts: {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       summary = await generateSummary({ prompt, style });
+      // Debug: log a preview of the raw LLM output so we can inspect formatting issues.
+      try {
+        logger.debug('LLM raw output preview', { textPreview: String(summary).slice(0, 2000) });
+      } catch (_) {}
       // success
       payloadErrorForLogs = undefined;
       break;

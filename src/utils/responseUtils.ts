@@ -12,6 +12,15 @@ export function buildContextItemsAndLines(topItems: any[], uiLocale: string, max
     return line;
   });
 
+  // Debug: log the number of context items and a short preview of the lines.
+  try {
+    // Use console.debug so this appears in server logs when LOG_LEVEL allows it.
+    console.debug && console.debug('buildContextItemsAndLines', {
+      count: contextItems.length,
+      preview: contextLines.slice(0, 4).map((l) => String(l).slice(0, 240))
+    });
+  } catch (_) {}
+
   return { contextItems, contextLines };
 }
 
