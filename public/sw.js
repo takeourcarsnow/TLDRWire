@@ -16,6 +16,11 @@ const ENABLE_BACKGROUND_TASKS = false;
 const STATIC_ASSETS = [
   '/',
   '/sw.js',
+  '/logo.png',
+  '/logo.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/favicon.ico',
   'https://cdn.jsdelivr.net/npm/marked@12/marked.min.js',
   'https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js'
 ];
@@ -308,8 +313,8 @@ if (ENABLE_BACKGROUND_TASKS) {
     
     const options = {
       body: 'New TLDRWire summary available!',
-      icon: '/icon-192.png',
-      badge: '/badge-72.png',
+  icon: '/icon-192.png',
+  badge: '/favicon.ico',
       actions: [
         {
           action: 'view',

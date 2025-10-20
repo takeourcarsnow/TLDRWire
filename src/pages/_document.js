@@ -4,6 +4,15 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
+        {/* Inline theme initializer + critical loader styles to avoid FOUC */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var s=localStorage.getItem('tldrwire:theme'); if(s==='dark'||s==='light'){document.documentElement.setAttribute('data-theme',s);return;} var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.setAttribute('data-theme', m ? 'dark' : 'light');}catch(e){} })();` }} />
+        <style dangerouslySetInnerHTML={{ __html: "" +
+          /* default loader background (light) and dark-theme overrides */
+          '\n.logo-loader{background:#ffffff !important; color: #0f1720 !important;}\n' +
+          '[data-theme=\"dark\"] .logo-loader, :root[data-theme=\"dark\"] .logo-loader{background:#0f161b !important; color: #e6edf3 !important;}\n' +
+          '[data-theme=\"dark\"] .logo-loader__img, :root[data-theme=\"dark\"] .logo-loader__img{}\n' +
+          '.logo-loader.hidden{display:none !important;}\n' +
+          '.logo-loader{display:flex !important; position:fixed; inset:0; align-items:center; justify-content:center; z-index:20000;}\n' }} />
         <meta name="color-scheme" content="dark light" />
         <meta name="theme-color" content="#4da3ff" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -14,6 +23,10 @@ export default function Document() {
         />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" />
         <link rel="manifest" href="/manifest.webmanifest" />
+  {/* Favicons and touch icons */}
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="alternate icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

@@ -1,8 +1,9 @@
 import { AppProps } from 'next/app';
 import Head from 'next/head';
 import Script from 'next/script';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import '../../styles/globals.css';
+import LogoLoader from '../components/LogoLoader';
 // Layout debugger removed
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -52,6 +53,57 @@ export default function App({ Component, pageProps }: AppProps) {
       console.warn('manifest diagnostic setup error', err);
     }
   }, []);
+  // Simplified loader: show until the page load event fires or until a short
+  // maximum timeout to avoid the loader getting stuck. This is deterministic
+  // and avoids complex timing/race conditions.
+  const [loaderHidden, setLoaderHidden] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let maxTimer: number | undefined;
+    const hide = () => setLoaderHidden(true);
+
+    // If the document already finished loading, hide quickly.
+    if (document.readyState === 'complete') {
+      // small delay so the loader has a chance to appear visually
+      maxTimer = window.setTimeout(hide, 120);
+      return () => { if (maxTimer) clearTimeout(maxTimer); };
+    }
+
+    const onLoad = () => {
+      hide();
+    };
+
+    // Ensure loader doesn't hang indefinitely. 2500ms is a hard cap.
+    maxTimer = window.setTimeout(hide, 2500);
+    window.addEventListener('load', onLoad, { once: true });
+
+    return () => {
+      window.removeEventListener('load', onLoad);
+      if (maxTimer) clearTimeout(maxTimer);
+    };
+  }, []);
+
+  // Keep the document locked from scrolling while loader is visible. Add a
+  // simple class to <html> and <body> so CSS can enforce overflow:hidden.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const cls = 'logo-loader-active';
+    const el = document.documentElement;
+    const body = document.body;
+    if (!loaderHidden) {
+      el.classList.add(cls);
+      body.classList.add(cls);
+    } else {
+      el.classList.remove(cls);
+      body.classList.remove(cls);
+    }
+    return () => {
+      el.classList.remove(cls);
+      body.classList.remove(cls);
+    };
+  }, [loaderHidden]);
   return (
     <>
       <Head>
@@ -85,6 +137,31 @@ export default function App({ Component, pageProps }: AppProps) {
   <meta name="apple-mobile-web-app-title" content="TLDRWire" />
       </Head>
       
+      {/* Ensure theme is set before hydration so the loader image matches the
+          chosen theme immediately. This script runs before React boots. */}
+      <Script
+        id="set-theme"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{ __html: `(() => {
+          try {
+            const saved = localStorage.getItem('tldrwire:theme');
+            if (saved === 'dark' || saved === 'light') {
+              document.documentElement.setAttribute('data-theme', saved);
+              return;
+            }
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+          } catch (e) { /* ignore */ }
+        })();` }}
+      />
+
+      {/* Show logo loader until the page fully loads or our timeout expires */}
+      <div className={"logo-loader-wrapper"}>
+        <div id="__logo_loader_root">
+          <LogoLoader hidden={loaderHidden} />
+        </div>
+      </div>
+
       {/* Markdown rendering + sanitization */}
       <Script 
         src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js" 
