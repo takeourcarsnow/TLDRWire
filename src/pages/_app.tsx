@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import '../../styles/globals.css';
 // Layout debugger removed
 import LogoLoader from '../components/LogoLoader';
+import PwaInstall from '../components/PwaInstall';
 
 export default function App({ Component, pageProps }: AppProps) {
   const [loading, setLoading] = useState(true);
@@ -16,6 +17,24 @@ export default function App({ Component, pageProps }: AppProps) {
       setLoading(false);
       setTimeout(() => setShowLoader(false), 500); // Remove after fade
     }, 1500);
+  }, []);
+
+  // Register service worker on client when available. Keep this minimal so
+  // it works on localhost during development. Browsers only activate SW on
+  // secure contexts (https) or on localhost, which makes local testing easy.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/service-worker.js')
+        .then((reg) => {
+          // registration successful
+          // console.log('SW registered', reg);
+        })
+        .catch((err) => {
+          // console.warn('SW registration failed', err);
+        });
+    }
   }, []);
 
   // Toggle a body-level class while the loader is visible so portal-mounted
@@ -84,6 +103,7 @@ export default function App({ Component, pageProps }: AppProps) {
       </div>
 
       {showLoader && <LogoLoader hidden={!loading} />}
+      <PwaInstall />
 
       {/* Markdown rendering + sanitization */}
       <Script 
