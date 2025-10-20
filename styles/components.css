@@ -97,7 +97,7 @@
 
 .preset-carousel {
   /* button geometry variables: change these to control how many fit */
-  --preset-button-width: 72px; /* total width reserved per button (increased for larger icons) */
+  --preset-button-width: 88px; /* total width reserved per button (increased for larger icons and labels) */
   --preset-button-gap: 6px; /* gap between buttons (used for calc only) */
 
   display: flex;
@@ -300,9 +300,6 @@
   border-color: var(--border);
   color: var(--text);
   box-shadow: none !important;
-  /* selected button gets extra width to accommodate label and larger icon */
-  width: 88px;
-  flex: 0 0 88px;
 }
 
 /* keyboard focus styles for accessibility */

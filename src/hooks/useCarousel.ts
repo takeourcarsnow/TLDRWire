@@ -25,6 +25,7 @@ export const useCarousel = ({
   const dragStartScrollRef = useRef(0);
   const movedRef = useRef(false);
   const suppressClickUntilRef = useRef<number>(0);
+  const lastInteractionWasDragRef = useRef(false);
 
   // Programmatic scroll state
   const isProgrammaticScrollRef = useRef(false);
@@ -240,6 +241,7 @@ export const useCarousel = ({
     // ensure dragging state is reset for clicks
     isDraggingRef.current = false;
     movedRef.current = false;
+    lastInteractionWasDragRef.current = false;
     dragStartXRef.current = e.clientX;
     dragStartScrollRef.current = carousel ? carousel.scrollLeft : 0;
   };
@@ -264,6 +266,31 @@ export const useCarousel = ({
         suppressClickUntilRef.current = Date.now() + 200; // ms
         // reset moved flag now; click handler will check the timestamp
         movedRef.current = false;
+        // Auto-select the closest item after drag release
+        setTimeout(() => {
+          const carousel = carouselRef.current;
+          if (!carousel) return;
+          const candidates = getCandidates();
+          if (candidates.length === 0) return;
+          const carouselCenter = getCarouselCenter();
+          let closest: HTMLElement | null = null;
+          let bestDist = Number.POSITIVE_INFINITY;
+          for (const el of candidates) {
+            const r = el.getBoundingClientRect();
+            const center = r.left + r.width / 2;
+            const dist = Math.abs(center - carouselCenter);
+            if (dist < bestDist) {
+              bestDist = dist;
+              closest = el;
+            }
+          }
+          if (closest && closest.dataset.originalValue) {
+            const val = closest.dataset.originalValue;
+            setPendingValue(val);
+            notifyParentForValue(val);
+            centerElement(closest, 'smooth');
+          }
+        }, 150);
       }
 
       isDraggingRef.current = false;
@@ -296,6 +323,7 @@ export const useCarousel = ({
       if (Math.abs(dx) <= 3) return; // still a potential click
       // Start dragging
       isDraggingRef.current = true;
+      lastInteractionWasDragRef.current = true;
       try { (e.currentTarget as Element).setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
       // prevent text selection while dragging
       try { e.preventDefault(); } catch (err) { /* ignore */ }
@@ -380,10 +408,20 @@ export const useCarousel = ({
         }
       }
 
-      // Clear any optimistic pending highlight but do NOT auto-select the
-      // closest item when the user scrolls. Selection remains under the
-      // control of explicit actions (clicks/arrow keys/selectValue).
-      setPendingValue(null);
+      if (!isInteractingRef.current && lastInteractionWasDragRef.current) {
+        const val = closest.dataset.originalValue;
+        if (val) {
+          setPendingValue(val);
+          notifyParentForValue(val);
+          centerSelected(carouselEl, val, 'smooth');
+        }
+        lastInteractionWasDragRef.current = false;
+      } else {
+        // Clear any optimistic pending highlight but do NOT auto-select the
+        // closest item when the user scrolls. Selection remains under the
+        // control of explicit actions (clicks/arrow keys/selectValue).
+        setPendingValue(null);
+      }
     }, 120) as unknown as number;
   };
 
