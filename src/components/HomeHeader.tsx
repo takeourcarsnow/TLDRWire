@@ -10,7 +10,7 @@ interface HomeHeaderProps {
 
 export function HomeHeader({ theme, onToggleTheme }: HomeHeaderProps) {
   return (
-    <header>
+    <header className="site-header">
       <div className="header-content">
         <div className="header-main">
           <h1>TLDRWire</h1>

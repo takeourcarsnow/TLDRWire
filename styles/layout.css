@@ -83,6 +83,24 @@ header {
   z-index: 10;
 }
 
+/* Make the main site header sticky so it remains visible while scrolling.
+   Use a specific class to avoid changing other <header> elements (e.g. modal headers). */
+.site-header {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  /* account for device safe area (notches) where supported */
+  padding-top: env(safe-area-inset-top);
+  /* remove the small top margin so the header sits flush at the top */
+  margin-top: 0;
+  /* keep it above content and the bottom navbar but below modal overlays */
+  z-index: 1100;
+  /* hint to the browser to optimize for transform changes when sticking */
+  will-change: transform;
+  /* subtle elevation when header overlaps content */
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
 .header-main {
   display: flex;
   flex-direction: column;

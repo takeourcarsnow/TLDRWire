@@ -37,22 +37,28 @@ export const centerSelected = (
   if (!value || !carousel) return;
 
   const candidates = Array.from(carousel.querySelectorAll('[data-original-value]')) as HTMLElement[];
-  // Find all candidates with the requested value and choose the one
-  // nearest the carousel center (robust for single and duplicated lists).
+  // Find all candidates with the requested value
   const matches = candidates.filter(el => el.dataset.originalValue === value);
   let selectedButton: HTMLElement | undefined = undefined;
   if (matches.length === 1) selectedButton = matches[0];
   else if (matches.length > 1) {
-    const carouselRect = carousel.getBoundingClientRect();
-    const carouselCenter = carouselRect.left + carouselRect.width / 2;
-    let bestDist = Number.POSITIVE_INFINITY;
-    for (const el of matches) {
-      const r = el.getBoundingClientRect();
-      const center = r.left + r.width / 2;
-      const dist = Math.abs(center - carouselCenter);
-      if (dist < bestDist) {
-        bestDist = dist;
-        selectedButton = el;
+    // Prefer the middle segment (seg 1) for tripled carousels
+    const midMatches = matches.filter(el => el.dataset.seg === '1');
+    if (midMatches.length > 0) {
+      selectedButton = midMatches[0];
+    } else {
+      // Fallback to closest
+      const carouselRect = carousel.getBoundingClientRect();
+      const carouselCenter = carouselRect.left + carouselRect.width / 2;
+      let bestDist = Number.POSITIVE_INFINITY;
+      for (const el of matches) {
+        const r = el.getBoundingClientRect();
+        const center = r.left + r.width / 2;
+        const dist = Math.abs(center - carouselCenter);
+        if (dist < bestDist) {
+          bestDist = dist;
+          selectedButton = el;
+        }
       }
     }
   } else {

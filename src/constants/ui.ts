@@ -77,6 +77,7 @@ export const ARTICLES_MAX = 40;
 export const PRESET_CONFIGS = {
   morning: {
     region: 'global',
+    language: 'en',
     category: 'top',
     style: 'executive-brief',
     length: 'short',
@@ -85,6 +86,7 @@ export const PRESET_CONFIGS = {
   },
   tech: {
     region: 'global',
+    language: 'en',
     category: 'technology',
     style: 'concise-bullets',
     length: 'medium',
@@ -93,6 +95,7 @@ export const PRESET_CONFIGS = {
   },
   markets: {
     region: 'global',
+    language: 'en',
     category: 'business',
     style: 'market-analyst',
     length: 'long',
@@ -101,6 +104,7 @@ export const PRESET_CONFIGS = {
   },
   breaking: {
     region: 'global',
+    language: 'en',
     category: 'top',
     style: 'concise-bullets',
     length: 'short',
@@ -109,6 +113,7 @@ export const PRESET_CONFIGS = {
   },
   politics: {
     region: 'global',
+    language: 'en',
     category: 'politics',
     style: 'neutral',
     length: 'medium',
@@ -117,6 +122,7 @@ export const PRESET_CONFIGS = {
   },
   sports: {
     region: 'global',
+    language: 'en',
     category: 'sports',
     style: 'concise-bullets',
     length: 'medium',
@@ -125,6 +131,7 @@ export const PRESET_CONFIGS = {
   },
   entertainment: {
     region: 'global',
+    language: 'en',
     category: 'entertainment',
     style: 'casual',
     length: 'medium',
@@ -133,6 +140,7 @@ export const PRESET_CONFIGS = {
   },
   science: {
     region: 'global',
+    language: 'en',
     category: 'science',
     style: 'analytical',
     length: 'medium',
@@ -141,6 +149,7 @@ export const PRESET_CONFIGS = {
   },
   health: {
     region: 'global',
+    language: 'en',
     category: 'health',
     style: 'neutral',
     length: 'medium',
@@ -149,6 +158,7 @@ export const PRESET_CONFIGS = {
   },
   business: {
     region: 'global',
+    language: 'en',
     category: 'business',
     style: 'executive-brief',
     length: 'medium',
@@ -157,6 +167,7 @@ export const PRESET_CONFIGS = {
   },
   international: {
     region: 'global',
+    language: 'en',
     category: 'world',
     style: 'neutral',
     length: 'medium',
@@ -165,6 +176,7 @@ export const PRESET_CONFIGS = {
   },
   environment: {
     region: 'global',
+    language: 'en',
     category: 'climate',
     style: 'neutral',
     length: 'medium',
@@ -173,6 +185,7 @@ export const PRESET_CONFIGS = {
   },
   education: {
     region: 'global',
+    language: 'en',
     category: 'education',
     style: 'analytical',
     length: 'medium',
@@ -181,6 +194,7 @@ export const PRESET_CONFIGS = {
   },
   arts: {
     region: 'global',
+    language: 'en',
     category: 'culture',
     style: 'casual',
     length: 'medium',
@@ -189,6 +203,7 @@ export const PRESET_CONFIGS = {
   },
   weekend: {
     region: 'global',
+    language: 'en',
     category: 'top',
     style: 'casual',
     length: 'long',

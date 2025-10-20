@@ -60,15 +60,14 @@ export const useCarousel = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, value, selectedPreset]);
 
-  // Clear timeout on unmount
+  // When a preset is selected, center all carousels on their current value
   useEffect(() => {
-    return () => {
-      if (scrollEndTimeoutRef.current) {
-        try { window.clearTimeout(scrollEndTimeoutRef.current); } catch (e) { /* ignore */ }
-        scrollEndTimeoutRef.current = null;
-      }
-    };
-  }, []);
+    if (value && selectedPreset !== undefined) {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        centerSelected(carouselRef.current, value, 'smooth');
+      }));
+    }
+  }, [selectedPreset, value]);
 
   // Helper: compute the current visible carousel center (client coordinates)
   const getCarouselCenter = useCallback(() => {
