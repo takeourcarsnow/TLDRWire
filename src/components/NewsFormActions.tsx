@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Sparkles } from 'lucide-react';
+import { Clock, Sparkles, Loader } from 'lucide-react';
 import PresetCarousel from './PresetCarousel';
 
 interface Props {
@@ -22,7 +22,9 @@ export default function NewsFormActions({ onGenerate, onPresetClick, isLoading, 
             disabled={isLoading || rateLimited}
             style={rateLimited ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
           >
-            {rateLimited ? (
+            {isLoading ? (
+              <span><Loader size={16} className="spin" /> Generating…</span>
+            ) : rateLimited ? (
               <span><Clock size={16} /> Wait {rateLimitCountdown}s…</span>
             ) : (
               <span><Sparkles size={16} /> Generate TLDR</span>

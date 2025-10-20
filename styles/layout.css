@@ -66,39 +66,14 @@
 /* Keep an accessible focus indication for keyboard users */
 .theme-toggle:focus-visible {
   outline: 2px solid rgba(77,163,255,0.18) !important;
-  outline-offset: 2px !important;
 }
-
-header {
-  background: var(--panel-glass);
-  border-bottom: 1px solid var(--border-glass);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  padding-bottom: 8px;
-  margin-bottom: 16px;
-  margin-top: 6px;
-  /* Position header so absolutely-positioned controls inside it
-     (like the theme toggle) are anchored to the header's top-right. */
-  position: relative;
-  z-index: 10;
-}
-
-/* Make the main site header sticky so it remains visible while scrolling.
-   Use a specific class to avoid changing other <header> elements (e.g. modal headers). */
 .site-header {
-  position: -webkit-sticky;
-  position: sticky;
-  top: 0;
   /* account for device safe area (notches) where supported */
   padding-top: env(safe-area-inset-top);
   /* remove the small top margin so the header sits flush at the top */
   margin-top: 0;
   /* keep it above content and the bottom navbar but below modal overlays */
   z-index: 1100;
-  /* hint to the browser to optimize for transform changes when sticking */
-  will-change: transform;
-  /* subtle elevation when header overlaps content */
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
 }
 
 .header-main {

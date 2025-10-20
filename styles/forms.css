@@ -143,6 +143,13 @@ button.primary {
   font-weight: 500;
 }
 
+button.primary:hover,
+button.primary:active,
+button.primary:focus {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+
 /* Ensure primary action has extra bottom spacing on small viewports so it's
    not obscured by the fixed bottom navbar. We use margin instead of padding
    so the visual size of the button remains consistent. */
@@ -169,12 +176,12 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background: rgba(77,163,255,0.9);
-  border-color: rgba(77,163,255,0.9);
+  background: rgba(77,163,255,0.95);
+  border-color: rgba(77,163,255,0.95);
 }
 
 button:active {
-  background: rgba(77,163,255,0.8);
+  background: rgba(77,163,255,0.9);
 }
 
 button:disabled {
