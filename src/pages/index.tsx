@@ -3,7 +3,9 @@ import Head from 'next/head';
 import { HomeHeader } from '../components/HomeHeader';
 import { HomeMain } from '../components/HomeMain';
 import { HomeModal } from '../components/HomeModal';
+import { InstallPrompt } from '../components/InstallPrompt';
 import { useHome } from '../hooks/useHome';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 const LOADING_MESSAGES = [
   'Fetching articles',
@@ -18,6 +20,10 @@ const LOADING_MESSAGES = [
 
 export default function Home() {
   const h = useHome();
+  const { isInstallable, isInstalled, installApp } = usePWAInstall();
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [hasShownInstallPrompt, setHasShownInstallPrompt] = useState(false);
+
   const [currentMessage, setCurrentMessage] = useState(LOADING_MESSAGES[0]);
 
   useEffect(() => {
@@ -30,6 +36,33 @@ export default function Home() {
 
     return () => clearInterval(interval);
   }, [h.isLoading]);
+
+  // Show install prompt on first visit if installable and not installed
+  useEffect(() => {
+    if (isInstallable && !isInstalled && !hasShownInstallPrompt) {
+      // Check if this is the first visit
+      const hasVisited = localStorage.getItem('tldrwire-has-visited');
+      if (!hasVisited) {
+        // Delay showing the prompt to avoid showing it immediately on page load
+        const timer = setTimeout(() => {
+          setShowInstallPrompt(true);
+          setHasShownInstallPrompt(true);
+          localStorage.setItem('tldrwire-has-visited', 'true');
+        }, 3000); // Show after 3 seconds
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isInstallable, isInstalled, hasShownInstallPrompt]);
+
+  const handleInstall = () => {
+    installApp();
+    setShowInstallPrompt(false);
+  };
+
+  const handleDismissInstall = () => {
+    setShowInstallPrompt(false);
+  };
 
   return (
     <>
@@ -99,6 +132,12 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      <InstallPrompt
+        isVisible={showInstallPrompt}
+        onInstall={handleInstall}
+        onDismiss={handleDismissInstall}
+      />
     </>
   );
 }

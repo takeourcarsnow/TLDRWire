@@ -7,6 +7,17 @@ import '../../styles/globals.css';
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
+    // Register service worker for PWA functionality
+    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('Service Worker registered successfully:', registration.scope);
+        })
+        .catch((error) => {
+          console.log('Service Worker registration failed:', error);
+        });
+    }
+
     // Production-only diagnostic: fetch the manifest and log status/headers.
     // Helps debug 401/403 issues on hosted deployments (Vercel).
     try {
