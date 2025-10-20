@@ -9,6 +9,7 @@ import { ApiResponse } from '../types/tldr';
 import { cacheManager, NEGATIVE_CACHE_TTL } from './cacheManager';
 import { buildContextItemsAndLines, insertImagesIntoSummary, computeTopSources, createFallbackPayload } from './responseUtils';
 import { summarizeWithPossibleFallback } from './llmWrapper';
+import { translateTitles } from './llmClient';
 
 export const responseHandler = {
   checkCache: (cacheKey: string): ApiResponse | null => {
@@ -91,12 +92,28 @@ export const responseHandler = {
       return { status: 200, payload: payloadFallback };
     }
 
+    // Translate titles to the chosen language if not English
+    let translatedTopItems = topItems;
+    let translatedCleanTopItems = cleanTopItems;
+    if (language !== 'en') {
+      const titles = topItems.map(item => item.title);
+      const translatedTitles = await translateTitles(titles, language);
+      translatedTopItems = topItems.map((item, idx) => ({
+        ...item,
+        title: translatedTitles[idx] || item.title
+      }));
+      translatedCleanTopItems = cleanTopItems.map((item, idx) => ({
+        ...item,
+        title: translatedTitles[idx] || item.title
+      }));
+    }
+
     // Generate summary
     const regionCfg = getRegionConfig(region, language);
     const regionName = regionCfg.name;
     const catName = (category || 'Top').replace(/^\w/, (c) => c.toUpperCase());
 
-    const { contextItems, contextLines } = buildContextItemsAndLines(topItems, uiLocale);
+    const { contextItems, contextLines } = buildContextItemsAndLines(translatedTopItems, uiLocale);
 
     const lengthPreset = (typeof length === 'string' ? length : 'medium').toLowerCase();
     const lengthConfig = LENGTH_CONFIGS[lengthPreset as keyof typeof LENGTH_CONFIGS] || LENGTH_CONFIGS.medium;
@@ -133,14 +150,14 @@ export const responseHandler = {
         timeframeHours: maxAgeHours,
         language,
         locale: uiLocale,
-        usedArticles: cleanTopItems.length,
+        usedArticles: translatedCleanTopItems.length,
         model: usedLLM ? GEMINI_MODEL : 'fallback',
         fallback: !usedLLM,
         length: lengthPreset
       },
       summary: finalSummary,
-      images: cleanTopItems.filter(a => a.imageUrl !== null).map(a => ({ title: a.title, url: a.url, imageUrl: a.imageUrl! })),
-      articles: cleanTopItems.map(a => ({
+      images: translatedCleanTopItems.filter(a => a.imageUrl !== null).map(a => ({ title: a.title, url: a.url, imageUrl: a.imageUrl! })),
+      articles: translatedCleanTopItems.map(a => ({
         title: a.title,
         url: a.url,
         publishedAt: a.publishedAt,
@@ -161,8 +178,8 @@ export const responseHandler = {
     }
 
     cacheManager.set(cacheKey, { ts: Date.now(), payload });
-    requestLog.info('response ready', { usedArticles: cleanTopItems.length, model: GEMINI_MODEL, cached: false });
-    requestLog.info('final articles used for summary', { count: cleanTopItems.length });
+    requestLog.info('response ready', { usedArticles: translatedCleanTopItems.length, model: GEMINI_MODEL, cached: false });
+    requestLog.info('final articles used for summary', { count: translatedCleanTopItems.length });
 
     totalTimer();
     return { status: 200, payload };

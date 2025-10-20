@@ -54,3 +54,27 @@ export async function generateSummary({ prompt, style }: { prompt: string; style
     throw new Error(err?.message || 'LLM generation failed with an unknown error');
   }
 }
+
+export async function translateTitles(titles: string[], targetLanguage: string): Promise<string[]> {
+  const mdl = getModel();
+  if (!mdl || targetLanguage === 'en') {
+    return titles; // Return original titles if no model or target is English
+  }
+
+  const prompt = `Translate the following article titles to ${targetLanguage}. Keep them concise and natural. Return only the translated titles, one per line, in the same order:
+
+${titles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}`;
+
+  try {
+    const result = await mdl.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.3, topP: 0.9, maxOutputTokens: 1000 }
+    });
+    const text = result?.response?.text?.()?.trim() || "";
+    const translatedTitles = text.split('\n').map(line => line.replace(/^\d+\.\s*/, '').trim()).filter(line => line);
+    return translatedTitles.length === titles.length ? translatedTitles : titles; // Fallback to original if parsing failed
+  } catch (err) {
+    console.warn('Title translation failed:', err);
+    return titles; // Fallback to original titles
+  }
+}
