@@ -869,50 +869,6 @@ html.modal-open {
   transform: scale(0.98);
 }
 
-/* Fullscreen logo loader displayed on first load (no animations/transitions) */
-.logo-loader {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Follow the theme palette: --bg is white for light theme and dark for dark theme */
-  background: var(--bg, #ffffff);
-  color: var(--text);
-  z-index: 20000;
-  pointer-events: auto;
-  /* No animations or transitions: visibility changes are immediate */
-}
-
-.logo-loader.hidden {
-  display: none;
-  pointer-events: none;
-}
-
-.logo-loader:not(.hidden) {
-  display: flex;
-}
-
-/* When the loader is active, prevent the page from scrolling */
-html.logo-loader-active,
-body.logo-loader-active {
-  overflow: hidden !important;
-  height: 100% !important;
-}
-
-/* While the preloader overlay is active, forcibly disable any visual
-   effects on the app root so there is no blur, transition, or animation
-   affecting the underlying content. This prevents accidental visual
-   motion when the loader is shown. */
-html.logo-loader-active #__next,
-body.logo-loader-active #__next,
-html.logo-loader-active #__next *,
-body.logo-loader-active #__next * {
-  filter: none !important;
-  backdrop-filter: none !important;
-  transition: none !important;
-  animation: none !important;
-}
 
 /* Fallback / double-ensure blur: apply a heavy filter to the app root
    when loader is active so older browsers without backdrop-filter still
@@ -922,17 +878,4 @@ body.logo-loader-active #__next * {
    toggling is required — when the loader is present it blocks interaction
    and visually hides the content underneath via the overlay. */
 
-.logo-loader__img {
-  width: 96px;
-  height: 96px;
-  display: block;
-  /* color of the inline SVG follows currentColor set on the container */
-  color: inherit;
-  animation: none !important;
-  transition: none !important;
-  /* Ensure crisp rendering similar to external SVG file */
-  shape-rendering: geometricPrecision;
-  image-rendering: optimizeQuality;
-}
-
-/* loader keyframes removed to disable animation */
+/* Logo loader removed: related styles have been deleted */
