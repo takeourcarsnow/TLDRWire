@@ -52,6 +52,10 @@ header {
   padding-bottom: 8px;
   margin-bottom: 16px;
   margin-top: 6px;
+  /* Position header so absolutely-positioned controls inside it
+     (like the theme toggle) are anchored to the header's top-right. */
+  position: relative;
+  z-index: 10;
 }
 
 .header-main {

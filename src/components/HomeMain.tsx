@@ -10,7 +10,6 @@ const NewsForm = dynamic(() => import('./NewsForm').then(m => ({ default: m.News
 const NewsOutput = dynamic(() => import('./NewsOutput').then(m => ({ default: m.NewsOutput })), { ssr: false });
 const HistoryPanel = dynamic(() => import('./HistoryPanel').then(m => ({ default: m.HistoryPanel })), { ssr: false });
 const PresetCarousel = dynamic(() => import('./PresetCarousel').then(m => m.default), { ssr: false });
-const ThemeToggle = dynamic(() => import('./ThemeToggle').then(m => ({ default: m.ThemeToggle })), { ssr: false });
 
 interface HomeMainProps {
   activeTab: number;
@@ -67,9 +66,7 @@ export function HomeMain({
       <main id="main-content">
         <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab} disabled={isDraggingSlider}>
           <section className="panel">
-            <div className="theme-toggle-container">
-              <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-            </div>
+            {/* Theme toggle moved to the header so it sits in the upper-right corner */}
             <h2 style={{ margin: 0, flexShrink: 0, fontSize: '18px', fontWeight: 'normal', color: 'var(--text)' }}>Presets</h2>
             <PresetCarousel onPresetClick={onPresetClick} selectedPreset={selectedPreset} />
             <div className="form-divider"></div>

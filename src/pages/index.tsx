@@ -57,7 +57,7 @@ export default function Home() {
       </Head>
 
       <div className={h.isLoading ? 'blurred' : ''}>
-        <HomeHeader />
+        <HomeHeader theme={h.theme} onToggleTheme={h.toggleTheme} />
 
         <HomeMain
           activeTab={h.activeTab}
