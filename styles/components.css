@@ -33,14 +33,8 @@
   /* Keep overflow visible so long content flows into the page and the
      browser scrollbar is used instead of nested scrollbars. */
   overflow: visible;
-}
-
-/* Limit width on wide screens for better readability */
-@media (min-width: 768px) {
-  .summary-wrapper {
-    max-width: 60ch;
-    margin: 0 auto;
-  }
+  max-width: 60ch;
+  margin: 0 auto;
 }
 
 /* Ensure rendered summaries don't create their own scroll container */
@@ -73,7 +67,9 @@
   padding: 12px 16px;
   border-radius: 8px;
   border: 1px solid rgba(255,107,107,0.2);
-  margin: 0 12px; /* Add horizontal margins since panel padding was removed */
+  margin: 0 auto;
+  text-align: center;
+  max-width: 60ch;
 }
 
 .success {
@@ -82,7 +78,9 @@
   padding: 12px 16px;
   border-radius: 8px;
   border: 1px solid rgba(102,187,106,0.2);
-  margin: 0 12px; /* Add horizontal margins since panel padding was removed */
+  margin: 0 auto;
+  text-align: center;
+  max-width: 60ch;
 }
 
 /* Preset Carousel */

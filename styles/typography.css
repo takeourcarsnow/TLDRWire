@@ -4,9 +4,11 @@
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  margin: 0 auto 8px auto;
   padding: 8px 12px 0 12px; /* Add horizontal padding since panel padding was removed */
   font-weight: 500;
+  justify-content: center;
+  max-width: 60ch;
 }
 
 .meta-item {
@@ -43,6 +45,7 @@
   margin: 0 auto;
   padding: 0 16px; /* Small padding for readability */
   overflow-x: auto; /* Prevent text cutoff on narrow screens */
+  text-align: center;
 }
 
 /* compact reading mode removed; density controlled via font size slider */
