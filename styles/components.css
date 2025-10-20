@@ -954,6 +954,25 @@ body.loader-active .bottom-navbar-portal {
   z-index: 1000;
 }
 
-.bottom-navbar-portal.blurred {
-  filter: blur(2px);
+.bottom-navbar-portal.blurred,
+.bottom-navbar-portal.locked {
+  /* Keep blur for visual consistency */
+  filter: blur(6px);
+
+  /* Use the same frosted-panel background the rest of the UI uses so
+     the navbar composites similarly in light and dark themes. */
+  background: var(--panel-glass);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+
+  /* Subtle divider to match the rest of the UI and remove strong shadow
+     so the portal doesn't pop visually when blurred. */
+  border-top: 1px solid var(--border-glass);
+  box-shadow: none;
+}
+
+/* When the navbar is locked, make it non-interactive and slightly dimmed. */
+.bottom-navbar-portal.locked {
+  pointer-events: none;
+  opacity: 0.6;
 }

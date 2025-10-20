@@ -38,7 +38,11 @@ export function BottomNavbar({ activeIndex, onTabChange, isLoading }: BottomNavb
 
   useEffect(() => {
     if (container) {
-      container.className = `bottom-navbar-portal ${isLoading ? 'blurred' : ''}`;
+      const classes = ['bottom-navbar-portal'];
+      if (isLoading) classes.push('blurred', 'locked');
+      container.className = classes.join(' ');
+      // accessibility: hide from assistive tech while loading
+      container.setAttribute('aria-hidden', isLoading ? 'true' : 'false');
     }
   }, [container, isLoading]);
 
@@ -57,6 +61,8 @@ export function BottomNavbar({ activeIndex, onTabChange, isLoading }: BottomNavb
             aria-selected={isActive}
             role="tab"
             tabIndex={isActive ? 0 : -1}
+            // disable interaction while loading to prevent accidental navigation
+            disabled={isLoading}
           >
             <Icon size={20} />
             <span className="nav-label">{tab.label}</span>

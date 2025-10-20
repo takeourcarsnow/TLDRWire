@@ -4,6 +4,7 @@ import { HomeHeader } from '../components/HomeHeader';
 import { HomeMain } from '../components/HomeMain';
 import { HomeModal } from '../components/HomeModal';
 import { useHome } from '../hooks/useHome';
+import useLockBodyScroll from '../hooks/useLockBodyScroll';
 
 const LOADING_MESSAGES = [
   'Fetching articles',
@@ -31,6 +32,10 @@ export default function Home() {
 
     return () => clearInterval(interval);
   }, [h.isLoading]);
+
+  // Lock body scroll and touch interactions while generating a TLDR so
+  // the user can't accidentally swipe between screens or scroll the page.
+  useLockBodyScroll(!!h.isLoading);
 
   return (
     <>
