@@ -787,3 +787,66 @@ html.modal-open {
   margin: 10px 0;
   border: none;
 }
+
+/* Print styles: hide UI chrome and history when printing summaries */
+@media print {
+  /* Hide header, footer, fixed nav and any history/modals */
+  header,
+  footer,
+  .bottom-navbar,
+  .history-list-container,
+  .history-grid,
+  .history-card,
+  .modal,
+  .modal-backdrop {
+    display: none !important;
+  }
+
+  /* Ensure the summary area uses the full page width and flows naturally */
+  .summary-wrapper,
+  .summary,
+  .output {
+    display: block !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Remove shadows, rounded corners and background panels for clean print */
+  .history-card,
+  .panel,
+  .modal,
+  .loader,
+  .preset-carousel-container {
+    box-shadow: none !important;
+    background: transparent !important;
+    border: none !important;
+  }
+
+  /* Avoid printing focus outlines and interactive controls that don't make sense on paper */
+  a,
+  button,
+  input,
+  textarea,
+  .nav-tab {
+    /* Ensure printed colors are preserved where possible */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    text-decoration: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Force page breaks between long summaries if needed */
+  .summary + .summary {
+    page-break-before: always;
+  }
+}
+
+/* Utility: explicitly hide elements when printing. Prefer adding this class to
+   components (BottomNavbar, HistoryPanel) in JSX for clarity. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
