@@ -475,6 +475,18 @@
   isolation: isolate; /* create a new stacking context */
 }
 
+/* Wrapper added around each slide's content. Ensure it fills the
+   available width, establishes the min-height set from React, and
+   sets a touch-action that lets the app handle horizontal swipes while
+   preserving native vertical scrolling behavior. */
+.swipe-slide-content {
+  width: 100%;
+  display: block;
+  /* Allow native vertical panning but let JS handle horizontal swipes */
+  touch-action: pan-y;
+  -ms-touch-action: pan-y;
+}
+
 /* Stop marquee animation on slides that aren't active to avoid visual bleed
    and improve performance while off-screen. */
 .swiper-slide:not(.swiper-slide-active) .meta-strip-inner {
