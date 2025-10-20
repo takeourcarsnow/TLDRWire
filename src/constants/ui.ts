@@ -16,7 +16,7 @@ export const REGION_OPTIONS = [
 ];
 
 export const LANGUAGE_OPTIONS = [
-  { value: 'en', label: 'English', icon: '🇺🇸' },
+  { value: 'en', label: 'English', icon: '🇬🇧' },
   { value: 'lt', label: 'Lithuanian', icon: '🇱🇹' },
   { value: 'de', label: 'German', icon: '🇩🇪' },
   { value: 'fr', label: 'French', icon: '🇫🇷' },

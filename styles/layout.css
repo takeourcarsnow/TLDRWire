@@ -345,21 +345,54 @@ footer {
   font-size: 12px;
   min-width: 60px;
   box-shadow: none !important;
-  transition: none !important;
+  transition: transform 0.3s ease-out !important;
   cursor: default !important;
   appearance: none !important;
   border-radius: 0 !important;
-  transform: none !important;
+  transform: scale(1) !important;
   outline: none !important;
 }
 
 .nav-tab.active {
-  color: var(--accent);
+}
+
+.nav-tab-0.active {
+}
+
+.nav-tab-1.active {
+}
+
+.nav-tab-2.active {
 }
 
 .nav-label {
   font-size: 10px;
   font-weight: 400;
+}
+
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background 0.3s ease-out, color 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.nav-tab-0.active .icon-container {
+  color: #3b82f6;
+  transform: scale(1.1);
+}
+
+.nav-tab-1.active .icon-container {
+  color: #10b981;
+  transform: scale(1.1);
+}
+
+.nav-tab-2.active .icon-container {
+  color: #8b5cf6;
+  transform: scale(1.1);
 }
 
 /* Reduce home panel min-height on small screens so content doesn't feel cramped */

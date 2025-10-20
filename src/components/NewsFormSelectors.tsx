@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import TwEmoji from './TwEmoji';
 import PresetCarousel from './PresetCarousel';
 import { MapPin, Globe, Folder, Star, Briefcase, Monitor, Microscope, Trophy, Film, Theater, Hospital, Building, Leaf, Coins, Zap, GraduationCap, Plane, Gamepad, Rocket, Shield, PenTool, FileText, Target, MessageCircle, Newspaper, BarChart, Meh, Rainbow, Eye, Book, Frown, Clock, TrendingUp, AlertTriangle, Glasses, Pen, Angry } from 'lucide-react';
@@ -11,29 +11,33 @@ interface Props {
 }
 
 export default function NewsFormSelectors({ preferences, onPreferenceChange }: Props) {
+  const [showRegionLabel, setShowRegionLabel] = useState(false);
+  const [showCategoryLabel, setShowCategoryLabel] = useState(false);
+  const [showStyleLabel, setShowStyleLabel] = useState(false);
+
   return (
     <>
       <div className="form-group regions-group">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-          <label htmlFor="region" style={{ marginBottom: 0, flexShrink: 0, fontSize: '16px', color: 'var(--text)' }}>Regions and Language</label>
-          <PresetCarousel options={REGION_OPTIONS} value={preferences.region} onChange={(v) => onPreferenceChange('region', v)} />
+          <label htmlFor="region" style={{ marginBottom: 0, flexShrink: 0, fontSize: '16px', color: 'var(--text)', opacity: showRegionLabel ? 1 : 0, transition: 'opacity 0.3s ease' }}>Regions and Language</label>
+          <PresetCarousel options={REGION_OPTIONS} value={preferences.region} onChange={(v) => onPreferenceChange('region', v)} onMouseEnter={() => setShowRegionLabel(true)} onMouseLeave={() => setShowRegionLabel(false)} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-          <PresetCarousel options={LANGUAGE_OPTIONS} value={preferences.language} onChange={(v) => onPreferenceChange('language', v)} />
+          <PresetCarousel options={LANGUAGE_OPTIONS} value={preferences.language} onChange={(v) => onPreferenceChange('language', v)} onMouseEnter={() => setShowRegionLabel(true)} onMouseLeave={() => setShowRegionLabel(false)} />
         </div>
       </div>
 
       <div className="form-group category-group">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1 }}>
-          <label htmlFor="category" style={{ marginBottom: 0, flexShrink: 0, fontSize: '16px', color: 'var(--text)' }}>Category</label>
-          <PresetCarousel options={CATEGORY_OPTIONS} value={preferences.category} onChange={(v) => onPreferenceChange('category', v)} />
+          <label htmlFor="category" style={{ marginBottom: 0, flexShrink: 0, fontSize: '16px', color: 'var(--text)', opacity: showCategoryLabel ? 1 : 0, transition: 'opacity 0.3s ease' }}>Category</label>
+          <PresetCarousel options={CATEGORY_OPTIONS} value={preferences.category} onChange={(v) => onPreferenceChange('category', v)} onMouseEnter={() => setShowCategoryLabel(true)} onMouseLeave={() => setShowCategoryLabel(false)} />
         </div>
       </div>
 
       <div className="form-group">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1 }}>
-          <label htmlFor="style" style={{ marginBottom: 0, flexShrink: 0, fontSize: '16px', color: 'var(--text)' }}>Style</label>
-          <PresetCarousel options={STYLE_OPTIONS} value={preferences.style} onChange={(v) => onPreferenceChange('style', v)} />
+          <label htmlFor="style" style={{ marginBottom: 0, flexShrink: 0, fontSize: '16px', color: 'var(--text)', opacity: showStyleLabel ? 1 : 0, transition: 'opacity 0.3s ease' }}>Style</label>
+          <PresetCarousel options={STYLE_OPTIONS} value={preferences.style} onChange={(v) => onPreferenceChange('style', v)} onMouseEnter={() => setShowStyleLabel(true)} onMouseLeave={() => setShowStyleLabel(false)} />
         </div>
       </div>
     </>

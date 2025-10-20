@@ -43,7 +43,21 @@ export function SwipeableContainer({ children, activeIndex, onSlideChange, disab
   useEffect(() => {
     updateSlideMinHeight();
     window.addEventListener('resize', updateSlideMinHeight);
-    return () => window.removeEventListener('resize', updateSlideMinHeight);
+    // Listen for history updates (expansions, filtering) so we can
+    // re-run Swiper's auto height calculation and avoid leftover
+    // empty space when content size changes.
+    const onHistoryUpdated = () => {
+      if (swiperRef.current) {
+        const s = swiperRef.current as any;
+        if (typeof s.updateAutoHeight === 'function') s.updateAutoHeight();
+        else if (typeof s.update === 'function') s.update();
+      }
+    };
+    window.addEventListener('tldrwire:history-updated', onHistoryUpdated);
+    return () => {
+      window.removeEventListener('resize', updateSlideMinHeight);
+      window.removeEventListener('tldrwire:history-updated', onHistoryUpdated);
+    };
   }, [updateSlideMinHeight]);
 
   // When the filler min-height changes, ensure Swiper recalculates any
@@ -57,6 +71,24 @@ export function SwipeableContainer({ children, activeIndex, onSlideChange, disab
         s.update();
       }
     }
+  }, [slideMinHeight]);
+
+  // Also observe DOM mutations inside the main content and trigger updates.
+  // This handles cases where the card's content renders asynchronously
+  // (images, favicons, or markdown rendering) and changes the height
+  // after our initial measurement.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const observer = new MutationObserver(() => {
+      if (swiperRef.current) {
+        const s = swiperRef.current as any;
+        if (typeof s.updateAutoHeight === 'function') s.updateAutoHeight();
+        else if (typeof s.update === 'function') s.update();
+      }
+    });
+    const root = document.getElementById('main-content');
+    if (root) observer.observe(root, { childList: true, subtree: true, attributes: true });
+    return () => observer.disconnect();
   }, [slideMinHeight]);
 
   useEffect(() => {

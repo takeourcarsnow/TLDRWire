@@ -47,7 +47,7 @@ export function BottomNavbar({ activeIndex, onTabChange, isLoading }: BottomNavb
   }, [container, isLoading]);
 
   const nav = (
-    <nav className="bottom-navbar" role="tablist" aria-label="Main navigation">
+    <nav className={`bottom-navbar active-${activeIndex}`} role="tablist" aria-label="Main navigation">
       {tabs.map((tab, index) => {
         const Icon = tab.icon;
         const isActive = activeIndex === index;
@@ -55,7 +55,7 @@ export function BottomNavbar({ activeIndex, onTabChange, isLoading }: BottomNavb
         return (
           <button
             key={index}
-            className={`nav-tab ${isActive ? 'active' : ''}`}
+            className={`nav-tab nav-tab-${index} ${isActive ? 'active' : ''}`}
             onClick={() => onTabChange(index)}
             aria-label={`${tab.label} tab`}
             aria-selected={isActive}
@@ -64,7 +64,9 @@ export function BottomNavbar({ activeIndex, onTabChange, isLoading }: BottomNavb
             // disable interaction while loading to prevent accidental navigation
             disabled={isLoading}
           >
-            <Icon size={20} />
+            <div className="icon-container">
+              <Icon size={20} />
+            </div>
             <span className="nav-label">{tab.label}</span>
           </button>
         );

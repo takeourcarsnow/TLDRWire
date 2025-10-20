@@ -13,6 +13,8 @@ interface PresetCarouselProps {
   options?: Option[];
   value?: string;
   onChange?: (value: string) => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 const PresetCarousel = (props: PresetCarouselProps) => {
@@ -67,13 +69,14 @@ const PresetCarousel = (props: PresetCarouselProps) => {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
       onPointerLeave={handlePointerCancel}
+      onMouseEnter={props.onMouseEnter}
+      onMouseLeave={(e) => { e.stopPropagation(); props.onMouseLeave?.(); }}
       // Ensure mouse and wheel interactions on desktop do not bubble
       // up to the page-level swiper which would change the active
       // section while the user is interacting with this carousel.
       onMouseDown={(e) => { e.stopPropagation(); }}
       onMouseMove={(e) => { e.stopPropagation(); }}
       onMouseUp={(e) => { e.stopPropagation(); }}
-      onMouseLeave={(e) => { e.stopPropagation(); }}
       onWheel={(e) => { e.stopPropagation(); }}
     >
       <CarouselArrows onScrollLeft={scrollLeft} onScrollRight={scrollRight} />
