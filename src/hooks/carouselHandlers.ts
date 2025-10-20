@@ -1,4 +1,5 @@
 import { RefObject } from 'react';
+import { centerSelected } from '../utils/carouselUtils';
 
 export function initScrollToMiddle(carouselRef: RefObject<HTMLDivElement>) {
   const init = () => {
@@ -13,8 +14,10 @@ export function initScrollToMiddle(carouselRef: RefObject<HTMLDivElement>) {
 }
 
 export function centerOnSelected(carouselRef: RefObject<HTMLDivElement>, value?: string | null | undefined) {
+  // Defer to the utility which will choose the duplicate closest to the
+  // carousel center (preferring the middle segment when available).
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    // delegate to consumer implementation (imported util)
+    centerSelected(carouselRef.current, value || undefined, 'smooth');
   }));
 }
 

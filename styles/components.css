@@ -1025,3 +1025,26 @@ body.loader-active .bottom-navbar-portal {
   pointer-events: none;
   opacity: 0.6;
 }
+
+/* Disable the default click / tap background highlight on carousel
+   buttons so taps do not flash an unwanted color on mobile/desktop. */
+.preset-carousel .preset-button,
+.preset-carousel .arrow-button {
+  -webkit-tap-highlight-color: transparent; /* iOS / WebKit */
+  tap-highlight-color: transparent; /* future-proof / non-prefixed */
+  -webkit-touch-callout: none; /* disable callout on iOS */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.preset-carousel .preset-button:active,
+.preset-carousel .arrow-button:active {
+  /* Keep background consistent while pressed and avoid any transient
+     color overlay that mobile browsers sometimes apply. Use !important
+     to override UA / generic button rules when necessary. */
+  background: var(--bg-secondary) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}

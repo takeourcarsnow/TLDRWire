@@ -47,8 +47,12 @@ const PresetCarousel = (props: PresetCarouselProps) => {
     ? props.options!.map(opt => ({ value: opt.value, label: opt.label, icon: opt.icon }))
     : presets.map(([key, Icon]) => ({ value: key, label: capitalizeLabel(key), icon: Icon }));
 
-  // Use a single list (no tripling) — remove seamless/infinite behavior.
-  const items = normalizedItems.map((it, idx) => ({ ...it, _origIndex: idx, _seg: 0 }));
+  // Create a tripled list (left, middle, right) so the carousel can
+  // seamlessly wrap. Each duplicate carries an _origIndex and _seg so
+  // centering logic can prefer the middle segment when needed.
+  const items = [0, 1, 2].flatMap(seg =>
+    normalizedItems.map((it, idx) => ({ ...it, _origIndex: idx, _seg: seg }))
+  );
 
   return (
     <div
