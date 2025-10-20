@@ -9,6 +9,7 @@ export function wrapImageInParagraph(img: HTMLImageElement) {
   img.style.height = 'auto';
   img.style.display = 'block';
   img.style.margin = '0 auto';
+  img.loading = 'lazy'; // Add lazy loading for performance
   img.onerror = () => {
     try { wrapper.style.display = 'none'; } catch {}
   };

@@ -70,7 +70,10 @@
 }
 
 header {
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--panel-glass);
+  border-bottom: 1px solid var(--border-glass);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   padding-bottom: 8px;
   margin-bottom: 16px;
   margin-top: 6px;
@@ -313,8 +316,10 @@ footer {
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--panel);
-  border-top: 1px solid var(--border);
+  background: var(--panel-glass);
+  border-top: 1px solid var(--border-glass);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   justify-content: space-around;
   padding: 8px 0;

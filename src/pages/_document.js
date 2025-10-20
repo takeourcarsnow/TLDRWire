@@ -4,6 +4,22 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
+        {/* Preload critical resources */}
+        <link
+          rel="preload"
+          href="/logo.svg"
+          as="image"
+          type="image/svg+xml"
+        />
+        <link
+          rel="dns-prefetch"
+          href="//fonts.googleapis.com"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
         {/* Inline theme initializer + critical loader styles to avoid FOUC */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var s=localStorage.getItem('tldrwire:theme'); if(s==='dark'||s==='light'){document.documentElement.setAttribute('data-theme',s);return;} var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.setAttribute('data-theme', m ? 'dark' : 'light');}catch(e){} })();` }} />
         {/* Critical theme initializer kept; loader styles removed */}

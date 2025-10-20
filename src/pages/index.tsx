@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Head from 'next/head';
 import { HomeHeader } from '../components/HomeHeader';
 import { HomeMain } from '../components/HomeMain';
-import { HomeModal } from '../components/HomeModal';
 import { useHome } from '../hooks/useHome';
 import useLockBodyScroll from '../hooks/useLockBodyScroll';
+
+// Lazy load modal component for better initial load performance
+const HomeModal = React.lazy(() => import('../components/HomeModal').then(module => ({ default: module.HomeModal })));
 
 const LOADING_MESSAGES = [
   'Fetching articles',
@@ -83,14 +85,16 @@ export default function Home() {
           onToggleTheme={h.toggleTheme}
         />
 
-        <HomeModal
-          selectedHistoryEntry={h.selectedHistoryEntry}
-          setSelectedHistoryEntry={h.setSelectedHistoryEntry}
-          onApplyHistory={h.onApplyHistory}
-          onDeleteHistory={h.removeHistoryItem}
-          updatePreference={h.updatePreference}
-          setActiveTab={h.setActiveTab}
-        />
+        <Suspense fallback={null}>
+          <HomeModal
+            selectedHistoryEntry={h.selectedHistoryEntry}
+            setSelectedHistoryEntry={h.setSelectedHistoryEntry}
+            onApplyHistory={h.onApplyHistory}
+            onDeleteHistory={h.removeHistoryItem}
+            updatePreference={h.updatePreference}
+            setActiveTab={h.setActiveTab}
+          />
+        </Suspense>
       </div>
 
       {h.isLoading && (

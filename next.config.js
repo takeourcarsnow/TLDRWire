@@ -10,13 +10,6 @@ const nextConfig = {
   },
   // Enable compression
   compress: true,
-  // Allow building even if ESLint reports problems. This prevents dev-time lint
-  // rules from blocking production builds (useful during development or CI).
-  // If you prefer to keep strict linting, remove or set to false and fix the
-  // reported issues instead.
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
   // Optimize headers for better performance
   headers: async () => {
     return [
