@@ -91,11 +91,7 @@ export default function Home() {
         <div className="loading-overlay">
           <div className="loading-container">
             <div className="loading-text">
-              {'Generating...'.split('').map((letter, index) => (
-                <span key={index} className="loading-letter" style={{ animationDelay: `${index * 0.1}s` }}>
-                  {letter}
-                </span>
-              ))}
+              Generating
             </div>
             <div className="loading-subtitle">
               <div key={currentMessage} className="loading-stage">{currentMessage}</div>
