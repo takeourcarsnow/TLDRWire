@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Check, Eye, Trash2 } from 'lucide-react';
+import { RotateCcw, Eye, Trash2, MapPin, Folder, PenTool } from 'lucide-react';
 import { HistoryEntry } from '../hooks/useApi';
 import { formatTimeAgo } from '../utils/historyUtils';
 import HistorySnippet from './HistorySnippet';
@@ -58,9 +58,15 @@ function HistoryCard({
           }
         </div>
         <div className="history-tags">
-          <span className="history-tag region-tag">{entry.payload.region}</span>
-          <span className="history-tag category-tag">{entry.payload.category}</span>
-          <span className="history-tag style-tag">{entry.payload.style}</span>
+          <span className="history-tag region-tag" title={`Region: ${entry.payload.region}`}>
+            <MapPin size={14} /> {entry.payload.region}
+          </span>
+          <span className="history-tag category-tag" title={`Category: ${entry.payload.category}`}>
+            <Folder size={14} /> {entry.payload.category}
+          </span>
+          <span className="history-tag style-tag" title={`Style: ${entry.payload.style}`}>
+            <PenTool size={14} /> {entry.payload.style}
+          </span>
         </div>
       </div>
 
@@ -80,10 +86,9 @@ function HistoryCard({
         <button
           className="history-action-btn apply-btn"
           onClick={() => onApply(entry.payload)}
-          title="Apply settings"
+          title="Retry with these settings"
         >
-          <Check size={16} />
-          <span>Apply</span>
+          <RotateCcw size={16} />
         </button>
         <button
           className="history-action-btn view-btn"
@@ -91,7 +96,6 @@ function HistoryCard({
           title="View full summary"
         >
           <Eye size={16} />
-          <span>{isExpanded ? 'Close' : 'View'}</span>
         </button>
         <button
           className="history-action-btn delete-btn"
@@ -99,7 +103,6 @@ function HistoryCard({
           title="Delete"
         >
           <Trash2 size={16} />
-          <span>Delete</span>
         </button>
       </div>
     </div>

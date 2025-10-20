@@ -9,6 +9,7 @@ interface HistoryPanelProps {
   onClear: () => void;
   updatePreference: (key: keyof Preferences, value: string) => void;
   renderMarkdownToElement: (el: HTMLDivElement | null, markdown: string | undefined) => void;
+  onNavigate?: () => void;
 }
 
 export const HistoryPanel = memo(function HistoryPanel({
@@ -17,7 +18,8 @@ export const HistoryPanel = memo(function HistoryPanel({
   onDelete,
   onClear,
   updatePreference,
-  renderMarkdownToElement
+  renderMarkdownToElement,
+  onNavigate
 }: HistoryPanelProps) {
   return (
     <div className="history-panel">
@@ -27,6 +29,7 @@ export const HistoryPanel = memo(function HistoryPanel({
           Object.entries(payload).forEach(([key, value]) => {
             updatePreference(key as keyof Preferences, String(value));
           });
+          onNavigate?.();
         }}
         onDelete={onDelete}
         onClear={onClear}

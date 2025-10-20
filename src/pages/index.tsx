@@ -27,38 +27,40 @@ export default function Home() {
         <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E" />
       </Head>
 
-      <HomeHeader theme={h.theme} onToggleTheme={h.toggleTheme} />
+      <div className={h.isLoading ? 'blurred' : ''}>
+        <HomeHeader theme={h.theme} onToggleTheme={h.toggleTheme} />
 
-      <HomeMain
-        activeTab={h.activeTab}
-        setActiveTab={h.setActiveTab}
-        isLoading={h.isLoading}
-        error={h.error}
-        data={h.data}
-        lastRequestRef={h.lastRequestRef}
-        history={h.history}
-        onApplyHistory={h.onApplyHistory}
-        onDeleteHistory={h.removeHistoryItem}
-        onClearHistory={h.clearHistory}
-        preferences={h.preferences}
-        updatePreference={h.updatePreference}
-        onGenerate={h.generateSummary}
-        onPresetClick={h.handlePresetClick}
-        selectedPreset={h.selectedPreset}
-        rateLimited={h.isRateLimited()}
-        rateLimitCountdown={h.rateLimitCountdown}
-        isDraggingSlider={h.isDraggingSlider}
-        setIsDraggingSlider={h.setIsDraggingSlider}
-      />
+        <HomeMain
+          activeTab={h.activeTab}
+          setActiveTab={h.setActiveTab}
+          isLoading={h.isLoading}
+          error={h.error}
+          data={h.data}
+          lastRequestRef={h.lastRequestRef}
+          history={h.history}
+          onApplyHistory={h.onApplyHistory}
+          onDeleteHistory={h.removeHistoryItem}
+          onClearHistory={h.clearHistory}
+          preferences={h.preferences}
+          updatePreference={h.updatePreference}
+          onGenerate={h.generateSummary}
+          onPresetClick={h.handlePresetClick}
+          selectedPreset={h.selectedPreset}
+          rateLimited={h.isRateLimited()}
+          rateLimitCountdown={h.rateLimitCountdown}
+          isDraggingSlider={h.isDraggingSlider}
+          setIsDraggingSlider={h.setIsDraggingSlider}
+        />
 
-      <HomeModal
-        selectedHistoryEntry={h.selectedHistoryEntry}
-        setSelectedHistoryEntry={h.setSelectedHistoryEntry}
-        onApplyHistory={h.onApplyHistory}
-        onDeleteHistory={h.removeHistoryItem}
-        updatePreference={h.updatePreference}
-        setActiveTab={h.setActiveTab}
-      />
+        <HomeModal
+          selectedHistoryEntry={h.selectedHistoryEntry}
+          setSelectedHistoryEntry={h.setSelectedHistoryEntry}
+          onApplyHistory={h.onApplyHistory}
+          onDeleteHistory={h.removeHistoryItem}
+          updatePreference={h.updatePreference}
+          setActiveTab={h.setActiveTab}
+        />
+      </div>
     </>
   );
 }

@@ -59,7 +59,7 @@ export function HomeMain({
 
   return (
     <>
-      <main className={isLoading ? 'blurred' : ''} id="main-content">
+      <main id="main-content">
         <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab} disabled={isDraggingSlider}>
           <section className="panel">
             <h2 style={{ margin: 0, flexShrink: 0, fontSize: '18px', fontWeight: 'normal', color: 'var(--text)' }}>Presets</h2>
@@ -95,6 +95,7 @@ export function HomeMain({
             onClear={onClearHistory}
             updatePreference={updatePreference}
             renderMarkdownToElement={renderMarkdownToElementMemo}
+            onNavigate={() => setActiveTab(0)}
           />
         </SwipeableContainer>
       </main>
