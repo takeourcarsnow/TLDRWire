@@ -2,6 +2,19 @@
   color: var(--muted);
 }
 
+/* Theme toggle container for centering in main content */
+.theme-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.theme-toggle-container .theme-toggle {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+}
+
 .output {
   /* Simplified: allow the output panel to size naturally and use the
      document/page scrollbar instead of an inner scrollbar. */
@@ -54,104 +67,6 @@
   padding-bottom: 8px;
 }
 
-/* Enhanced loading states */
-.loading {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  padding: 16px 20px;
-  border-radius: 10px;
-  background: var(--panel);
-  border: 1px solid rgba(77,163,255,0.2);
-}
-
-.loading .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: pulse 1.4s ease-in-out infinite both;
-}
-
-.loading .dot:nth-child(1) { animation-delay: -0.32s; }
-.loading .dot:nth-child(2) { animation-delay: -0.16s; }
-.loading .dot:nth-child(3) { animation-delay: 0s; }
-
-/* New loader styles */
-.loader {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: var(--panel);
-  border: 1px solid rgba(77,163,255,0.18);
-  box-shadow: 0 8px 24px var(--shadow);
-}
-
-.spinner {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, var(--accent) 0deg, transparent 240deg);
-  -webkit-mask: radial-gradient(circle 8px, transparent 6px, #000 7px);
-  mask: radial-gradient(circle 8px, transparent 6px, #000 7px);
-  animation: spin 1s linear infinite;
-}
-
-.loader .message {
-  display: grid;
-  gap: 6px;
-}
-
-.loader .subtle {
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-/* Render the small progress indicator used in loaders as a pseudo-element
-   on the message container so the DOM doesn't need an empty <div>. This keeps
-   markup simpler while preserving the animated gradient used previously. */
-.loader .message::after {
-  content: '';
-  display: block;
-  margin-top: 8px;
-  width: 200px;
-  max-width: 48vw;
-  height: 3px;
-  border-radius: 999px;
-  overflow: hidden;
-  background-color: var(--border);
-  position: relative;
-  /* animated gradient overlay using background-position */
-  background-image: var(--accent);
-  background-repeat: no-repeat;
-  background-size: 40% 100%;
-  background-position: -40% 0;
-  animation: progressShift 1.2s ease-in-out infinite;
-}
-
-/* Button inline spinner */
-.btn-spinner {
-  width: 1em;
-  height: 1em;
-  margin-right: 8px;
-  vertical-align: -2px;
-  display: inline-block;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, rgba(255,255,255,0.9), rgba(255,255,255,0) 60%);
-  -webkit-mask: radial-gradient(circle 6px, transparent 5px, #000 6px);
-  mask: radial-gradient(circle 6px, transparent 5px, #000 6px);
-  animation: spin 0.9s linear infinite;
-}
-
-/* Skeleton loading */
-.skeleton {
-  background: var(--border);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-}
-
 .error {
   color: var(--danger);
   background: rgba(255,107,107,0.1);
@@ -168,14 +83,6 @@
   border-radius: 8px;
   border: 1px solid rgba(102,187,106,0.2);
   margin: 0 12px; /* Add horizontal margins since panel padding was removed */
-}
-
-.warning {
-  color: var(--warning);
-  background: rgba(255,167,38,0.1);
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,167,38,0.2);
 }
 
 /* Preset Carousel */
@@ -266,6 +173,19 @@
   margin-top: -8px;
   opacity: 0;
   pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Position the first arrow on the left */
+.preset-carousel-container .arrow-button:first-child {
+  left: 0;
+}
+
+/* Position the second arrow on the right */
+.preset-carousel-container .arrow-button:nth-child(2) {
+  right: 0;
 }
 
 /* Show arrows on hover */

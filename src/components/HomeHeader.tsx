@@ -1,14 +1,6 @@
-import { ThemeToggle } from './ThemeToggle';
-
-interface HomeHeaderProps {
-  theme: 'light' | 'dark';
-  onToggleTheme: () => void;
-}
-
-export function HomeHeader({ theme, onToggleTheme }: HomeHeaderProps) {
+export function HomeHeader() {
   return (
     <header>
-      <ThemeToggle theme={theme} onToggle={onToggleTheme} />
       <div className="header-content">
         <div className="header-main">
           <h1>TLDRWire</h1>

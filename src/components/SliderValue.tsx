@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface SliderValueProps {
   value: string | number;
@@ -9,7 +9,18 @@ interface SliderValueProps {
 }
 
 export const SliderValue: React.FC<SliderValueProps> = ({ value, min, max, dragging, displayValue }) => {
-  if (!dragging) return null;
+  const [show, setShow] = useState(dragging);
+
+  useEffect(() => {
+    if (dragging) {
+      setShow(true);
+    } else {
+      const timer = setTimeout(() => setShow(false), 300); // Match animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [dragging]);
+
+  if (!show) return null;
 
   const percentage = ((Number(value) - min) / (max - min)) * 100;
 
@@ -19,7 +30,7 @@ export const SliderValue: React.FC<SliderValueProps> = ({ value, min, max, dragg
       style={{
         position: 'absolute',
         left: `${percentage}%`,
-        top: '-24px',
+        top: '-20px',
         transform: 'translateX(-50%)',
         background: 'var(--panel)',
         color: 'var(--text)',
@@ -30,7 +41,9 @@ export const SliderValue: React.FC<SliderValueProps> = ({ value, min, max, dragg
         whiteSpace: 'nowrap',
         pointerEvents: 'none',
         border: '1px solid var(--border)',
-        boxShadow: '0 2px 8px var(--shadow)'
+        boxShadow: '0 2px 8px var(--shadow)',
+        opacity: dragging ? 1 : 0,
+        transition: 'opacity 0.3s ease-out'
       }}
     >
       {displayValue !== undefined ? displayValue : value}

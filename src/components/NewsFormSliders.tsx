@@ -15,6 +15,16 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, onSli
 
   const handleTimeframeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = Number(e.target.value);
+    // Check if value is close to a 12-hour mark (within 3 hours)
+    const nearest12 = Math.round(value / 12) * 12;
+    const distance = Math.abs(value - nearest12);
+
+    // If within 3 hours of a 12-hour mark, snap to it
+    if (distance <= 3) {
+      value = nearest12;
+    }
+
+    // Ensure it's within bounds
     if (value < TIMEFRAME_MIN) value = TIMEFRAME_MIN;
     if (value > TIMEFRAME_MAX) value = TIMEFRAME_MAX;
     onPreferenceChange('timeframe', value.toString());
@@ -31,6 +41,15 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, onSli
     const idx = Number(e.target.value);
     const clamped = Math.min(Math.max(idx, 0), LENGTH_OPTIONS.length - 1);
     onPreferenceChange('length', LENGTH_OPTIONS[clamped]);
+  };
+
+  const getSliderColor = (value: number, min: number, max: number) => {
+    const normalized = (value - min) / (max - min);
+    // Cold to hot: blue (0) -> purple -> red (1)
+    const hue = 240 - (normalized * 240); // 240 (blue) to 0 (red)
+    const saturation = 70 + (normalized * 30); // 70% to 100%
+    const lightness = 50 + (normalized * 20); // 50% to 70%
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   };
 
   const lengthIndex = (len: string) => {
@@ -87,7 +106,11 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, onSli
               onChange={handleTimeframeChange}
               onPointerDown={() => handlePointerDown('timeframe')}
               onPointerUp={() => handlePointerUp('timeframe')}
-              style={{ width: '100%' }}
+              className={dragging.timeframe ? 'dragging' : ''}
+              style={{
+                width: '100%',
+                '--slider-color': getSliderColor(Number(preferences.timeframe), TIMEFRAME_MIN, TIMEFRAME_MAX)
+              } as React.CSSProperties}
             />
             <SliderValue
               value={preferences.timeframe}
@@ -111,7 +134,11 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, onSli
               onChange={handleLimitChange}
               onPointerDown={() => handlePointerDown('limit')}
               onPointerUp={() => handlePointerUp('limit')}
-              style={{ width: '100%' }}
+              className={dragging.limit ? 'dragging' : ''}
+              style={{
+                width: '100%',
+                '--slider-color': getSliderColor(Number(preferences.limit), ARTICLES_MIN, ARTICLES_MAX)
+              } as React.CSSProperties}
             />
             <SliderValue
               value={preferences.limit}
@@ -136,7 +163,11 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, onSli
               onChange={handleLengthSliderChange}
               onPointerDown={() => handlePointerDown('length')}
               onPointerUp={() => handlePointerUp('length')}
-              style={{ width: '100%' }}
+              className={dragging.length ? 'dragging' : ''}
+              style={{
+                width: '100%',
+                '--slider-color': getSliderColor(lengthIndex(preferences.length), 0, LENGTH_OPTIONS.length - 1)
+              } as React.CSSProperties}
             />
             <SliderValue
               value={lengthIndex(preferences.length)}

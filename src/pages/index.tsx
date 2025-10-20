@@ -28,7 +28,7 @@ export default function Home() {
       </Head>
 
       <div className={h.isLoading ? 'blurred' : ''}>
-        <HomeHeader theme={h.theme} onToggleTheme={h.toggleTheme} />
+        <HomeHeader />
 
         <HomeMain
           activeTab={h.activeTab}
@@ -50,6 +50,8 @@ export default function Home() {
           rateLimitCountdown={h.rateLimitCountdown}
           isDraggingSlider={h.isDraggingSlider}
           setIsDraggingSlider={h.setIsDraggingSlider}
+          theme={h.theme}
+          onToggleTheme={h.toggleTheme}
         />
 
         <HomeModal
