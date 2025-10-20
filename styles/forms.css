@@ -400,10 +400,6 @@ input[type="range"]:active::-webkit-slider-thumb {
   box-shadow: 0 1px 2px rgba(0,0,0,0.1), inset 0 1px 2px rgba(0,0,0,0.2), inset 0 -1px 0 rgba(0,0,0,0.15);
 }
 
-input[type="range"]:focus {
-  box-shadow: 0 0 0 4px rgba(77,163,255,0.12), inset 0 1px 2px rgba(0,0,0,0.1), inset 0 -1px 1px rgba(255,255,255,0.1), 0 1px 2px rgba(0,0,0,0.05);
-}
-
 input[type="range"]::-moz-range-track {
   height: 6px;
   background: var(--slider-color, var(--border));

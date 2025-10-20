@@ -555,7 +555,6 @@
   border-radius: 12px;
   padding: 20px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px var(--shadow);
   animation: historyCardFadeIn 0.4s ease-out forwards;
   opacity: 0;
   transform: translateY(10px);
@@ -568,12 +567,6 @@
 .history-card:nth-child(3) { animation-delay: 0.15s; }
 .history-card:nth-child(4) { animation-delay: 0.2s; }
 .history-card:nth-child(5) { animation-delay: 0.25s; }
-
-.history-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px var(--shadow);
-  border-color: rgba(77,163,255,0.2);
-}
 
 .history-card-header {
   display: flex;
@@ -678,11 +671,6 @@
   cursor: pointer;
   transition: all 0.15s ease;
   min-height: 36px;
-}
-
-.history-action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--shadow);
 }
 
 .apply-btn:hover {
