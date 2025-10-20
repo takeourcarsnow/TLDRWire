@@ -7,7 +7,9 @@ interface PresetButtonProps {
   label?: string;
   icon?: string | React.ComponentType<any>;
   isSelected: boolean;
-  onClick: () => void;
+  // Accept the clicked DOM element so callers can center exactly that
+  // duplicate when needed (useful for tripled-segment carousels).
+  onClick: (el?: HTMLElement) => void;
   suppressClickUntil: number;
   seg: number;
 }
@@ -26,12 +28,13 @@ const PresetButton: React.FC<PresetButtonProps> = ({
   return (
     <div
       className={`preset-button ${isSelected ? 'selected' : ''}`}
-      onClick={() => {
+      onClick={(e) => {
         // Ignore clicks that immediately follow a drag
         if (Date.now() < suppressClickUntil) {
           return;
         }
-        onClick();
+        // Pass the clicked DOM element to the handler for precise centering
+        onClick(e.currentTarget as HTMLElement);
       }}
       title={label || capitalizeLabel(value)}
       aria-label={`Select ${label || capitalizeLabel(value)}`}

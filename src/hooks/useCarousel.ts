@@ -1,6 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { centerSelected, centerNeighbor, selectClosest } from '../utils/carouselUtils';
-import { initScrollToMiddle, doInstantJump } from './carouselHandlers';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { centerSelected } from '../utils/carouselUtils';
 
 interface UseCarouselProps {
   options?: Array<{ value: string; label?: string; icon?: string | React.ComponentType<any> }>;
@@ -17,7 +16,7 @@ export const useCarousel = ({
   onChange,
   onPresetClick
 }: UseCarouselProps) => {
-  const carouselRef = useRef<HTMLDivElement>(null);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
   const scrollEndTimeoutRef = useRef<number | null>(null);
   const isInteractingRef = useRef(false);
   const isDraggingRef = useRef(false);
@@ -26,17 +25,33 @@ export const useCarousel = ({
   const movedRef = useRef(false);
   const suppressClickUntilRef = useRef<number>(0);
 
-  // We'll render the items 3x (tripled) and keep the scroll positioned on the middle segment
-  // so the user can scroll endlessly. When near either edge we'll jump the scroll position
-  // by one segment width to maintain the illusion of infinite looping.
-  useEffect(() => {
-    initScrollToMiddle(carouselRef);
-  }, [options, value, selectedPreset]);
+  // Programmatic scroll state
+  const isProgrammaticScrollRef = useRef(false);
+  // expose a pending value so the UI can show immediate feedback while waiting
+  // for the scroll animation to finish and the parent to be notified.
+  const [pendingValue, setPendingValue] = useState<string | null>(null);
 
-  // Center on mount/when options change (use instant on init to avoid jump animations)
+  // No infinite/tripled behavior: do not reposition the scroll on options
+  // changes. We'll simply center the chosen value when needed.
+
+  // Center on mount/when options change. Use an instant (non-animated)
+  // positioning when first initializing or when the underlying options
+  // list changes, but use smooth animation for subsequent selection
+  // updates so the UI feels continuous when the user selects multiple
+  // items in a row.
+  const firstCenterRef = React.useRef(true);
+  const prevOptionsRef = React.useRef(options);
   useEffect(() => {
-    // defer to next frames so layout is stable (matches earlier logic)
-    requestAnimationFrame(() => requestAnimationFrame(() => centerSelected(carouselRef.current, value || selectedPreset || undefined, 'auto')));
+    const optionsChanged = prevOptionsRef.current !== options;
+    const behaviour: 'auto' | 'smooth' = firstCenterRef.current || optionsChanged ? 'auto' : 'smooth';
+
+    // Center the current selection when value/selectedPreset changes.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      centerSelected(carouselRef.current, value || selectedPreset || undefined, behaviour);
+    }));
+
+    firstCenterRef.current = false;
+    prevOptionsRef.current = options;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, value, selectedPreset]);
 
@@ -50,15 +65,106 @@ export const useCarousel = ({
     };
   }, []);
 
-  const scrollLeft = () => {
-    // Move to the previous preset by centering the previous item in the middle segment.
-    centerNeighbor(carouselRef.current, -1, onChange, onPresetClick, (val) => centerSelected(carouselRef.current, val, 'smooth'));
-  };
+  // Helper: compute the current visible carousel center (client coordinates)
+  const getCarouselCenter = useCallback(() => {
+    const carousel = carouselRef.current;
+    if (!carousel) return 0;
+    const rect = carousel.getBoundingClientRect();
+    return rect.left + rect.width / 2;
+  }, []);
 
-  const scrollRight = () => {
-    // Move to the next preset by centering the next item in the middle segment.
-    centerNeighbor(carouselRef.current, 1, onChange, onPresetClick, (val) => centerSelected(carouselRef.current, val, 'smooth'));
-  };
+  // Helper: return all rendered candidate buttons (tripled duplicates)
+  const getCandidates = useCallback(() => {
+    const carousel = carouselRef.current;
+    if (!carousel) return [] as HTMLElement[];
+    return Array.from(carousel.querySelectorAll('[data-original-value]')) as HTMLElement[];
+  }, []);
+
+  // Center a specific DOM element within the carousel (by its center).
+  const centerElement = useCallback((el: HTMLElement | null, behaviour: 'auto' | 'smooth' = 'smooth') => {
+    const carousel = carouselRef.current;
+    if (!carousel || !el) return;
+    const carouselRect = carousel.getBoundingClientRect();
+    const buttonRect = el.getBoundingClientRect();
+    const carouselCenter = carouselRect.left + carouselRect.width / 2;
+    const buttonCenter = buttonRect.left + buttonRect.width / 2;
+    const scrollLeft = carousel.scrollLeft + (buttonCenter - carouselCenter);
+    try {
+      carousel.scrollTo({ left: scrollLeft, behavior: behaviour });
+    } catch (e) {
+      // fallback for older browsers
+      carousel.scrollLeft = scrollLeft;
+    }
+  }, []);
+
+  // Notify parent for a chosen logical value. This is called when a
+  // programmatic scroll animation finishes and we've stabilized on the
+  // correct duplicate.
+  const notifyParentForValue = useCallback((val: string | null) => {
+    if (!val) return;
+    if (onChange) onChange(val);
+    else if (onPresetClick) onPresetClick(val);
+  }, [onChange, onPresetClick]);
+
+  // Move to the previous logical item — finite behavior (no wrapping).
+  const scrollLeft = useCallback(() => {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+    const candidates = getCandidates();
+    if (candidates.length === 0) return;
+    const carouselCenter = getCarouselCenter();
+    let closestIndex = 0;
+    let bestDist = Number.POSITIVE_INFINITY;
+    candidates.forEach((el, idx) => {
+      const r = el.getBoundingClientRect();
+      const center = r.left + r.width / 2;
+      const dist = Math.abs(center - carouselCenter);
+      if (dist < bestDist) {
+        bestDist = dist;
+        closestIndex = idx;
+      }
+    });
+    const prevIndex = Math.max(0, closestIndex - 1);
+    if (prevIndex === closestIndex) return; // already at start
+    const prevEl = candidates[prevIndex];
+    const val = prevEl?.dataset.originalValue || null;
+    if (!prevEl || !val) return;
+    setPendingValue(val);
+    centerElement(prevEl, 'smooth');
+    // notify parent immediately
+    if (onChange) onChange(val);
+    else if (onPresetClick) onPresetClick(val);
+  }, [centerElement, getCandidates, getCarouselCenter, onChange, onPresetClick]);
+
+  // Move to the next logical item — finite behavior (no wrapping).
+  const scrollRight = useCallback(() => {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+    const candidates = getCandidates();
+    if (candidates.length === 0) return;
+    const carouselCenter = getCarouselCenter();
+    let closestIndex = 0;
+    let bestDist = Number.POSITIVE_INFINITY;
+    candidates.forEach((el, idx) => {
+      const r = el.getBoundingClientRect();
+      const center = r.left + r.width / 2;
+      const dist = Math.abs(center - carouselCenter);
+      if (dist < bestDist) {
+        bestDist = dist;
+        closestIndex = idx;
+      }
+    });
+    const nextIndex = Math.min(candidates.length - 1, closestIndex + 1);
+    if (nextIndex === closestIndex) return; // already at end
+    const nextEl = candidates[nextIndex];
+    const val = nextEl?.dataset.originalValue || null;
+    if (!nextEl || !val) return;
+    setPendingValue(val);
+    centerElement(nextEl, 'smooth');
+    // notify parent immediately
+    if (onChange) onChange(val);
+    else if (onPresetClick) onPresetClick(val);
+  }, [centerElement, getCandidates, getCarouselCenter, onChange, onPresetClick]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowLeft') {
@@ -157,39 +263,81 @@ export const useCarousel = ({
     isDraggingRef.current = false;
   };
 
-  // Scroll handler to jump when hitting either edge segment
+  // Scroll handler: maintain infinite loop illusion by jumping to the
+  // middle segment when crossing either edge, and detect scroll end so we
+  // can pick the closest item and notify the parent (deferred to avoid
+  // interrupting ongoing animations or causing mid-scroll re-renders).
   const handleScroll = () => {
     const carousel = carouselRef.current;
     if (!carousel) return;
-    const seg = carousel.scrollWidth / 3;
-    if (!seg || !isFinite(seg)) return;
-
-    // Use a small pixel threshold so we don't trigger during normal snapping
-    const THRESHOLD = 4; // px
-    const left = carousel.scrollLeft;
-
-    // When we need to jump, disable smooth scrolling and scroll-snap so the
-    // reposition is instantaneous and not visibly animated or snapped.
-    const doInstantJumpLocal = (newLeft: number) => doInstantJump(carousel, newLeft);
-
-    // if we've scrolled past the left edge into the first segment, jump right
-    if (left <= THRESHOLD) {
-      doInstantJumpLocal(left + seg);
-      return;
+    // debounce scroll-end detection
+    if (scrollEndTimeoutRef.current) {
+      try { window.clearTimeout(scrollEndTimeoutRef.current); } catch (e) { /* ignore */ }
+      scrollEndTimeoutRef.current = null;
     }
+    scrollEndTimeoutRef.current = window.setTimeout(() => {
+      scrollEndTimeoutRef.current = null;
+      const carouselEl = carouselRef.current;
+      if (!carouselEl) return;
+      const candidates = getCandidates();
+      if (candidates.length === 0) return;
 
-    // if we've scrolled into/after the last segment, jump left
-    if (left >= seg * 2 - THRESHOLD) {
-      doInstantJumpLocal(left - seg);
-      return;
-    }
+      let closest: HTMLElement | null = null;
+      let bestDist = Number.POSITIVE_INFINITY;
+      const carouselRect = carouselEl.getBoundingClientRect();
+      const carouselCenter = carouselRect.left + carouselRect.width / 2;
+      for (const el of candidates) {
+        const r = el.getBoundingClientRect();
+        const center = r.left + r.width / 2;
+        const dist = Math.abs(center - carouselCenter);
+        if (dist < bestDist) {
+          bestDist = dist;
+          closest = el;
+        }
+      }
+      if (!closest) return;
 
-    // If the user is actively interacting (pointer/touch down), skip
-    // auto-selection — we'll handle selection on release.
-    if (isInteractingRef.current) return;
-    // Autoselect disabled: don't automatically choose the closest item after
-    // scroll finishes. We still keep the edge-jump logic above for looping.
+      // Clear any optimistic pending highlight but do NOT auto-select the
+      // closest item when the user scrolls. Selection remains under the
+      // control of explicit actions (clicks/arrow keys/selectValue).
+      setPendingValue(null);
+    }, 120) as unknown as number;
   };
+
+  // Select a logical value: center a specific duplicate (clickedElement
+  // if provided, otherwise prefer the middle-segment duplicate), show an
+  // optimistic pending selection and notify the parent after the scroll
+  // animation ends.
+  const selectValue = useCallback((val: string, el?: HTMLElement | null) => {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+    const candidates = getCandidates();
+    if (candidates.length === 0) return;
+
+    let targetEl: HTMLElement | null = null;
+    if (el) targetEl = el;
+    else {
+      // find the closest DOM element for the requested value
+      const carouselCenter = getCarouselCenter();
+      let best = Number.POSITIVE_INFINITY;
+      for (const c of candidates) {
+        if (c.dataset.originalValue !== val) continue;
+        const r = c.getBoundingClientRect();
+        const center = r.left + r.width / 2;
+        const dist = Math.abs(center - carouselCenter);
+        if (dist < best) {
+          best = dist;
+          targetEl = c;
+        }
+      }
+    }
+    if (!targetEl) return;
+    setPendingValue(val);
+    centerElement(targetEl, 'smooth');
+    // Notify parent immediately for a straightforward controlled API.
+    if (onChange) onChange(val);
+    else if (onPresetClick) onPresetClick(val);
+  }, [centerElement, getCandidates, getCarouselCenter, onChange, onPresetClick]);
 
   return {
     carouselRef,
@@ -205,5 +353,7 @@ export const useCarousel = ({
     handlePointerCancel,
     handleScroll,
     suppressClickUntilRef,
+    selectValue,
+    pendingValue,
   };
 };

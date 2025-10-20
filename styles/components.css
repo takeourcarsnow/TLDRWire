@@ -214,7 +214,10 @@
   flex: 0 0 var(--preset-button-width);
   height: auto;
   flex-shrink: 0;
-  scroll-snap-align: start;
+    /* snap to the carousel center so programmatic centering and CSS
+      scroll-snap agree — prevents conflicting snaps that can produce
+      large jumps when wrapping between tripled segments. */
+    scroll-snap-align: center;
   cursor: pointer;
 }
 

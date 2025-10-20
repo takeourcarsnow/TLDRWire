@@ -37,9 +37,28 @@ export const centerSelected = (
   if (!value || !carousel) return;
 
   const candidates = Array.from(carousel.querySelectorAll('[data-original-value]')) as HTMLElement[];
-  // Prefer the middle segment duplicate
-  let selectedButton = candidates.find(el => el.dataset.originalValue === value && el.dataset.seg === '1');
-  if (!selectedButton) selectedButton = candidates.find(el => el.dataset.originalValue === value);
+  // Find all candidates with the requested value and choose the one
+  // nearest the carousel center (robust for single and duplicated lists).
+  const matches = candidates.filter(el => el.dataset.originalValue === value);
+  let selectedButton: HTMLElement | undefined = undefined;
+  if (matches.length === 1) selectedButton = matches[0];
+  else if (matches.length > 1) {
+    const carouselRect = carousel.getBoundingClientRect();
+    const carouselCenter = carouselRect.left + carouselRect.width / 2;
+    let bestDist = Number.POSITIVE_INFINITY;
+    for (const el of matches) {
+      const r = el.getBoundingClientRect();
+      const center = r.left + r.width / 2;
+      const dist = Math.abs(center - carouselCenter);
+      if (dist < bestDist) {
+        bestDist = dist;
+        selectedButton = el;
+      }
+    }
+  } else {
+    // no exact matches — nothing to center
+    return;
+  }
 
   if (selectedButton) {
     const carouselRect = carousel.getBoundingClientRect();
@@ -48,7 +67,6 @@ export const centerSelected = (
     const buttonCenter = buttonRect.left + buttonRect.width / 2;
     const scrollLeft = carousel.scrollLeft + (buttonCenter - carouselCenter);
 
-    // Use scrollTo so we can control behaviour
     try {
       carousel.scrollTo({ left: scrollLeft, behavior: behaviour });
     } catch (e) {
@@ -72,17 +90,13 @@ export const centerNeighbor = (
   const candidates = Array.from(carousel.querySelectorAll('[data-original-value]')) as HTMLElement[];
   if (candidates.length === 0) return;
 
-  // Prefer the middle segment duplicates
-  const midCandidates = candidates.filter(el => el.dataset.seg === '1');
-  const list = midCandidates.length ? midCandidates : candidates;
-
   const carouselRect = carousel.getBoundingClientRect();
   const carouselCenter = carouselRect.left + carouselRect.width / 2;
 
   // find index of currently centered item
   let closestIndex = 0;
   let closestDist = Number.POSITIVE_INFINITY;
-  list.forEach((el, idx) => {
+  candidates.forEach((el, idx) => {
     const r = el.getBoundingClientRect();
     const center = r.left + r.width / 2;
     const dist = Math.abs(center - carouselCenter);
@@ -92,16 +106,20 @@ export const centerNeighbor = (
     }
   });
 
-  const nextIndex = (closestIndex + direction + list.length) % list.length;
-  const nextEl = list[nextIndex];
+  const nextIndex = closestIndex + direction;
+  if (nextIndex < 0 || nextIndex >= candidates.length) {
+    // At the edge, do nothing (no seamless wrap)
+    return;
+  }
+
+  const nextEl = candidates[nextIndex];
   const val = nextEl?.dataset.originalValue;
   if (!val) return;
 
-  // Notify parent of the change
   if (onChange) onChange(val);
   else if (onPresetClick) onPresetClick(val);
 
-  // Center the chosen item smoothly (centerSelected prefers middle segment duplicate)
+  // Center the chosen item (no special segment logic required)
   if (centerSelectedFn) centerSelectedFn(val, 'smooth');
 };
 
@@ -122,13 +140,9 @@ export const selectClosest = (
   const carouselRect = carousel.getBoundingClientRect();
   const carouselCenter = carouselRect.left + carouselRect.width / 2;
 
-  // Prefer items living in the middle tripled segment when possible
-  const midCandidates = candidates.filter(el => el.dataset.seg === '1');
-  const searchList = midCandidates.length ? midCandidates : candidates;
-
   let closest: HTMLElement | null = null;
   let closestDist = Number.POSITIVE_INFINITY;
-  for (const el of searchList) {
+  for (const el of candidates) {
     const r = el.getBoundingClientRect();
     const center = r.left + r.width / 2;
     const dist = Math.abs(center - carouselCenter);

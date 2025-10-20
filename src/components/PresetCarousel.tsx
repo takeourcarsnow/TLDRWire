@@ -1,6 +1,6 @@
 import React from 'react';
 import { presets, Option } from '../constants/presets';
-import { capitalizeLabel, centerSelected } from '../utils/carouselUtils';
+import { capitalizeLabel } from '../utils/carouselUtils';
 import { useCarousel } from '../hooks/useCarousel';
 import PresetButton from './PresetButton';
 import CarouselArrows from './CarouselArrows';
@@ -30,6 +30,8 @@ const PresetCarousel = (props: PresetCarouselProps) => {
     handlePointerCancel,
     handleScroll,
     suppressClickUntilRef,
+    selectValue,
+    pendingValue,
   } = useCarousel({
     options: props.options,
     value: props.value,
@@ -45,10 +47,8 @@ const PresetCarousel = (props: PresetCarouselProps) => {
     ? props.options!.map(opt => ({ value: opt.value, label: opt.label, icon: opt.icon }))
     : presets.map(([key, Icon]) => ({ value: key, label: capitalizeLabel(key), icon: Icon }));
 
-  // Triplicate for seamless looping
-  const tripledItems = Array.from({ length: 3 }).flatMap((_, seg) =>
-    normalizedItems.map((it, idx) => ({ ...it, _origIndex: idx, _seg: seg }))
-  );
+  // Use a single list (no tripling) — remove seamless/infinite behavior.
+  const items = normalizedItems.map((it, idx) => ({ ...it, _origIndex: idx, _seg: 0 }));
 
   return (
     <div
@@ -66,15 +66,14 @@ const PresetCarousel = (props: PresetCarouselProps) => {
     >
       <CarouselArrows onScrollLeft={scrollLeft} onScrollRight={scrollRight} />
       <div className="preset-carousel" ref={carouselRef} onScroll={handleScroll}>
-        {tripledItems.map((it, i) => {
+        {items.map((it, i) => {
           const origValue = it.value as string;
-          const isSelected = (props.value === origValue) || (props.selectedPreset === origValue);
-          const onClick = () => {
-            if (props.onChange) props.onChange(origValue);
-            else if (props.onPresetClick) props.onPresetClick(origValue);
-            // Center the clicked item immediately. Use 'smooth' so it animates.
-            // We pass the origValue to prefer centering the exact clicked duplicate.
-            centerSelected(carouselRef.current, origValue, 'smooth');
+          const isSelected = (props.value === origValue) || (props.selectedPreset === origValue) || (pendingValue === origValue);
+          const onClick = (el?: HTMLElement) => {
+            // Delegate selection to the carousel hook which will animate and
+            // notify the parent after the scroll completes. We pass the
+            // clicked DOM element so the hook can center that element.
+            selectValue(origValue, el || null);
           };
 
           return (
