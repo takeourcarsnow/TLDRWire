@@ -4,9 +4,19 @@ import Script from 'next/script';
 import { useEffect, useState } from 'react';
 import '../../styles/globals.css';
 // Layout debugger removed
+import LogoLoader from '../components/LogoLoader';
 
 export default function App({ Component, pageProps }: AppProps) {
+  const [loading, setLoading] = useState(true);
+  const [showLoader, setShowLoader] = useState(true);
+
   useEffect(() => {
+    // Show loader for 1.5 seconds, then fade out over 0.5 seconds
+    const timer = setTimeout(() => {
+      setLoading(false);
+      setTimeout(() => setShowLoader(false), 500); // Remove after fade
+    }, 1500);
+
     // Register service worker for PWA functionality
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       navigator.serviceWorker.register('/sw.js')
@@ -52,7 +62,25 @@ export default function App({ Component, pageProps }: AppProps) {
       console.warn('manifest diagnostic setup error', err);
     }
   }, []);
-  // Preloader removed: no runtime loader state or DOM class toggles.
+
+  // Toggle a body-level class while the loader is visible so portal-mounted
+  // elements (like BottomNavbar) can be hidden via CSS even though they are
+  // rendered outside the app root.
+  useEffect(() => {
+    try {
+      if (showLoader) {
+        document.body.classList.add('loader-active');
+      } else {
+        document.body.classList.remove('loader-active');
+      }
+    } catch (e) {
+      // ignore when document isn't available (SSR)
+    }
+    return () => {
+      try { document.body.classList.remove('loader-active'); } catch (e) {}
+    };
+  }, [showLoader]);
+  // Keep main app mounted while loader is visible so content can load in background.
   return (
     <>
       <Head>
@@ -104,7 +132,17 @@ export default function App({ Component, pageProps }: AppProps) {
         })();` }}
       />
 
-      {/* Loader removed: no preloader shown */}
+      {/* Always mount the main app so data fetching, scripts and components
+          initialize while the loader overlay is visible. The loader is an
+          overlay (`.logo-loader`) with high z-index so it sits above the UI.
+          We keep `LogoLoader` mounted while `showLoader` is true and remove it
+          after the fade completes. The content receives a fade-in class so
+          it transitions once the loader is removed. */}
+      <div className={showLoader ? 'app-hidden-under-loader' : 'content-fade-in'} aria-hidden={showLoader}>
+        <Component {...pageProps} />
+      </div>
+
+      {showLoader && <LogoLoader hidden={!loading} />}
 
       {/* Markdown rendering + sanitization */}
       <Script 
@@ -128,7 +166,6 @@ export default function App({ Component, pageProps }: AppProps) {
         </div>
       </noscript>
       
-  <Component {...pageProps} />
   {/* Layout debugger removed */}
     </>
   );

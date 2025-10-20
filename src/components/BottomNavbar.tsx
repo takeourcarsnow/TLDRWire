@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { Home, Newspaper, History } from 'lucide-react';
 
 interface BottomNavbarProps {
@@ -13,7 +14,28 @@ export function BottomNavbar({ activeIndex, onTabChange }: BottomNavbarProps) {
     { icon: History, label: 'History' },
   ];
 
-  return (
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    // Create a container direct under document.body so fixed positioning
+    // is calculated against the viewport even when other ancestors
+    // have transforms/filters that would otherwise establish a containing block.
+    const el = document.createElement('div');
+    el.className = 'bottom-navbar-portal';
+    document.body.appendChild(el);
+    setContainer(el);
+
+    return () => {
+      try {
+        document.body.removeChild(el);
+      } catch (e) {
+        // ignore
+      }
+      setContainer(null);
+    };
+  }, []);
+
+  const nav = (
     <nav className="bottom-navbar" role="tablist" aria-label="Main navigation">
       {tabs.map((tab, index) => {
         const Icon = tab.icon;
@@ -36,4 +58,11 @@ export function BottomNavbar({ activeIndex, onTabChange }: BottomNavbarProps) {
       })}
     </nav>
   );
+
+  if (container) {
+    return ReactDOM.createPortal(nav, container);
+  }
+
+  // On server / initial render fall back to rendering nothing to avoid SSR issues.
+  return null;
 }

@@ -879,3 +879,77 @@ html.modal-open {
    and visually hides the content underneath via the overlay. */
 
 /* Logo loader removed: related styles have been deleted */
+
+/* Logo Loader Styles */
+.logo-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.5s ease;
+}
+
+.logo-loader.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* When the loader is active we allow the app to mount underneath it but
+   prevent interaction and visually hide it until the loader is gone. This
+   ensures resources and components initialize in the background. */
+.app-hidden-under-loader {
+  /* Keep layout and rendering happening, but prevent user interaction */
+  pointer-events: none;
+  user-select: none;
+  /* Fully hide content visually while still allowing the browser to
+     layout and fetch resources. Using opacity keeps elements painted and
+     scripts can initialize; switching to `.content-fade-in` will animate
+     to visible. */
+  opacity: 0;
+  /* Keep elements in the rendering flow to allow images/scripts to load */
+  visibility: visible;
+  transform: translateZ(0);
+}
+
+.logo-loader__img {
+  width: 192px;
+  height: auto;
+  animation: logoPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Content fade-in animation */
+.content-fade-in {
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* Hide portal-mounted bottom navbar while loader is active */
+body.loader-active .bottom-navbar-portal {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+/* Ensure the portal itself doesn't introduce layout when hidden */
+.bottom-navbar-portal {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
