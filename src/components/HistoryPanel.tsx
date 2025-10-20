@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import HistoryList from './HistoryList';
 import { Preferences } from '../hooks/usePreferences';
 
@@ -11,7 +11,7 @@ interface HistoryPanelProps {
   renderMarkdownToElement: (el: HTMLDivElement | null, markdown: string | undefined) => void;
 }
 
-export function HistoryPanel({
+export const HistoryPanel = memo(function HistoryPanel({
   history,
   onApply,
   onDelete,
@@ -34,4 +34,4 @@ export function HistoryPanel({
       />
     </div>
   );
-}
+});

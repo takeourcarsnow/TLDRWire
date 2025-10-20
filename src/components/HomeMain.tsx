@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { SwipeableContainer } from './SwipeableContainer';
-import { BottomNavbar } from './BottomNavbar';
 import { renderMarkdownToElement } from '../utils/rendering';
 import { usePreferences, type Preferences } from '../hooks/usePreferences';
 import { PRESET_CONFIGS } from '../constants/ui';
 
-const NewsForm = dynamic(() => import('./NewsForm').then(m => m.NewsForm), { ssr: false });
-const NewsOutput = dynamic(() => import('./NewsOutput').then(m => m.NewsOutput), { ssr: false });
-const HistoryPanel = dynamic(() => import('./HistoryPanel').then(m => m.HistoryPanel), { ssr: false });
+const SwipeableContainer = dynamic(() => import('./SwipeableContainer').then(m => ({ default: m.SwipeableContainer })), { ssr: false });
+const BottomNavbar = dynamic(() => import('./BottomNavbar').then(m => ({ default: m.BottomNavbar })), { ssr: false });
+const NewsForm = dynamic(() => import('./NewsForm').then(m => ({ default: m.NewsForm })), { ssr: false });
+const NewsOutput = dynamic(() => import('./NewsOutput').then(m => ({ default: m.NewsOutput })), { ssr: false });
+const HistoryPanel = dynamic(() => import('./HistoryPanel').then(m => ({ default: m.HistoryPanel })), { ssr: false });
 const PresetCarousel = dynamic(() => import('./PresetCarousel').then(m => m.default), { ssr: false });
 
 interface HomeMainProps {

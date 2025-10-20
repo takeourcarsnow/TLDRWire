@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, memo } from 'react';
 import { ApiResponse } from '../hooks/useApi';
 import SummaryRenderer from './SummaryRenderer';
 import NewsMeta from './NewsMeta';
@@ -14,7 +14,7 @@ interface NewsOutputProps {
   onHistory?: () => void;
 }
 
-export function NewsOutput({ isLoading, error, data, lastRequest, onHistory }: NewsOutputProps) {
+export const NewsOutput = memo(function NewsOutput({ isLoading, error, data, lastRequest, onHistory }: NewsOutputProps) {
   const summaryRef = useRef<HTMLDivElement>(null);
   const [toast, setToast] = useState<{ message: string; type?: any } | null>(null);
 
@@ -108,4 +108,4 @@ export function NewsOutput({ isLoading, error, data, lastRequest, onHistory }: N
       <NewsControls isHidden={!!error} onCopy={copyToClipboard} onShare={shareContent} onHistory={onHistory || (() => {})} onPrint={printSummary} />
     </>
   );
-}
+});

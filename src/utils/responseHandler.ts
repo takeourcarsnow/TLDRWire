@@ -106,9 +106,11 @@ export const responseHandler = {
 
     // Finalize summary with deduplication and sources
     const finalizeTimer = requestLog.startTimer('summary finalization', { region, category });
-    let finalSummary = dedupeSummaryBullets(summary);
+    let finalSummary = summary; // Skip deduplication for new format
+    // let finalSummary = dedupeSummaryBullets(summary);
 
-    finalSummary = insertImagesIntoSummary(finalSummary, contextItems);
+    // Images are now included directly in the LLM response, no need to insert them
+    // finalSummary = insertImagesIntoSummary(finalSummary, contextItems);
 
     const topSources = computeTopSources(cleanTopItems);
     if (topSources) finalSummary += `\n\nSources: ${topSources}`;

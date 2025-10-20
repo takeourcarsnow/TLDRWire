@@ -51,33 +51,33 @@ export const styleDirectives: { [key: string]: string } = {
 export function buildPrompt({ regionName, catName, maxAge, style, language, uiLocale, lengthPreset, lengthConfig, contextLines }: BuildPromptParams): string {
   const styleNote = styleDirectives[style] || styleDirectives.neutral;
 
-  const base = `You are a precise news summarizer. Summarize the most important developments for:
-- Region: ${regionName}
-- Category: ${catName}
-- Time window: last ${maxAge} hours
-- Desired style: ${style}
-- Language: ${language} (locale: ${uiLocale})
-- Desired length: ${lengthPreset}
+  const base = `Summarize key news developments for ${regionName} ${catName} in the last ${maxAge} hours.
 
-Constraints:
-- Output in ${language}. Use Markdown. Do NOT include code fences.
-- Use locale-aware conventions for this locale (${uiLocale}): spelling, idioms where safe, dates in the examples already provided, and currency/number formatting if needed.
-- Start with a ${lengthConfig.tldrSentences} TL;DR.
-- Then provide exactly ${lengthConfig.bulletsMax} bulleted key takeaways (each with a short 1–2 sentence expansion; keep bullets crisp for short length, add slightly more context for long length). If there are fewer clearly distinct stories, split key developments into distinct angles (e.g., policy decision, market reaction, international response, domestic politics) to reach the requested bullet count while avoiding repetition.
-- Where relevant, include a Markdown link to ONE representative source in each bullet using the links provided.
-- Format links with concise labels: use the source name or domain (e.g., [Reuters](...)), not the raw URL as link text.
-- For each bullet, if the corresponding article in the context has an image, copy that image markdown immediately after the bullet headline, before any expansion text.
-- Do NOT repeat the same story: each bullet must cover a distinct development; if multiple sources report the same event, merge into one bullet.
-- If there is "no news" for a focus (e.g., selected region/language), state that ONCE only; do not repeat similar "no updates" bullets.
-- Avoid speculation and sensationalism.
-- Keep it respectful: no slurs, hate speech, harassment, or explicit content.
-- If a story is local to Lithuania and region is Lithuania, prioritize it.
+For each article, use this exact format:
+TL;DR: [brief summary of this specific article]
 
-Style directive:
-${styleNote}
+[Article title/caption]
 
-Articles to consider:
-${contextLines.join("\n\n")}`;
+[Detailed summary of this article]
 
-  return base + "\n\nImportant: Apply the chosen style consistently across the entire output — the TL;DR opener, every bullet headline, and each bullet's 1-2 sentence expansion must reflect the requested style and tone. Produce exactly the requested number of bullets — do not produce fewer than requested. If the style is `headlines-only`, produce only single-line headlines (one per bullet) with no expansions. If the style uses a special voice (e.g., 'snarky' or 'uzkalnis'), apply that voice to every bullet and expansion while staying within the other constraints.";
+![image](image_url_if_available)
+
+Source: [source_name](source_url)
+
+---
+
+Repeat this format for each of the ${lengthConfig.bulletsMax} most important articles.
+
+Output in ${language} (${uiLocale} locale). Use Markdown.
+- Style: ${styleNote}
+- Avoid repetition, speculation, sensationalism
+- Respectful tone only
+- Include images where available in the articles
+
+Articles to summarize:
+${contextLines.join("\n\n")}
+
+Apply style consistently across all summaries.`;
+
+  return base;
 }

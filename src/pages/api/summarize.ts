@@ -78,6 +78,7 @@ export async function summarizeWithLLM(opts: {
   }
 
   stopLLM();
-  summary = dedupeSummaryBullets(summary);
+  // Skip deduplication for new format
+  // summary = dedupeSummaryBullets(summary);
   return { summary, llmError: payloadErrorForLogs };
 }
