@@ -101,6 +101,7 @@
   overflow: hidden;
   white-space: nowrap;
   width: 100%;
+  mask: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
 }
 .meta-strip-inner {
   display: inline-flex;
@@ -109,5 +110,5 @@
   padding: 8px 0;
   width: max-content;
   /* Disabled auto-scroll (was: metaMarquee 20s linear infinite) */
-  animation: none;
+  animation: metaMarquee 20s linear infinite;
 }

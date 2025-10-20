@@ -1,12 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { HomeHeader } from '../components/HomeHeader';
 import { HomeMain } from '../components/HomeMain';
 import { HomeModal } from '../components/HomeModal';
 import { useHome } from '../hooks/useHome';
 
+const LOADING_MESSAGES = [
+  'Fetching articles',
+  'Making summaries',
+  'Getting photos',
+  'Analyzing content',
+  'Processing headlines',
+  'Gathering sources',
+  'Compiling insights',
+  'Refining summaries'
+];
+
 export default function Home() {
   const h = useHome();
+  const [currentMessage, setCurrentMessage] = useState(LOADING_MESSAGES[0]);
+
+  useEffect(() => {
+    if (!h.isLoading) return;
+
+    const interval = setInterval(() => {
+      const randomIndex = Math.floor(Math.random() * LOADING_MESSAGES.length);
+      setCurrentMessage(LOADING_MESSAGES[randomIndex]);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [h.isLoading]);
 
   return (
     <>
@@ -63,6 +86,23 @@ export default function Home() {
           setActiveTab={h.setActiveTab}
         />
       </div>
+
+      {h.isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-container">
+            <div className="loading-text">
+              {'Generating...'.split('').map((letter, index) => (
+                <span key={index} className="loading-letter" style={{ animationDelay: `${index * 0.1}s` }}>
+                  {letter}
+                </span>
+              ))}
+            </div>
+            <div className="loading-subtitle">
+              <div key={currentMessage} className="loading-stage">{currentMessage}</div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

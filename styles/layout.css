@@ -90,6 +90,97 @@ main {
   transition: filter 0.3s ease-in-out;
 }
 
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.loading-container {
+  text-align: center;
+}
+
+.loading-text {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.loading-letter {
+  display: inline-block;
+  animation: letterBounce 0.6s ease-out forwards, letterWiggle 3s ease-in-out 0.6s infinite, letterGlow 2s ease-in-out 0.6s infinite;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes letterBounce {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes letterWiggle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(0.5px);
+  }
+}
+
+@keyframes letterGlow {
+  0%, 100% {
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+  }
+}
+
+.loading-subtitle {
+  position: relative;
+  height: 2em;
+  overflow: visible;
+  margin-top: 0.5rem;
+}
+
+.loading-stage {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  animation: stageFade 0.5s ease-in-out;
+}
+
+@keyframes stageFade {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .panel {
   padding: 12px;
   position: relative;
