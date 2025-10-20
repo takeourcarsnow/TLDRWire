@@ -65,7 +65,17 @@ export function HomeMain({
     <>
       <main id="main-content">
         <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab} disabled={isDraggingSlider}>
-          <section className="panel">
+          <section className="panel home-panel">
+            {/* Very top: short intro about the website (scrolling/ticker like results meta) */}
+            <div className="meta" style={{ marginBottom: 12 }}>
+              <div className="meta-strip" aria-hidden={false}>
+                <div className="meta-strip-inner" role="list">
+                  <span className="meta-item" role="listitem" style={{ color: 'var(--muted)', fontSize: '14px', lineHeight: 1.4 }}>
+                    TLDRWire fetches headlines and uses an AI model to generate concise, customizable summaries — a quick briefing for what&apos;s happening in the news.
+                  </span>
+                </div>
+              </div>
+            </div>
             {/* Theme toggle moved to the header so it sits in the upper-right corner */}
             <h2 style={{ margin: 0, flexShrink: 0, fontSize: '18px', fontWeight: 'normal', color: 'var(--text)' }}>Presets</h2>
             <PresetCarousel onPresetClick={onPresetClick} selectedPreset={selectedPreset} />

@@ -219,7 +219,7 @@ main {
 }
 
 /* Center content in home section */
-.panel:first-child {
+.panel.home-panel {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -235,7 +235,7 @@ main {
   padding-bottom: 12px;
 }
 
-.panel:first-child .form-group {
+.panel.home-panel .form-group {
   max-width: 600px;
   width: 100%;
   display: flex;
@@ -243,17 +243,17 @@ main {
   align-items: center;
 }
 
-.panel:first-child .row {
+.panel.home-panel .row {
   justify-content: center;
   width: 100%;
   max-width: 800px;
 }
 
-.panel:first-child .row {
+.panel.home-panel .row {
   align-items: center; /* vertically center items inside rows */
 }
 
-.panel:first-child .slider-row {
+.panel.home-panel .slider-row {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -262,39 +262,39 @@ main {
   width: 100%;
 }
 
-.panel:first-child .slider-group {
+.panel.home-panel .slider-group {
   width: 100%;
   max-width: 600px;
 }
 
-.panel:first-child label {
+.panel.home-panel label {
   text-align: center;
   justify-content: center;
 }
 
-.panel:first-child .custom-select {
+.panel.home-panel .custom-select {
   margin: 0 auto;
 }
 
-.panel:first-child .slider-group {
+.panel.home-panel .slider-group {
   margin: 0 auto;
   max-width: 600px;
 }
 
-.panel:first-child .actions {
+.panel.home-panel .actions {
   justify-content: center;
   max-width: 600px;
   width: 100%;
 }
 
-.panel:first-child .actions {
+.panel.home-panel .actions {
   display: flex; /* ensure actions container is a flexbox for proper centering */
   /* add extra bottom spacing so primary actions aren't covered by the fixed navbar */
   padding-bottom: 18px;
   margin-bottom: 8px;
 }
 
-.panel:first-child .row > div {
+.panel.home-panel .row > div {
   width: 100%;
 }
 
@@ -364,7 +364,7 @@ footer {
 
 /* Reduce home panel min-height on small screens so content doesn't feel cramped */
 @media (max-width: 640px) {
-  .panel:first-child {
+  .panel.home-panel {
     min-height: 60vh;
     padding-top: 10px;
     padding-bottom: 10px;

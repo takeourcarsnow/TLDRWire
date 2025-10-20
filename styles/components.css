@@ -212,7 +212,7 @@
   /* give each button a stable width so 6 always fit */
   width: var(--preset-button-width);
   flex: 0 0 var(--preset-button-width);
-  height: auto;
+  min-height: 64px; /* fixed height to prevent jumping when label appears/disappears */
   flex-shrink: 0;
     /* snap to the carousel center so programmatic centering and CSS
       scroll-snap agree — prevents conflicting snaps that can produce
@@ -231,9 +231,32 @@
   font-size: 28px;
 }
 
+/* Default (unselected) icons should be visually muted so the selected
+   preset stands out. Color is only applied when the button is selected.
+   Add smooth transitions for size and color changes. */
+.preset-icon,
+.preset-icon svg,
+.preset-icon .twemoji img {
+  color: var(--muted);
+  transition: color 180ms ease, width 180ms ease, height 180ms ease, font-size 180ms ease, transform 180ms ease, opacity 160ms ease;
+  opacity: 0.95;
+}
+
 .preset-icon .twemoji img {
   width: 1em;
   height: 1em;
+}
+
+/* Desaturate TwEmoji images in the unselected state so they appear muted
+   like the vector icons. Restore full color when the preset is selected. */
+.preset-icon .twemoji img {
+  filter: grayscale(100%) brightness(0.95) opacity(0.95);
+  transition: filter 180ms ease, opacity 160ms ease;
+}
+.preset-button.selected .preset-icon .twemoji img,
+.preset-button[aria-pressed="true"] .preset-icon .twemoji img {
+  filter: none;
+  opacity: 1;
 }
 
 
@@ -313,17 +336,24 @@
 }
 
 /* subtle selected-state color for icon and label (no motion) */
-.preset-button.selected .preset-icon:not([data-color]),
-.preset-button[aria-pressed="true"] .preset-icon:not([data-color]) {
-  /* Only apply the selected-state accent color when the preset hasn't
-     supplied its own explicit color. Presets that provide a color set
-     data-color on the container and will keep their color when selected. */
-  color: var(--accent);
+.preset-button.selected .preset-icon,
+.preset-button[aria-pressed="true"] .preset-icon {
+  /* Selected icons scale up regardless of whether they provided an
+     explicit color. The color itself is applied either via the
+     data-color/style (for presets that declare a color) or via the
+     accent color for presets without an explicit color. */
   opacity: 1;
-  /* selected icon grows larger to emphasize the top preset */
   width: 36px;
   height: 36px;
   font-size: 36px;
+}
+
+/* When the preset does NOT provide its own color, tint it using the
+   accent color on selection. Presets that declare a color will be
+   colored by their inline style/data-color when selected. */
+.preset-button.selected .preset-icon:not([data-color]),
+.preset-button[aria-pressed="true"] .preset-icon:not([data-color]) {
+  color: var(--accent);
 }
 
 .preset-button.selected .preset-icon .twemoji img,

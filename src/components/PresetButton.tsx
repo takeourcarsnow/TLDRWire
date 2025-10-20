@@ -45,11 +45,20 @@ const PresetButton: React.FC<PresetButtonProps> = ({
       data-original-value={value}
       data-seg={String(seg)}
     >
-      <div className="preset-icon" aria-hidden="true" style={color ? { color } : undefined} data-color={color || undefined}>
+      <div
+        className="preset-icon"
+        aria-hidden="true"
+        // Only apply the preset color when this button is selected so
+        // presets are not colored all the time.
+        style={isSelected && color ? { color } : undefined}
+        data-color={isSelected && color ? color : undefined}
+      >
         {icon ? (
           typeof icon === 'string'
             ? <TwEmoji text={icon} className="preset-twemoji" />
-            : React.createElement(icon as React.ComponentType<any>, { size: iconSize, color, 'data-color': color || undefined })
+            // Only pass a color prop to the icon component when selected so
+            // the icon isn't tinted in the unselected state.
+            : React.createElement(icon as React.ComponentType<any>, { size: iconSize, color: isSelected ? color : undefined })
         ) : null}
       </div>
       <div className={`preset-label ${isSelected ? 'visible' : 'hidden'}`}>

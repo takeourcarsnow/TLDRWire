@@ -63,7 +63,7 @@ export const STYLE_OPTIONS = [
   { value: 'doomer', label: 'Doomer', icon: AlertTriangle },
   { value: '4chan-user', label: '4chan-style', icon: Glasses },
   { value: 'uzkalnis', label: 'Užkalnis-esque', icon: Pen },
-  { value: 'piktas-delfio-komentatorius', label: 'Piktas Delfio Komentatorius (švelnus)', icon: Angry },
+  { value: 'piktas-delfio-komentatorius', label: 'Piktas Delfio Komentatorius', icon: Angry },
 ];
 
 export const LENGTH_OPTIONS = ['short', 'medium', 'long', 'very-long'];

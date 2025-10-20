@@ -211,6 +211,22 @@ export const useCarousel = ({
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    // On non-touch pointers (mouse/pen) stop propagation so the page-level
+    // swiper does not receive the gesture and accidentally advances while
+    // the user is interacting with the inner carousel on desktop.
+    // Keep touch events propagating so mobile swipes continue to work as
+    // before.
+    try {
+      if (e.pointerType !== 'touch') {
+        e.stopPropagation();
+        // Also stop immediate propagation on the native event to try and
+        // prevent any native listeners (e.g. Swiper) from running after
+        // this handler.
+        try { (e.nativeEvent as Event).stopImmediatePropagation(); } catch (err) { /* ignore */ }
+      }
+    } catch (err) {
+      // defensive: some environments may not expose pointerType
+    }
     // Mark that the user is interacting (prevents auto-selection)
     isInteractingRef.current = true;
     if (scrollEndTimeoutRef.current) {
@@ -229,6 +245,15 @@ export const useCarousel = ({
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
+    // Prevent parent handlers on desktop mouse/pen pointer up too.
+    try {
+      if (e.pointerType !== 'touch') {
+        e.stopPropagation();
+        try { (e.nativeEvent as Event).stopImmediatePropagation(); } catch (err) { /* ignore */ }
+      }
+    } catch (err) {
+      /* ignore */
+    }
     isInteractingRef.current = false;
     // If we were dragging, release capture and suppress the following click
     // (so mouseup doesn't trigger a click on the element beneath).
@@ -247,6 +272,17 @@ export const useCarousel = ({
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
+    // Stop propagation for non-touch pointer moves so the parent swiper
+    // doesn't receive the drag gestures on desktop.
+    try {
+      if (e.pointerType !== 'touch') {
+        e.stopPropagation();
+        try { (e.nativeEvent as Event).stopImmediatePropagation(); } catch (err) { /* ignore */ }
+      }
+    } catch (err) {
+      /* ignore */
+    }
+
     // Only respond to pointermove when the pointer is down / interacting.
     if (!isInteractingRef.current) return;
     const carousel = carouselRef.current;
@@ -271,7 +307,16 @@ export const useCarousel = ({
   };
 
   const handlePointerCancel = (e: React.PointerEvent) => {
-    // Treat cancel like pointer up
+    // Treat cancel like pointer up. Also prevent parent handlers for
+    // non-touch pointer types.
+    try {
+      if (e.pointerType !== 'touch') {
+        e.stopPropagation();
+        try { (e.nativeEvent as Event).stopImmediatePropagation(); } catch (err) { /* ignore */ }
+      }
+    } catch (err) {
+      /* ignore */
+    }
     isInteractingRef.current = false;
     if (isDraggingRef.current) {
       try { (e.currentTarget as Element).releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
