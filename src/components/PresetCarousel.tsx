@@ -1,5 +1,5 @@
 import React from 'react';
-import { presets, Option } from '../constants/presets';
+import { presets, Option, presetColors } from '../constants/presets';
 import { capitalizeLabel } from '../utils/carouselUtils';
 import { useCarousel } from '../hooks/useCarousel';
 import PresetButton from './PresetButton';
@@ -44,8 +44,8 @@ const PresetCarousel = (props: PresetCarouselProps) => {
 
   // Build a normalized items array (value, label, icon) that we can duplicate
   const normalizedItems = usingOptions
-    ? props.options!.map(opt => ({ value: opt.value, label: opt.label, icon: opt.icon }))
-    : presets.map(([key, Icon]) => ({ value: key, label: capitalizeLabel(key), icon: Icon }));
+    ? props.options!.map(opt => ({ value: opt.value, label: opt.label, icon: opt.icon, color: opt.color ?? presetColors[opt.value] }))
+    : presets.map(([key, Icon]) => ({ value: key, label: capitalizeLabel(key), icon: Icon, color: presetColors[key] }));
 
   // Create a tripled list (left, middle, right) so the carousel can
   // seamlessly wrap. Each duplicate carries an _origIndex and _seg so
@@ -86,6 +86,7 @@ const PresetCarousel = (props: PresetCarouselProps) => {
               value={origValue}
               label={it.label}
               icon={it.icon}
+              color={it.color}
               isSelected={isSelected}
               onClick={onClick}
               suppressClickUntil={suppressClickUntilRef.current}

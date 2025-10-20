@@ -305,13 +305,19 @@
 
 
 
-.preset-button.selected svg {
+.preset-button.selected .preset-icon:not([data-color]) svg,
+.preset-button[aria-pressed="true"] .preset-icon:not([data-color]) svg {
+  /* Tint the actual <svg> only when the preset hasn't supplied a color
+     so icons that provide their own color keep it when selected. */
   color: var(--accent);
 }
 
 /* subtle selected-state color for icon and label (no motion) */
-.preset-button.selected .preset-icon,
-.preset-button[aria-pressed="true"] .preset-icon {
+.preset-button.selected .preset-icon:not([data-color]),
+.preset-button[aria-pressed="true"] .preset-icon:not([data-color]) {
+  /* Only apply the selected-state accent color when the preset hasn't
+     supplied its own explicit color. Presets that provide a color set
+     data-color on the container and will keep their color when selected. */
   color: var(--accent);
   opacity: 1;
   /* selected icon grows larger to emphasize the top preset */

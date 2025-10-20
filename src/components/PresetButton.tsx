@@ -7,6 +7,8 @@ interface PresetButtonProps {
   label?: string;
   icon?: string | React.ComponentType<any>;
   isSelected: boolean;
+  // optional color used to tint the icon (CSS color string)
+  color?: string;
   // Accept the clicked DOM element so callers can center exactly that
   // duplicate when needed (useful for tripled-segment carousels).
   onClick: (el?: HTMLElement) => void;
@@ -19,6 +21,7 @@ const PresetButton: React.FC<PresetButtonProps> = ({
   label,
   icon,
   isSelected,
+  color,
   onClick,
   suppressClickUntil,
   seg
@@ -42,8 +45,12 @@ const PresetButton: React.FC<PresetButtonProps> = ({
       data-original-value={value}
       data-seg={String(seg)}
     >
-      <div className="preset-icon" aria-hidden="true">
-        {icon ? (typeof icon === 'string' ? <TwEmoji text={icon} /> : React.createElement(icon as React.ComponentType<any>, { size: iconSize })) : null}
+      <div className="preset-icon" aria-hidden="true" style={color ? { color } : undefined} data-color={color || undefined}>
+        {icon ? (
+          typeof icon === 'string'
+            ? <TwEmoji text={icon} className="preset-twemoji" />
+            : React.createElement(icon as React.ComponentType<any>, { size: iconSize, color, 'data-color': color || undefined })
+        ) : null}
       </div>
       <div className={`preset-label ${isSelected ? 'visible' : 'hidden'}`}>
         {label || capitalizeLabel(value)}
