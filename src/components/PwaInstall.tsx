@@ -54,9 +54,18 @@ export default function PwaInstall() {
     <Modal
       isOpen={visible}
       onClose={handleClose}
-      title="Install TLDRWire"
+      title=""
+      showCloseButton={false}
     >
-      <p>Install TLDRWire as an app for a faster, more immersive experience. Access it directly from your home screen!</p>
+      <div style={{ textAlign: 'center' }}>
+        <h2 style={{ margin: '0 0 20px 0', fontSize: '24px', fontWeight: 'bold' }}>Install TLDRWire</h2>
+        <img
+          src="/logo.png"
+          alt="TLDRWire logo"
+          style={{ width: '80px', height: '80px', borderRadius: '12px', marginBottom: '20px' }}
+        />
+        <p>Install TLDRWire as an app for a faster, more immersive experience. Access it directly from your home screen!</p>
+      </div>
       <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
         <button
           onClick={handleClose}

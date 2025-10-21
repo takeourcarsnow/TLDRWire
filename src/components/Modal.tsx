@@ -6,9 +6,10 @@ interface ModalProps {
   title: string;
   headerRight?: ReactNode;
   children: ReactNode;
+  showCloseButton?: boolean;
 }
 
-export function Modal({ isOpen, onClose, title, headerRight, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, headerRight, children, showCloseButton = true }: ModalProps) {
   const modalRef = React.useRef<HTMLDivElement | null>(null);
   const previouslyFocused = React.useRef<HTMLElement | null>(null);
 
@@ -88,15 +89,17 @@ export function Modal({ isOpen, onClose, title, headerRight, children }: ModalPr
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {/* optional header actions placed to the left of the close button */}
             {headerRight}
-            <button
-              className="close-btn secondary"
-              type="button"
-              onClick={onClose}
-              aria-label="Close modal"
-              style={{ padding: '6px 10px' }}
-            >
-              ✖
-            </button>
+            {showCloseButton && (
+              <button
+                className="close-btn secondary"
+                type="button"
+                onClick={onClose}
+                aria-label="Close modal"
+                style={{ padding: '6px 10px' }}
+              >
+                ✖
+              </button>
+            )}
           </div>
         </header>
         <div className="content">
