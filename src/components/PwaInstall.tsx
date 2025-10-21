@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Modal } from './Modal';
 
 // Small component that listens for the beforeinstallprompt event and exposes
-// a button to trigger the browser install prompt. Useful for testing PWA on
+// a modal to trigger the browser install prompt. Useful for testing PWA on
 // desktop during local development.
 export default function PwaInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -28,38 +29,62 @@ export default function PwaInstall() {
     };
   }, []);
 
-  if (!visible) return null;
+  const handleInstall = async () => {
+    try {
+      if (!deferredPrompt) return;
+      // Show the native install prompt
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      // Hide modal regardless of choice
+      setVisible(false);
+      setDeferredPrompt(null);
+      // optionally log the choice
+      // console.log('PWA install choice', choice);
+    } catch (e) {
+      setVisible(false);
+      setDeferredPrompt(null);
+    }
+  };
+
+  const handleClose = () => {
+    setVisible(false);
+  };
 
   return (
-    <div style={{ position: 'fixed', right: 12, bottom: 84, zIndex: 9999 }}>
-      <button
-        onClick={async () => {
-          try {
-            if (!deferredPrompt) return;
-            // Show the native install prompt
-            deferredPrompt.prompt();
-            const choice = await deferredPrompt.userChoice;
-            // Hide UI regardless of choice
-            setVisible(false);
-            setDeferredPrompt(null);
-            // optionally log the choice
-            // console.log('PWA install choice', choice);
-          } catch (e) {
-            setVisible(false);
-            setDeferredPrompt(null);
-          }
-        }}
-        style={{
-          background: '#0f1724',
-          color: '#fff',
-          border: 'none',
-          padding: '10px 14px',
-          borderRadius: 8,
-          boxShadow: '0 6px 18px rgba(2,6,23,0.3)'
-        }}
-      >
-        Install TLDRWire
-      </button>
-    </div>
+    <Modal
+      isOpen={visible}
+      onClose={handleClose}
+      title="Install TLDRWire"
+    >
+      <p>Install TLDRWire as an app for a faster, more immersive experience. Access it directly from your home screen!</p>
+      <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
+        <button
+          onClick={handleClose}
+          style={{
+            background: 'transparent',
+            color: '#64748b',
+            border: '1px solid #64748b',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}
+        >
+          Not Now
+        </button>
+        <button
+          onClick={handleInstall}
+          style={{
+            background: '#0f1724',
+            color: '#fff',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}
+        >
+          Install
+        </button>
+      </div>
+    </Modal>
   );
 }
