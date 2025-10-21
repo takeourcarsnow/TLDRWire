@@ -989,6 +989,7 @@ html.modal-open {
   width: 192px;
   height: auto;
   animation: logoPulse 1.5s ease-in-out infinite;
+  color: var(--accent);
 }
 
 @keyframes logoPulse {

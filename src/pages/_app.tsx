@@ -103,7 +103,7 @@ export default function App({ Component, pageProps }: AppProps) {
       </div>
 
       {showLoader && <LogoLoader hidden={!loading} />}
-      <PwaInstall />
+      <PwaInstall loaderDone={!showLoader} />
 
       {/* Markdown rendering + sanitization */}
       <Script 

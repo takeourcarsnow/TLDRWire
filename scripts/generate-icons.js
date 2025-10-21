@@ -29,11 +29,29 @@ async function run() {
   console.log('Reading source:', srcPath);
   const inputBuf = fs.readFileSync(srcPath);
 
-  // Generate PNG sizes
+  // Generate PNG sizes with padding for maskable icons
   console.log('Generating PNG variants...');
-  await sharp(inputBuf).resize(192, 192, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toFile(out192);
+  const generatePaddedIcon = async (size) => {
+    const paddedSize = Math.floor(size * 0.8); // 80% safe zone
+    const resized = await sharp(inputBuf)
+      .resize(paddedSize, paddedSize, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .png()
+      .toBuffer();
+    return sharp({
+      create: {
+        width: size,
+        height: size,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      }
+    })
+      .composite([{ input: resized, top: Math.floor((size - paddedSize) / 2), left: Math.floor((size - paddedSize) / 2) }])
+      .png()
+      .toFile(path.join(root, 'public', `icon-${size}.png`));
+  };
+  await generatePaddedIcon(192);
   console.log('Wrote', out192);
-  await sharp(inputBuf).resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toFile(out512);
+  await generatePaddedIcon(512);
   console.log('Wrote', out512);
 
   // Create favicon (use 32x32 and 16x16 source by resizing)

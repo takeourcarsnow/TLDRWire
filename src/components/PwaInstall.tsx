@@ -4,7 +4,7 @@ import { Modal } from './Modal';
 // Small component that listens for the beforeinstallprompt event and exposes
 // a modal to trigger the browser install prompt. Useful for testing PWA on
 // desktop during local development.
-export default function PwaInstall() {
+export default function PwaInstall({ loaderDone }: { loaderDone: boolean }) {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [visible, setVisible] = useState(false);
 
@@ -12,7 +12,9 @@ export default function PwaInstall() {
     function onBeforeInstall(e: any) {
       e.preventDefault();
       setDeferredPrompt(e);
-      setVisible(true);
+      if (loaderDone) {
+        setVisible(true);
+      }
     }
 
     function onAppInstalled() {
@@ -27,7 +29,13 @@ export default function PwaInstall() {
       window.removeEventListener('beforeinstallprompt', onBeforeInstall as any);
       window.removeEventListener('appinstalled', onAppInstalled as any);
     };
-  }, []);
+  }, [loaderDone]);
+
+  useEffect(() => {
+    if (deferredPrompt && loaderDone && !visible) {
+      setVisible(true);
+    }
+  }, [deferredPrompt, loaderDone, visible]);
 
   const handleInstall = async () => {
     try {
