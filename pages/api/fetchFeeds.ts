@@ -1,4 +1,4 @@
-import logger from '../../utils/logger';
+import logger from '../../app/utils/logger';
 import { prepareFeedUrls, prioritizeAndFilterUrls } from './feedPreparation';
 import { fetchFeedsConcurrently } from './feedFetching';
 import { aggregateFeedResults, computeFeedDiagnostics, computeTopHosts } from './resultAggregation';

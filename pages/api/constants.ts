@@ -6,7 +6,7 @@ export {
   SERVER_CACHE_TTL_MS,
   LLM_NEGATIVE_CACHE_MS,
   IP_THROTTLE_MS
-} from '../../constants/apiConstants';
+} from '../../app/constants/apiConstants';
 
 export {
   HISTORY_KEY,

@@ -1,5 +1,5 @@
 import { parser, FEED_CACHE, FEED_CACHE_TTL_MS, FEED_FAIL_TTL_MS, FEED_FAIL_COUNTS, FEED_FAIL_BLACKLIST_THRESHOLD } from './feedCache';
-import logger from '../../utils/logger';
+import logger from '../../app/utils/logger';
 
 export async function fetchWithRetries(u: string, requestLog: any, opts?: { signal?: AbortSignal }) {
   try {

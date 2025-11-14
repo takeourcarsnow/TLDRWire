@@ -1,4 +1,4 @@
-import { scrapeArticleImage } from '../../utils/scraper';
+import { scrapeArticleImage } from '../../app/utils/scraper';
 import { NormalizedArticle } from './articleNormalization';
 
 export interface CleanArticle {

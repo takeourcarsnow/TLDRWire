@@ -2,10 +2,10 @@ import { AppProps } from 'next/app';
 import Head from 'next/head';
 import Script from 'next/script';
 import { useEffect, useState } from 'react';
-import '../../styles/globals.css';
+import '../styles/globals.css';
 // Layout debugger removed
-import LogoLoader from '../components/LogoLoader';
-import PwaInstall from '../components/PwaInstall';
+import LogoLoader from '../app/components/LogoLoader';
+import PwaInstall from '../app/components/PwaInstall';
 
 export default function App({ Component, pageProps }: AppProps) {
   const [loading, setLoading] = useState(true);

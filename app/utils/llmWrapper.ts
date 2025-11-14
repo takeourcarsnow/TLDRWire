@@ -1,4 +1,4 @@
-import { summarizeWithLLM } from '../pages/api/summarize';
+import { summarizeWithLLM } from '../../pages/api/summarize';
 import { cacheManager, NEGATIVE_CACHE_TTL } from './cacheManager';
 
 export async function summarizeWithPossibleFallback(params: {

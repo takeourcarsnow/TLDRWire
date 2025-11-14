@@ -1,12 +1,12 @@
 // Next.js API Route: TL;DR summarizer (modularized)
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getModel } from './llm';
-import logger from '../../utils/logger';
-import { ApiResponse } from '../../types/tldr';
-import { requestValidator } from '../../utils/requestValidator';
-import { requestProcessor } from '../../utils/requestProcessor';
-import { responseHandler } from '../../utils/responseHandler';
+import { getModel } from '../../app/utils/llmClient';
+import logger from '../../app/utils/logger';
+import { ApiResponse } from '../../app/types/tldr';
+import { requestValidator } from '../../app/utils/requestValidator';
+import { requestProcessor } from '../../app/utils/requestProcessor';
+import { responseHandler } from '../../app/utils/responseHandler';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {

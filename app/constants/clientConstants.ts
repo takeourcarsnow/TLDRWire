@@ -12,4 +12,4 @@ export {
   HISTORY_KEY,
   HISTORY_LIMIT,
   CLIENT_CACHE_SIZE
-} from '../pages/api/storage';
+} from '../../pages/api/storage';

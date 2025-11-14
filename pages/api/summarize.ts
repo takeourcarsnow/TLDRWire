@@ -1,5 +1,5 @@
 import { buildPrompt, generateSummary, GEMINI_MODEL, getModel, type LengthConfig } from './llm';
-import logger from '../../utils/logger';
+import logger from '../../app/utils/logger';
 import { dedupeSummaryBullets } from './utils';
 
 export async function summarizeWithLLM(opts: {

@@ -1,4 +1,4 @@
-import logger from '../../utils/logger';
+import logger from '../../app/utils/logger';
 import { normalizeArticles } from './articleNormalization';
 import { deduplicateArticles } from './deduplication';
 import { sortAndFilterArticles } from './sortingAndFiltering';

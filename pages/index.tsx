@@ -1,12 +1,14 @@
+'use client';
+
 import React, { useState, useEffect, Suspense } from 'react';
 import Head from 'next/head';
-import { HomeHeader } from '../components/HomeHeader';
-import { HomeMain } from '../components/HomeMain';
-import { useHome } from '../hooks/useHome';
-import useLockBodyScroll from '../hooks/useLockBodyScroll';
+import { HomeHeader } from '../app/components/HomeHeader';
+import { HomeMain } from '../app/components/HomeMain';
+import { useHome } from '../app/hooks/useHome';
+import useLockBodyScroll from '../app/hooks/useLockBodyScroll';
 
 // Lazy load modal component for better initial load performance
-const HomeModal = React.lazy(() => import('../components/HomeModal').then(module => ({ default: module.HomeModal })));
+const HomeModal = React.lazy(() => import('../app/components/HomeModal').then(module => ({ default: module.HomeModal })));
 
 const LOADING_MESSAGES = [
   'Fetching articles',
@@ -57,7 +59,6 @@ export default function Home() {
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E" />
       </Head>
-
       <div className={h.isLoading ? 'blurred' : ''}>
         <HomeHeader theme={h.theme} onToggleTheme={h.toggleTheme} />
 
