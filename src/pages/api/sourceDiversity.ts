@@ -131,3 +131,4 @@ const enforceGeneralDiversity = (articles: NormalizedArticle[], maxArticles: num
     return selected.slice(0, maxArticles);
   }
 };
+export default (_req: any, res: any) => res.status(404).end();

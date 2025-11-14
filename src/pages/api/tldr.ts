@@ -2,7 +2,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getModel } from './llm';
-import logger from './logger';
+import logger from '../../utils/logger';
 import { ApiResponse } from '../../types/tldr';
 import { requestValidator } from '../../utils/requestValidator';
 import { requestProcessor } from '../../utils/requestProcessor';

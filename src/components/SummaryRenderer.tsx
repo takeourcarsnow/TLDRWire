@@ -5,7 +5,7 @@ import { renderMarkdownToElement } from '../utils/rendering';
 interface Props {
   summary?: string | null;
   isLoading: boolean;
-  summaryRef: React.RefObject<HTMLDivElement>;
+  summaryRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export default function SummaryRenderer({ summary, isLoading, summaryRef }: Props) {

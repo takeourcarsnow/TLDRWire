@@ -6,7 +6,7 @@ export {
   SERVER_CACHE_TTL_MS,
   LLM_NEGATIVE_CACHE_MS,
   IP_THROTTLE_MS
-} from './api';
+} from '../../constants/apiConstants';
 
 export {
   HISTORY_KEY,
@@ -45,3 +45,5 @@ export {
 export {
   SPORT_TYPES
 } from './sports';
+
+export default (_req: any, res: any) => res.status(404).end();

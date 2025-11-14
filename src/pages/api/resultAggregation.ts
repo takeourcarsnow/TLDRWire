@@ -67,3 +67,4 @@ export function computeTopHosts(items: any[], requestLog: any): Array<{ host: st
     return [];
   }
 }
+export default (_req: any, res: any) => res.status(404).end();

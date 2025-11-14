@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next';
-import logger from '../pages/api/logger';
+import logger from '../utils/logger';
 
 export interface ValidationResult {
   valid: boolean;

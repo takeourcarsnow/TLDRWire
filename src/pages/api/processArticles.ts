@@ -1,4 +1,4 @@
-import logger from './logger';
+import logger from '../../utils/logger';
 import { normalizeArticles } from './articleNormalization';
 import { deduplicateArticles } from './deduplication';
 import { sortAndFilterArticles } from './sortingAndFiltering';
@@ -159,3 +159,5 @@ function filterArticlesByCategory(articles: any[], category: string, region: str
     return filters.some(keyword => text.includes(keyword.toLowerCase()));
   });
 }
+
+export default (_req: any, res: any) => res.status(404).end();

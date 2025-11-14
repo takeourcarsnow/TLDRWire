@@ -1,6 +1,6 @@
 import type { NextApiRequest } from 'next';
 import { pickClientLocale, type ParsedLocale } from '../pages/api/locale';
-import logger from '../pages/api/logger';
+import logger from '../utils/logger';
 import { RequestBody } from '../types/tldr';
 
 export interface ProcessedRequest {

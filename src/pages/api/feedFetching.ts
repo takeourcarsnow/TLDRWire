@@ -113,3 +113,4 @@ export async function fetchFeedsConcurrently(
 
   return { results, abortedControllers, feedTimedOut };
 }
+export default (_req: any, res: any) => res.status(404).end();

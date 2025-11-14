@@ -12,3 +12,4 @@ export const deduplicateArticles = (articles: NormalizedArticle[]): NormalizedAr
   }
   return deduped;
 };
+export default (_req: any, res: any) => res.status(404).end();

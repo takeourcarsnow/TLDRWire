@@ -27,3 +27,4 @@ export const sortAndFilterArticles = (
 
   return { filteredArticles, maxAge };
 };
+export default (_req: any, res: any) => res.status(404).end();

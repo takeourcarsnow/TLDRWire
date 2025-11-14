@@ -17,3 +17,4 @@ export const SPORT_TYPES: { [key: string]: string[] } = {
   winter: ['skiing', 'biathlon', 'snowboard', 'figure skating', 'speed skating'],
   olympics: ['olympics', 'olympic']
 };
+export default (_req: any, res: any) => res.status(404).end();

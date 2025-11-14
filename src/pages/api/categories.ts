@@ -105,3 +105,5 @@ export const TOPIC_MAP: { [key: string]: string } = {
   culture: 'ENTERTAINMENT',
   health: 'HEALTH'
 };
+
+export default (_req: any, res: any) => res.status(404).end();

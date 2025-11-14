@@ -170,3 +170,4 @@ export function getImageScrapingStats(): { cacheSize: number; cacheHitRate: numb
     cacheHitRate: 0 // Would need proper metrics tracking
   };
 }
+export default (_req: any, res: any) => res.status(404).end();

@@ -15,3 +15,4 @@ export const TIMEFRAME_MIN = 1;
 export const TIMEFRAME_MAX = 72;
 export const ARTICLES_MIN = 8;
 export const ARTICLES_MAX = 40;
+export default (_req: any, res: any) => res.status(404).end();

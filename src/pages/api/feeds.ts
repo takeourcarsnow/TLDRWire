@@ -200,3 +200,4 @@ export function getAllFeedsWithFallbacks(params: BuildFeedUrlsParams, maxFeeds =
 
   return out;
 }
+export default (_req: any, res: any) => res.status(404).end();

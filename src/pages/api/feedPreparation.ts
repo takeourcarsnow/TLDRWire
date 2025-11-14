@@ -77,3 +77,4 @@ export function prioritizeAndFilterUrls(urls: string[], region: string): string[
   // Prioritize region fallbacks, then other URLs
   return [...regionFallbackUrls, ...otherUrls];
 }
+export default (_req: any, res: any) => res.status(404).end();

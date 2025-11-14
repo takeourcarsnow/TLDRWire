@@ -1,4 +1,4 @@
-import logger from './logger';
+import logger from '../../utils/logger';
 import { prepareFeedUrls, prioritizeAndFilterUrls } from './feedPreparation';
 import { fetchFeedsConcurrently } from './feedFetching';
 import { aggregateFeedResults, computeFeedDiagnostics, computeTopHosts } from './resultAggregation';
@@ -51,3 +51,5 @@ export async function fetchFeeds(opts: FetchFeedsOptions): Promise<FetchFeedsRes
 
   return { items, urls, perFeedCounts, perFeedErrors, usedFallbacks, topHosts };
 }
+
+export default (_req: any, res: any) => res.status(404).end();

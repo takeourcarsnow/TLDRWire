@@ -1,5 +1,5 @@
 import { parser, FEED_CACHE, FEED_CACHE_TTL_MS, FEED_FAIL_TTL_MS, FEED_FAIL_COUNTS, FEED_FAIL_BLACKLIST_THRESHOLD } from './feedCache';
-import logger from './logger';
+import logger from '../../utils/logger';
 
 export async function fetchWithRetries(u: string, requestLog: any, opts?: { signal?: AbortSignal }) {
   try {
@@ -119,3 +119,5 @@ export async function fetchWithRetries(u: string, requestLog: any, opts?: { sign
   } catch (e) { /* ignore fail bookkeeping errors */ }
   return { status: 'rejected', reason: lastErr };
 }
+
+export default (_req: any, res: any) => res.status(404).end();

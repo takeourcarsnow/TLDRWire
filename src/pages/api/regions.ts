@@ -30,3 +30,4 @@ export const FEED_LANG_MAP: { [key: string]: string } = {
   brazil: 'pt',
   australia: 'en'
 };
+export default (_req: any, res: any) => res.status(404).end();

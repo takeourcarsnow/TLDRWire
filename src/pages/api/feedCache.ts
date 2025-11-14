@@ -18,3 +18,5 @@ export const FEED_FAIL_COUNTS = new Map<string, { count: number; ts: number }>()
 export const FEED_FAIL_BLACKLIST_THRESHOLD = 3;
 
 export type FeedCacheEntry = { ts: number; value?: any; failed?: boolean; reason?: string };
+
+export default (_req: any, res: any) => res.status(404).end();

@@ -145,3 +145,4 @@ export function dedupeSummaryBullets(markdown: string, simThreshold: number = 0.
   }
   return kept.join('\n');
 }
+export default (_req: any, res: any) => res.status(404).end();

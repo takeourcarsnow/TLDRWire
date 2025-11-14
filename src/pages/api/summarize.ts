@@ -1,5 +1,5 @@
 import { buildPrompt, generateSummary, GEMINI_MODEL, getModel, type LengthConfig } from './llm';
-import logger from './logger';
+import logger from '../../utils/logger';
 import { dedupeSummaryBullets } from './utils';
 
 export async function summarizeWithLLM(opts: {
@@ -86,3 +86,5 @@ export async function summarizeWithLLM(opts: {
   // summary = dedupeSummaryBullets(summary);
   return { summary, llmError: payloadErrorForLogs };
 }
+
+export default (_req: any, res: any) => res.status(404).end();

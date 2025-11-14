@@ -1,7 +1,7 @@
 // Article scraping utilities for extracting images from web pages
 
 import * as cheerio from 'cheerio';
-import logger from '../pages/api/logger';
+import logger from '../utils/logger';
 import { SCRAPE_CACHE, SCRAPE_CACHE_TTL_MS, checkRateLimit, recordRequest, isValidImageUrl, getScrapingStats as _getScrapingStats } from './scrapeHelpers';
 import { errorToString } from './errorUtils';
 
