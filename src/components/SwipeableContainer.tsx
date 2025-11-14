@@ -109,6 +109,7 @@ export function SwipeableContainer({ children, activeIndex, onSlideChange, disab
       onSlideChange={(swiper) => onSlideChange(swiper.activeIndex)}
       onSwiper={(swiper) => (swiperRef.current = swiper)}
       allowTouchMove={!disabled}
+      simulateTouch={false}
       /* Let slides size to their content. Avoid forcing full-height which
          creates large empty space when content is short. */
     >

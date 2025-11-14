@@ -223,6 +223,7 @@ export const useCarousel = ({
         // prevent any native listeners (e.g. Swiper) from running after
         // this handler.
         try { (e.nativeEvent as Event).stopImmediatePropagation(); } catch (err) { /* ignore */ }
+        return; // Disable mouse dragging
       }
     } catch (err) {
       // defensive: some environments may not expose pointerType
