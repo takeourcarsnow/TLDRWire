@@ -9,7 +9,7 @@ export function useRateLimit() {
 
   // Countdown timer effect
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT && rateLimitCountdown > 0) {
+    if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT && rateLimitCountdown > 0) {
       const timer = setTimeout(() => {
         setRateLimitCountdown((c) => {
           const next = Math.max(0, c - 1);
@@ -27,7 +27,7 @@ export function useRateLimit() {
 
   // Restore rate limit state from localStorage on mount and sync across tabs
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT) return;
+    if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT) return;
 
     try {
       const raw = localStorage.getItem(RATE_LIMIT_KEY);
@@ -71,7 +71,7 @@ export function useRateLimit() {
   }, []);
 
   const startRateLimit = () => {
-    if (process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT) return;
+    if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT) return;
 
     const now = Date.now();
     setLastGenerateTime(now);
@@ -83,8 +83,10 @@ export function useRateLimit() {
   };
 
   const isRateLimited = () => {
-    if (process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT) return false;
-    return rateLimitCountdown > 0;
+    if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT) {
+      return rateLimitCountdown > 0;
+    }
+    return false;
   };
 
   return {

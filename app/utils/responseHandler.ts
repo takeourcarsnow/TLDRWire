@@ -21,6 +21,9 @@ export const responseHandler = {
   },
 
   checkThrottle: (ip: string, requestLog: any): { throttled: boolean; error?: ApiResponse } => {
+    if (process.env.NODE_ENV !== 'production') {
+      return { throttled: false };
+    }
     const { throttled, sinceLastMs } = cacheManager.checkThrottle(ip);
     if (throttled) {
       requestLog.warn('client request throttled (too frequent)', { ip, sinceLastMs });
@@ -157,7 +160,7 @@ export const responseHandler = {
       },
       summary: finalSummary,
       images: translatedCleanTopItems.filter(a => a.imageUrl !== null).map(a => ({ title: a.title, url: a.url, imageUrl: a.imageUrl! })),
-      articles: translatedCleanTopItems.map(a => ({
+      articles: translatedCleanTopItems.slice(0, -1).map(a => ({
         title: a.title,
         url: a.url,
         publishedAt: a.publishedAt,

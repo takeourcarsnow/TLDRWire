@@ -53,10 +53,10 @@ export function useHome() {
   const generateSummary = useCallback(async (overridePayload?: any) => {
     const now = Date.now();
     if (isLoading) return;
-    if (!process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT && lastGenerateTime && now - lastGenerateTime < 60 * 1000) {
+    if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT && lastGenerateTime && now - lastGenerateTime < 60 * 1000) {
       return;
     }
-    if (!process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT) {
+    if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_DISABLE_RATE_LIMIT) {
       startRateLimit();
     }
     clearError();
