@@ -141,6 +141,7 @@ button.primary {
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
+  outline: none;
 }
 
 button.primary:hover,
@@ -148,6 +149,7 @@ button.primary:active,
 button.primary:focus {
   background: var(--accent) !important;
   border-color: var(--accent) !important;
+  outline: none;
 }
 
 /* Ensure primary action has extra bottom spacing on small viewports so it's
@@ -173,20 +175,24 @@ button {
   transition: background 0.15s ease, border-color 0.15s ease;
   min-width: 120px;
   text-align: center;
+  outline: none;
 }
 
 button:hover:not(:disabled) {
   background: rgba(77,163,255,0.95);
   border-color: rgba(77,163,255,0.95);
+  outline: none;
 }
 
 button:active {
   background: rgba(77,163,255,0.9);
+  outline: none;
 }
 
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  outline: none;
 }
 
 /* Compact preset buttons inside the carousel should be allowed to shrink so more items fit */
@@ -194,6 +200,7 @@ button:disabled {
   min-width: 0 !important;
   max-width: 92px; /* keep labels readable but compact */
   padding: 6px 8px !important;
+  outline: none;
 }
 
 button.secondary {
@@ -207,15 +214,18 @@ button.secondary {
 button.secondary:hover:not(:disabled) {
   background: rgba(255,255,255,0.05);
   box-shadow: 0 4px 12px var(--shadow);
+  outline: none;
 }
 
 button.danger {
   background: var(--danger);
   color: white;
+  outline: none;
 }
 
 .icon-button.danger {
   color: var(--danger) !important;
+  outline: none !important;
 }
 
 .icon-button {
@@ -236,6 +246,7 @@ button.danger {
   box-shadow: none !important;
   background: transparent !important;
   border: none !important;
+  outline: none !important;
 }
 
 .btn-group {

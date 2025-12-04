@@ -49,12 +49,8 @@ const PresetCarousel = (props: PresetCarouselProps) => {
     ? props.options!.map(opt => ({ value: opt.value, label: opt.label, icon: opt.icon, color: opt.color ?? presetColors[opt.value] }))
     : presets.map(([key, Icon]) => ({ value: key, label: capitalizeLabel(key), icon: Icon, color: presetColors[key] }));
 
-  // Create a tripled list (left, middle, right) so the carousel can
-  // seamlessly wrap. Each duplicate carries an _origIndex and _seg so
-  // centering logic can prefer the middle segment when needed.
-  const items = [0, 1, 2].flatMap(seg =>
-    normalizedItems.map((it, idx) => ({ ...it, _origIndex: idx, _seg: seg }))
-  );
+  // Duplicate items once for seamless looping
+  const items = [...normalizedItems, ...normalizedItems].map((it, idx) => ({ ...it, _origIndex: idx % normalizedItems.length }));
 
   return (
     <div
@@ -112,7 +108,7 @@ const PresetCarousel = (props: PresetCarouselProps) => {
 
           return (
             <PresetButton
-              key={`${it._seg}-${it._origIndex}-${i}`}
+              key={`${it._origIndex}-${i}`}
               value={origValue}
               label={it.label}
               icon={it.icon}
@@ -120,7 +116,6 @@ const PresetCarousel = (props: PresetCarouselProps) => {
               isSelected={isSelected}
               onClick={onClick}
               suppressClickUntil={suppressClickUntilRef.current}
-              seg={it._seg}
             />
           );
         })}

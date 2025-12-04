@@ -105,7 +105,6 @@
   /* limit the visible area so exactly 5 buttons fit in the viewport */
   flex: 0 1 auto;
   max-width: calc(var(--preset-button-width) * 5 + var(--preset-button-gap) * 4);
-  scroll-snap-type: x mandatory;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
@@ -212,10 +211,6 @@
   flex: 0 0 var(--preset-button-width);
   min-height: 64px; /* fixed height to prevent jumping when label appears/disappears */
   flex-shrink: 0;
-    /* snap to the carousel center so programmatic centering and CSS
-      scroll-snap agree — prevents conflicting snaps that can produce
-      large jumps when wrapping between tripled segments. */
-    scroll-snap-align: center;
   cursor: pointer;
 }
 
@@ -1021,29 +1016,29 @@ body.loader-active .bottom-navbar-portal {
   right: 0;
   bottom: 0;
   z-index: 1000;
+  background: var(--panel);
 }
 
 .bottom-navbar-portal.blurred,
 .bottom-navbar-portal.locked {
-  /* Keep blur for visual consistency */
-  filter: blur(6px);
-
-  /* Use the same frosted-panel background the rest of the UI uses so
-     the navbar composites similarly in light and dark themes. */
-  background: var(--panel-glass);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  /* Use an opaque background to avoid see-through effect */
+  background: var(--panel);
 
   /* Subtle divider to match the rest of the UI and remove strong shadow
      so the portal doesn't pop visually when blurred. */
   border-top: 1px solid var(--border-glass);
   box-shadow: none;
+
+  /* Apply blur effect to match the main content when loading */
+  filter: blur(6px);
+
+  /* Darken the navbar when loading */
+  opacity: 0.5;
 }
 
-/* When the navbar is locked, make it non-interactive and slightly dimmed. */
+/* When the navbar is locked, make it non-interactive. */
 .bottom-navbar-portal.locked {
   pointer-events: none;
-  opacity: 0.6;
 }
 
 /* Disable the default click / tap background highlight on carousel

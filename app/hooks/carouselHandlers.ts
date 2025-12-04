@@ -29,9 +29,8 @@ export function doInstantJump(carousel: HTMLDivElement, newLeft: number) {
     carousel.style.scrollSnapType = 'none';
     carousel.scrollLeft = newLeft;
   } finally {
-    requestAnimationFrame(() => {
-      carousel.style.scrollBehavior = prevBehavior || 'smooth';
-      carousel.style.scrollSnapType = prevSnap || 'x mandatory';
-    });
+    // Keep scroll-behavior as auto to prevent smooth snapping
+    carousel.style.scrollBehavior = 'auto';
+    carousel.style.scrollSnapType = prevSnap || 'x mandatory';
   }
 }

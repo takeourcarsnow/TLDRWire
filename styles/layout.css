@@ -316,10 +316,8 @@ footer {
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--panel-glass);
+  background: var(--panel);
   border-top: 1px solid var(--border-glass);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
   display: flex;
   justify-content: space-around;
   padding: 4px 0;
@@ -407,4 +405,14 @@ footer {
     padding-top: 10px;
     padding-bottom: 10px;
   }
+}
+
+/* Hide scrollbars to prevent visual borders */
+html, body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
