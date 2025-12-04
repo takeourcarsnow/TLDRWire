@@ -130,13 +130,6 @@ main {
   text-align: center;
 }
 
-/* Adjust loader position on desktop to avoid it being too high up */
-@media (min-width: 641px) {
-  .loading-container {
-    margin-top: 20vh;
-  }
-}
-
 .loading-text {
   color: white;
   font-size: 1.5rem;

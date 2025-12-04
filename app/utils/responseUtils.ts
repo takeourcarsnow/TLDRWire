@@ -47,47 +47,117 @@ export function insertImagesIntoSummary(finalSummary: string, contextItems: TopI
     existingImages.add(match[1]);
   }
 
-  const lines = finalSummary.split('\n');
-  const result: string[] = [];
   const usedImages = new Set<string>();
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    result.push(line);
+  // Helper to find the best matching article for a given text
+  const findBestMatchingArticle = (text: string): TopItem | null => {
+    let bestMatch: TopItem | null = null;
+    let bestScore = 0;
 
-    if (line.match(/^(\s*[-*]\s+)(.+)$/)) {
-      let bestMatch: TopItem | null = null;
-      let bestScore = 0;
+    const textLower = text.toLowerCase();
+    const textWords = textLower.split(/\s+/).filter(w => w.length > 3);
 
-      for (const article of contextItems) {
-        if (!article.imageUrl || usedImages.has(String(article.imageUrl))) continue;
+    for (const article of contextItems) {
+      if (!article.imageUrl || usedImages.has(String(article.imageUrl)) || existingImages.has(String(article.imageUrl))) continue;
 
-        const bulletText = line.replace(/^(\s*[-*]\s+)/, '').toLowerCase();
-        const articleTitle = (article.title || '').toLowerCase();
+      const titleWords = (article.title || '').toLowerCase().split(/\s+/).filter(Boolean);
+      const overlap = textWords.filter((word: string) =>
+        titleWords.some((titleWord: string) => titleWord.includes(word) || word.includes(titleWord))
+      ).length;
 
-        const bulletWords = bulletText.split(/\s+/).filter(Boolean);
-        const titleWords = articleTitle.split(/\s+/).filter(Boolean);
-        const overlap = bulletWords.filter((word: string) =>
-          word.length > 3 && titleWords.some((titleWord: string) => titleWord.includes(word) || word.includes(titleWord))
-        ).length;
+      const score = overlap / Math.max(textWords.length || 1, titleWords.length || 1);
 
-        const score = overlap / Math.max(bulletWords.length || 1, titleWords.length || 1);
-
-        if (score > bestScore && score > 0.2) {
-          bestScore = score;
-          bestMatch = article;
-        }
-      }
-
-      if (bestMatch && bestMatch.imageUrl && !existingImages.has(bestMatch.imageUrl)) {
-        const safeTitle = (bestMatch.title || '').replace(/[\[\]]/g, '');
-        result.push(`![${safeTitle}](${bestMatch.imageUrl})`);
-        usedImages.add(bestMatch.imageUrl);
+      if (score > bestScore && score > 0.2) {
+        bestScore = score;
+        bestMatch = article;
       }
     }
+
+    return bestMatch;
+  };
+
+  // Split into article blocks (separated by ---)
+  const blocks = finalSummary.split(/\n---\n/);
+  const processedBlocks: string[] = [];
+
+  for (const block of blocks) {
+    const lines = block.split('\n');
+    let hasImage = lines.some(l => l.trim().startsWith('!['));
+    
+    // Check if this block has a bold header (article title)
+    const headerLine = lines.find(l => l.match(/^\*\*(.+)\*\*$/));
+    
+    if (headerLine && !hasImage) {
+      const titleMatch = headerLine.match(/^\*\*(.+)\*\*$/);
+      if (titleMatch) {
+        const articleTitle = titleMatch[1];
+        const matchingArticle = findBestMatchingArticle(articleTitle);
+        
+        if (matchingArticle && matchingArticle.imageUrl) {
+          // Find where to insert the image: after the summary paragraph, before the source link
+          const newLines: string[] = [];
+          let insertedImage = false;
+          
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            newLines.push(line);
+            
+            // Insert image before the source link [source](url) if we haven't inserted yet
+            if (!insertedImage && i + 1 < lines.length && lines[i + 1].match(/^\[.+\]\(.+\)$/)) {
+              const safeTitle = (matchingArticle.title || '').replace(/[\[\]]/g, '');
+              newLines.push('');
+              newLines.push(`![${safeTitle}](${matchingArticle.imageUrl})`);
+              newLines.push('');
+              usedImages.add(matchingArticle.imageUrl);
+              insertedImage = true;
+            }
+          }
+          
+          // If we couldn't find a source link, try inserting before an empty line at the end
+          if (!insertedImage) {
+            // Find last non-empty line that's not a source link
+            for (let i = newLines.length - 1; i >= 0; i--) {
+              if (newLines[i].match(/^\[.+\]\(.+\)$/)) {
+                const safeTitle = (matchingArticle.title || '').replace(/[\[\]]/g, '');
+                newLines.splice(i, 0, '', `![${safeTitle}](${matchingArticle.imageUrl})`, '');
+                usedImages.add(matchingArticle.imageUrl);
+                break;
+              }
+            }
+          }
+          
+          processedBlocks.push(newLines.join('\n'));
+          continue;
+        }
+      }
+    }
+    
+    // Handle bullet point format (legacy)
+    if (!headerLine) {
+      const newLines: string[] = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        newLines.push(line);
+
+        if (line.match(/^(\s*[-*]\s+)(.+)$/)) {
+          const bulletText = line.replace(/^(\s*[-*]\s+)/, '');
+          const matchingArticle = findBestMatchingArticle(bulletText);
+
+          if (matchingArticle && matchingArticle.imageUrl) {
+            const safeTitle = (matchingArticle.title || '').replace(/[\[\]]/g, '');
+            newLines.push(`![${safeTitle}](${matchingArticle.imageUrl})`);
+            usedImages.add(matchingArticle.imageUrl);
+          }
+        }
+      }
+      processedBlocks.push(newLines.join('\n'));
+      continue;
+    }
+    
+    processedBlocks.push(block);
   }
 
-  return result.join('\n');
+  return processedBlocks.join('\n---\n');
 }
 
 export function computeTopSources(cleanTopItems: Article[], maxSources = 5) {

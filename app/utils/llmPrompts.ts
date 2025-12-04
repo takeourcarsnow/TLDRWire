@@ -57,7 +57,7 @@ IMPORTANT: Start with a main TL;DR that summarizes all the key developments acro
 
 **article_title**
 
-[Detailed summary paragraph of this article]
+[Detailed summary paragraph of this article - at least 2-3 sentences explaining what happened, why it matters, and key details]
 
 ![image](image_url_if_available)
 
@@ -65,7 +65,12 @@ IMPORTANT: Start with a main TL;DR that summarizes all the key developments acro
 
 ---
 
-Do not combine articles into a single summary. Repeat this exact format for each article.
+CRITICAL REQUIREMENTS:
+- Do NOT combine articles into a single summary. Each article MUST have its own section.
+- Each article summary MUST be at least 2-3 sentences long. Do NOT write one-sentence summaries.
+- Include ALL ${lengthConfig.bulletsMax} articles. Do NOT skip or truncate the last articles.
+- If an article has an image URL in the context, ALWAYS include it using the ![title](url) format.
+- Give equal attention and detail to ALL articles, including the last one.
 
 CRITICAL LINKING RULES (follow exactly):
 - For each article, use the metadata in the context block:
@@ -89,7 +94,7 @@ Output in ${language} (${uiLocale} locale). Use Markdown.
 Articles to summarize:
 ${contextLines.join("\n\n")}
 
-Apply style consistently across all individual article summaries.`;
+Apply style consistently across all individual article summaries. Remember: each article deserves equal detail.`;
 
   return base;
 }

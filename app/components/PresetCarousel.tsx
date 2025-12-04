@@ -101,7 +101,7 @@ const PresetCarousel = React.memo((props: PresetCarouselProps) => {
         hideTimeoutRef.current = setTimeout(() => { props.onMouseLeave?.(); hideTimeoutRef.current = null; }, 2000);
       }}
     >
-      <div className="preset-carousel" ref={carouselRef} onScroll={handleScroll}>
+      <div className="preset-carousel" ref={carouselRef} onScroll={handleScroll} style={{ scrollBehavior: 'auto' }}>
         {items.map((it, i) => {
           const origValue = it.value as string;
           const isSelected = (props.value === origValue) || (props.selectedPreset === origValue) || (pendingValue === origValue);

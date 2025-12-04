@@ -110,6 +110,20 @@ export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: str
         let host = (url.hostname || '').replace(/^www\./, '');
         const currentText = (link.textContent || '').trim();
 
+        const looksLikeHostLabel = !currentText || /^[a-z0-9_.-]+$/i.test(currentText);
+
+        let isBrokenUrl = false;
+        try {
+          isBrokenUrl = !url.hostname || url.hostname.endsWith('.') || url.hostname.includes('..') || url.hostname.startsWith('.') || (url.protocol !== 'https:' && url.protocol !== 'http:');
+        } catch {
+          isBrokenUrl = true;
+        }
+
+        if (looksLikeHostLabel && isBrokenUrl) {
+          link.style.display = 'none';
+          return;
+        }
+
         // Heuristic: treat most links in the generated summary as
         // "source" links for individual articles and realign them to
         // the canonical article URLs from the API payload. This fixes
@@ -117,6 +131,7 @@ export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: str
         // example, i.guim.co.uk) instead of the article URL for the
         // last item, which breaks the source link and image.
         let metaForThis: { host: string; url: string } | null = null;
+        let isSourceLink = false;
         if (articleMeta.length && nextArticleIdx < articleMeta.length) {
           try {
             const parentText = (link.parentElement?.textContent || '').trim().toLowerCase();
@@ -124,10 +139,11 @@ export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: str
 
             // Looks like a standalone host or short label, not an
             // arbitrary inline hyperlink.
-            const looksLikeHostLabel = !textLower || /^[a-z0-9_.-]+$/i.test(textLower);
             const parentIsShort = parentText.length <= 80;
 
-            if (looksLikeHostLabel && parentIsShort) {
+            isSourceLink = looksLikeHostLabel && parentIsShort;
+
+            if (isSourceLink && nextArticleIdx < articleMeta.length - 1) {
               metaForThis = articleMeta[nextArticleIdx] || null;
               if (metaForThis) {
                 nextArticleIdx++;
@@ -139,6 +155,12 @@ export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: str
               }
             }
           } catch {}
+        }
+
+        // Hide the source of the last result if it's broken
+        if (isSourceLink && !metaForThis) {
+          link.style.display = 'none';
+          return;
         }
 
         if (!currentText || currentText.length > 42) link.textContent = (host || 'source').trim();
@@ -161,7 +183,7 @@ export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: str
           link.setAttribute('href', url.toString());
         }
 
-        if (host) {
+        if (metaForThis) {
           const faviconUrl = makeFaviconUrl(url);
           try {
             const parentEl = link.parentElement as HTMLElement | null;
@@ -211,6 +233,11 @@ export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: str
         }
       } catch {
         const t = (link.textContent || '').trim();
+        // Hide broken source links
+        if (t && /^[a-z0-9_.-]+$/i.test(t) && (link.parentElement?.textContent || '').trim().length <= 80) {
+          link.remove();
+          return;
+        }
         if (t.length > 42) link.textContent = t.slice(0, 40) + '…';
         link.title = 'Open link in new tab';
       }
@@ -219,9 +246,21 @@ export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: str
     // Images
     el.querySelectorAll<HTMLImageElement>('img').forEach((img: HTMLImageElement) => {
       if (img.src && !img.src.includes('favicon')) {
-        wrapImageInParagraph(img);
+        try {
+          const url = new URL(img.src);
+          if (!url.hostname) {
+            img.style.display = 'none';
+          } else {
+            wrapImageInParagraph(img);
+          }
+        } catch {
+          img.style.display = 'none';
+        }
       }
     });
+
+    // Clean up any remaining broken markdown syntax at the end
+    el.innerHTML = el.innerHTML.replace(/!\[.*$/g, '').replace(/\[.*$/g, '');
   } catch (err) {
     if (el) el.textContent = markdown || '';
   }

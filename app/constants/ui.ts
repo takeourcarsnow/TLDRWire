@@ -210,6 +210,33 @@ export const PRESET_CONFIGS = {
     timeframe: '72',
     limit: '30'
   },
+  weather: {
+    region: 'global',
+    language: 'en',
+    category: 'top',
+    style: 'concise-bullets',
+    length: 'short',
+    timeframe: '24',
+    limit: '15'
+  },
+  travel: {
+    region: 'global',
+    language: 'en',
+    category: 'travel',
+    style: 'casual',
+    length: 'medium',
+    timeframe: '48',
+    limit: '15'
+  },
+  finance: {
+    region: 'global',
+    language: 'en',
+    category: 'business',
+    style: 'market-analyst',
+    length: 'medium',
+    timeframe: '24',
+    limit: '20'
+  },
   'lt-local': {
     region: 'lithuania',
     category: 'top',

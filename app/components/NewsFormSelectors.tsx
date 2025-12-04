@@ -8,9 +8,10 @@ import { REGION_OPTIONS, LANGUAGE_OPTIONS, CATEGORY_OPTIONS, STYLE_OPTIONS } fro
 interface Props {
   preferences: Preferences;
   onPreferenceChange: (key: keyof Preferences, value: string) => void;
+  selectedPreset?: string | null;
 }
 
-export default memo(function NewsFormSelectors({ preferences, onPreferenceChange }: Props) {
+export default memo(function NewsFormSelectors({ preferences, onPreferenceChange, selectedPreset }: Props) {
   const [showRegionLabel, setShowRegionLabel] = useState(false);
   const [showLanguageLabel, setShowLanguageLabel] = useState(false);
   const [showCategoryLabel, setShowCategoryLabel] = useState(false);
@@ -37,28 +38,28 @@ export default memo(function NewsFormSelectors({ preferences, onPreferenceChange
       <div className="form-group regions-group">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
           <label htmlFor="region" style={{ marginBottom: 0, flexShrink: 0, fontSize: '16px', color: 'var(--text)', opacity: showRegionLabel ? 1 : 0, transition: 'opacity 0.3s ease' }}>Regions</label>
-          <PresetCarousel options={REGION_OPTIONS} value={preferences.region} onChange={onRegionChange} onMouseEnter={onRegionEnter} onMouseLeave={onRegionLeave} />
+          <PresetCarousel options={REGION_OPTIONS} value={preferences.region} onChange={onRegionChange} onMouseEnter={onRegionEnter} onMouseLeave={onRegionLeave} selectedPreset={selectedPreset} />
         </div>
       </div>
 
       <div className="form-group language-group">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
           <label htmlFor="language" style={{ marginBottom: 0, flexShrink: 0, fontSize: '16px', color: 'var(--text)', opacity: showLanguageLabel ? 1 : 0, transition: 'opacity 0.3s ease' }}>Language</label>
-          <PresetCarousel options={LANGUAGE_OPTIONS} value={preferences.language} onChange={onLanguageChange} onMouseEnter={onLanguageEnter} onMouseLeave={onLanguageLeave} />
+          <PresetCarousel options={LANGUAGE_OPTIONS} value={preferences.language} onChange={onLanguageChange} onMouseEnter={onLanguageEnter} onMouseLeave={onLanguageLeave} selectedPreset={selectedPreset} />
         </div>
       </div>
 
       <div className="form-group category-group">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1 }}>
           <label htmlFor="category" style={{ marginBottom: 0, flexShrink: 0, fontSize: '16px', color: 'var(--text)', opacity: showCategoryLabel ? 1 : 0, transition: 'opacity 0.3s ease' }}>Category</label>
-          <PresetCarousel options={CATEGORY_OPTIONS} value={preferences.category} onChange={onCategoryChange} onMouseEnter={onCategoryEnter} onMouseLeave={onCategoryLeave} />
+          <PresetCarousel options={CATEGORY_OPTIONS} value={preferences.category} onChange={onCategoryChange} onMouseEnter={onCategoryEnter} onMouseLeave={onCategoryLeave} selectedPreset={selectedPreset} />
         </div>
       </div>
 
       <div className="form-group">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1 }}>
           <label htmlFor="style" style={{ marginBottom: 0, flexShrink: 0, fontSize: '16px', color: 'var(--text)', opacity: showStyleLabel ? 1 : 0, transition: 'opacity 0.3s ease' }}>Style</label>
-          <PresetCarousel options={STYLE_OPTIONS} value={preferences.style} onChange={onStyleChange} onMouseEnter={onStyleEnter} onMouseLeave={onStyleLeave} />
+          <PresetCarousel options={STYLE_OPTIONS} value={preferences.style} onChange={onStyleChange} onMouseEnter={onStyleEnter} onMouseLeave={onStyleLeave} selectedPreset={selectedPreset} />
         </div>
       </div>
     </>

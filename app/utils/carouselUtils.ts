@@ -27,8 +27,8 @@ export const capitalizeLabel = (label: string): string => {
 };
 
 // Center the selected button when selection changes. Choose the duplicate that
-// lives in the middle segment when possible (so centering keeps the user in the
-// middle segment of the tripled list).
+// lives closest to the current carousel center, preferring the middle segment
+// duplicate to ensure the infinite loop works immediately.
 export const centerSelected = (
   carousel: HTMLDivElement | null,
   value: string | undefined,
@@ -42,23 +42,21 @@ export const centerSelected = (
   let selectedButton: HTMLElement | undefined = undefined;
   if (matches.length === 1) selectedButton = matches[0];
   else if (matches.length > 1) {
-    // Prefer the middle segment (seg 1) for tripled carousels
-    const midMatches = matches.filter(el => el.dataset.seg === '1');
-    if (midMatches.length > 0) {
-      selectedButton = midMatches[0];
-    } else {
-      // Fallback to closest
-      const carouselRect = carousel.getBoundingClientRect();
-      const carouselCenter = carouselRect.left + carouselRect.width / 2;
-      let bestDist = Number.POSITIVE_INFINITY;
-      for (const el of matches) {
-        const r = el.getBoundingClientRect();
-        const center = r.left + r.width / 2;
-        const dist = Math.abs(center - carouselCenter);
-        if (dist < bestDist) {
-          bestDist = dist;
-          selectedButton = el;
-        }
+    // Prefer matches in the middle segment (data-seg="1") for infinite loop compatibility
+    const middleMatches = matches.filter(el => el.dataset.seg === '1');
+    const candidatesToCheck = middleMatches.length > 0 ? middleMatches : matches;
+    
+    // Choose the closest to the carousel center
+    const carouselRect = carousel.getBoundingClientRect();
+    const carouselCenter = carouselRect.left + carouselRect.width / 2;
+    let bestDist = Number.POSITIVE_INFINITY;
+    for (const el of candidatesToCheck) {
+      const r = el.getBoundingClientRect();
+      const center = r.left + r.width / 2;
+      const dist = Math.abs(center - carouselCenter);
+      if (dist < bestDist) {
+        bestDist = dist;
+        selectedButton = el;
       }
     }
   } else {
@@ -67,6 +65,10 @@ export const centerSelected = (
   }
 
   if (selectedButton) {
+    const prevSnap = carousel.style.scrollSnapType;
+    const prevBehavior = carousel.style.scrollBehavior;
+    carousel.style.scrollSnapType = 'none';
+    carousel.style.scrollBehavior = 'smooth';
     const carouselRect = carousel.getBoundingClientRect();
     const buttonRect = selectedButton.getBoundingClientRect();
     const carouselCenter = carouselRect.left + carouselRect.width / 2;
@@ -74,11 +76,16 @@ export const centerSelected = (
     const scrollLeft = carousel.scrollLeft + (buttonCenter - carouselCenter);
 
     try {
-      carousel.scrollTo({ left: scrollLeft, behavior: behaviour });
+      carousel.scrollTo({ left: scrollLeft, behavior: 'smooth' });
     } catch (e) {
       // fallback for older browsers
       carousel.scrollLeft = scrollLeft;
     }
+    // Restore snap and behavior after animation
+    setTimeout(() => {
+      carousel.style.scrollSnapType = prevSnap || 'x mandatory';
+      carousel.style.scrollBehavior = prevBehavior || 'auto';
+    }, 1000);
   }
 };
 

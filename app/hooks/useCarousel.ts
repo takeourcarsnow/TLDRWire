@@ -30,6 +30,7 @@ export const useCarousel = ({
 
   // Programmatic scroll state
   const isProgrammaticScrollRef = useRef(false);
+  const isCenteringRef = useRef(false);
   // expose a pending value so the UI can show immediate feedback while waiting
   // for the scroll animation to finish and the parent to be notified.
   const [pendingValue, setPendingValue] = useState<string | null>(null);
@@ -59,11 +60,13 @@ export const useCarousel = ({
       return;
     }
 
-    const behaviour: 'auto' | 'smooth' = firstCenterRef.current || optionsChanged ? 'auto' : 'smooth';
+    const behaviour: 'auto' | 'smooth' = 'smooth';
 
     if (value) {
+      isCenteringRef.current = true;
       requestAnimationFrame(() => requestAnimationFrame(() => {
         centerSelected(carouselRef.current, value, behaviour);
+        setTimeout(() => { isCenteringRef.current = false; }, behaviour === 'smooth' ? 1000 : 0);
       }));
     }
 
@@ -71,7 +74,7 @@ export const useCarousel = ({
     prevOptionsRef.current = options;
     prevValueRef.current = value;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, value]);
+  }, [options, value, selectedPreset]);
 
   // Center the preset carousel (the one at the top of the page) when the
   // selected preset changes. This hook instance has no `options` prop and
@@ -79,14 +82,16 @@ export const useCarousel = ({
   useEffect(() => {
     if (options) return;
 
-    const behaviour: 'auto' | 'smooth' = firstCenterRef.current ? 'auto' : 'smooth';
+    const behaviour: 'auto' | 'smooth' = 'smooth';
 
+    isCenteringRef.current = true;
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (selectedPreset) {
         centerSelected(carouselRef.current, selectedPreset, behaviour);
       } else {
         initScrollToMiddle(carouselRef);
       }
+      setTimeout(() => { isCenteringRef.current = false; }, behaviour === 'smooth' ? 1000 : 0);
     }));
 
     firstCenterRef.current = false;
@@ -112,6 +117,9 @@ export const useCarousel = ({
   const centerElement = useCallback((el: HTMLElement | null, behaviour: 'auto' | 'smooth' = 'smooth') => {
     const carousel = carouselRef.current;
     if (!carousel || !el) return;
+    isCenteringRef.current = true;
+    const prevSnap = carousel.style.scrollSnapType;
+    carousel.style.scrollSnapType = 'none';
     const carouselRect = carousel.getBoundingClientRect();
     const buttonRect = el.getBoundingClientRect();
     const carouselCenter = carouselRect.left + carouselRect.width / 2;
@@ -123,6 +131,11 @@ export const useCarousel = ({
       // fallback for older browsers
       carousel.scrollLeft = scrollLeft;
     }
+    // Clear the flag and restore snap after animation completes (rough estimate)
+    setTimeout(() => { 
+      isCenteringRef.current = false; 
+      carousel.style.scrollSnapType = prevSnap || 'x mandatory';
+    }, behaviour === 'smooth' ? 1000 : 0);
   }, []);
 
   // Notify parent for a chosen logical value. This is called when a
@@ -165,7 +178,7 @@ export const useCarousel = ({
     const prevLogicalIndex = (currentLogicalIndex - 1 + logicalValues.length) % logicalValues.length;
     const prevVal = logicalValues[prevLogicalIndex];
 
-    let targetEl = candidates.find(c => c.dataset.originalValue === prevVal);
+    let targetEl = candidates.find(c => c.dataset.originalValue === prevVal && c.dataset.seg === '1') || candidates.find(c => c.dataset.originalValue === prevVal);
     if (!targetEl) return;
 
     setPendingValue(prevVal);
@@ -206,7 +219,7 @@ export const useCarousel = ({
     const nextLogicalIndex = (currentLogicalIndex + 1) % logicalValues.length;
     const nextVal = logicalValues[nextLogicalIndex];
 
-    let targetEl = candidates.find(c => c.dataset.originalValue === nextVal);
+    let targetEl = candidates.find(c => c.dataset.originalValue === nextVal && c.dataset.seg === '1') || candidates.find(c => c.dataset.originalValue === nextVal);
     if (!targetEl) return;
 
     setPendingValue(nextVal);
@@ -386,23 +399,23 @@ export const useCarousel = ({
     isDraggingRef.current = false;
   };
 
-  // Scroll handler: maintain loop illusion by jumping back when crossing the midpoint.
-  // Guard against work when neither user nor programmatic scroll is active
-  // so random layout reflows or parent scroll events don't cause visible
-  // "tugging" of the carousel when interacting elsewhere on the page.
+  // Scroll handler: maintain loop illusion by jumping back when crossing the midpoint for options-based carousels.
+  // For preset carousels, just debounce scroll-end detection.
   const handleScroll = () => {
     const carousel = carouselRef.current;
-    if (!carousel) return;
+    if (!carousel || isCenteringRef.current || isDraggingRef.current) return;
 
-    const totalWidth = carousel.scrollWidth;
-    const seg = totalWidth / 3 * 2;
-    const x = carousel.scrollLeft;
+    if (options) {
+      const totalWidth = carousel.scrollWidth;
+      const seg = totalWidth / 3;
+      const x = carousel.scrollLeft;
 
-    // Only apply the seamless looping jump logic when the user is actually
-    // dragging/scrolling this carousel. This prevents tiny scroll updates
-    // triggered by layout or parent containers from causing flicker.
-    if (isInteractingRef.current && x > seg) {
-      doInstantJump(carousel, x - (totalWidth / 3));
+      // Apply the seamless looping jump logic when crossing segment boundaries.
+      if (x > seg * 2) {
+        doInstantJump(carousel, x - seg);
+      } else if (x < seg) {
+        doInstantJump(carousel, x + seg * 2);
+      }
     }
 
     // debounce scroll-end detection
@@ -454,11 +467,12 @@ export const useCarousel = ({
     let targetEl: HTMLElement | null = null;
     if (el) targetEl = el;
     else {
-      // find the closest DOM element for the requested value
+      // find the DOM element for the requested value, preferring middle segment
+      const middleCandidates = candidates.filter(c => c.dataset.originalValue === val && c.dataset.seg === '1');
+      const candidatesToCheck = middleCandidates.length > 0 ? middleCandidates : candidates.filter(c => c.dataset.originalValue === val);
       const carouselCenter = getCarouselCenter();
       let best = Number.POSITIVE_INFINITY;
-      for (const c of candidates) {
-        if (c.dataset.originalValue !== val) continue;
+      for (const c of candidatesToCheck) {
         const r = c.getBoundingClientRect();
         const center = r.left + r.width / 2;
         const dist = Math.abs(center - carouselCenter);
