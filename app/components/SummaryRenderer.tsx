@@ -1,21 +1,23 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { renderMarkdownToElement } from '../utils/rendering';
+import type { Article } from '../types/tldr';
 
 
 interface Props {
   summary?: string | null;
   isLoading: boolean;
   summaryRef: React.RefObject<HTMLDivElement | null>;
+  articles?: Article[] | null;
 }
 
-export default function SummaryRenderer({ summary, isLoading, summaryRef }: Props) {
+export default function SummaryRenderer({ summary, isLoading, summaryRef, articles }: Props) {
   const internalRef = useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
     const usedRef: React.RefObject<HTMLDivElement> = (summaryRef || internalRef) as React.RefObject<HTMLDivElement>;
     if (!usedRef.current || !summary) return;
-    renderMarkdownToElement(usedRef.current, summary);
-  }, [summary, summaryRef]);
+    renderMarkdownToElement(usedRef.current, summary, articles || undefined);
+  }, [summary, summaryRef, articles]);
 
   return (
     <article

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo, useCallback } from 'react';
 import { presets, Option, presetColors } from '../constants/presets';
 import { capitalizeLabel } from '../utils/carouselUtils';
 import { useCarousel } from '../hooks/useCarousel';
@@ -16,7 +16,7 @@ interface PresetCarouselProps {
   onMouseLeave?: () => void;
 }
 
-const PresetCarousel = (props: PresetCarouselProps) => {
+const PresetCarousel = React.memo((props: PresetCarouselProps) => {
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const {
     carouselRef,
@@ -45,12 +45,18 @@ const PresetCarousel = (props: PresetCarouselProps) => {
   const usingOptions = Array.isArray(props.options) && props.options.length > 0;
 
   // Build a normalized items array (value, label, icon) that we can duplicate
-  const normalizedItems = usingOptions
+  // Memoize to prevent re-creating on every render
+  const normalizedItems = useMemo(() => usingOptions
     ? props.options!.map(opt => ({ value: opt.value, label: opt.label, icon: opt.icon, color: opt.color ?? presetColors[opt.value] }))
-    : presets.map(([key, Icon]) => ({ value: key, label: capitalizeLabel(key), icon: Icon, color: presetColors[key] }));
+    : presets.map(([key, Icon]) => ({ value: key, label: capitalizeLabel(key), icon: Icon, color: presetColors[key] })),
+    [usingOptions, props.options]
+  );
 
-  // Duplicate items once for seamless looping
-  const items = [...normalizedItems, ...normalizedItems].map((it, idx) => ({ ...it, _origIndex: idx % normalizedItems.length }));
+  // Duplicate items twice for seamless looping - memoize
+  const items = useMemo(() => 
+    [...normalizedItems, ...normalizedItems, ...normalizedItems].map((it, idx) => ({ ...it, _origIndex: idx % normalizedItems.length, _seg: Math.floor(idx / normalizedItems.length) })),
+    [normalizedItems]
+  );
 
   return (
     <div
@@ -116,12 +122,13 @@ const PresetCarousel = (props: PresetCarouselProps) => {
               isSelected={isSelected}
               onClick={onClick}
               suppressClickUntil={suppressClickUntilRef.current}
+              data-seg={it._seg}
             />
           );
         })}
       </div>
     </div>
   );
-};
+});
 
 export default PresetCarousel;

@@ -65,7 +65,19 @@ IMPORTANT: Start with a main TL;DR that summarizes all the key developments acro
 
 ---
 
-Do not combine articles into a single summary. Repeat this exact format for each article. Do not add extra information like dates, authors, or publication details unless they are part of the title or summary.
+Do not combine articles into a single summary. Repeat this exact format for each article.
+
+CRITICAL LINKING RULES (follow exactly):
+- For each article, use the metadata in the context block:
+  - The text after "Source:" is the source/host (example: "theguardian.com").
+  - The text after "Link:" is the full article URL (example: "https://www.theguardian.com/.../full-article-path").
+- In the line [<source>](<url>):
+  - Set <source> to the value from the "Source:" line (hostname only).
+  - Set <url> to the value from the "Link:" line (the exact article URL, unchanged).
+- Do NOT replace the article URL with a homepage or different URL (no "https://www.theguardian.com" if the Link line has a longer article path).
+- Do NOT invent or rewrite URLs; always copy them exactly from the Link metadata line.
+
+Do not add extra information like dates, authors, or publication details unless they are part of the title or summary.
 
 Output in ${language} (${uiLocale} locale). Use Markdown.
 - Style: ${styleNote}

@@ -13,6 +13,7 @@ interface PresetButtonProps {
   // duplicate when needed (useful for tripled-segment carousels).
   onClick: (el?: HTMLElement) => void;
   suppressClickUntil: number;
+  dataSeg?: number;
 }
 
 const PresetButton: React.FC<PresetButtonProps> = ({
@@ -22,7 +23,8 @@ const PresetButton: React.FC<PresetButtonProps> = ({
   isSelected,
   color,
   onClick,
-  suppressClickUntil
+  suppressClickUntil,
+  dataSeg
 }) => {
   const iconSize = isSelected ? 36 : 28;
 
@@ -41,6 +43,7 @@ const PresetButton: React.FC<PresetButtonProps> = ({
       aria-label={`Select ${label || capitalizeLabel(value)}`}
       aria-pressed={isSelected}
       data-original-value={value}
+      data-seg={dataSeg}
     >
       <div
         className="preset-icon"

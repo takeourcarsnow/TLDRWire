@@ -52,7 +52,7 @@ export const STYLE_OPTIONS = [
   { value: 'casual', label: 'Casual', icon: MessageCircle },
   { value: 'headlines-only', label: 'Headlines Only', icon: Newspaper },
   { value: 'analytical', label: 'Analytical', icon: BarChart },
-  { value: 'executive-brief', label: 'Executive Brief', icon: Briefcase },
+  { value: 'executive-brief', label: 'Executive Brief', icon: PenTool },
   { value: 'snarky', label: 'Snarky', icon: Meh },
   { value: 'optimistic', label: 'Optimistic', icon: Rainbow },
   { value: 'skeptical', label: 'Skeptical', icon: Eye },

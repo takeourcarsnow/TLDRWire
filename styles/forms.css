@@ -141,6 +141,7 @@ button.primary {
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
+  font-family: 'Playfair Display', "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Symbol", serif;
   outline: none;
 }
 

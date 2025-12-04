@@ -1,7 +1,8 @@
 import { applyThemeToFavicon, ensureThemeObserver, makeFaviconUrl } from './linkHelpers';
 import { wrapImageInParagraph } from './imageHelpers';
+import type { Article } from '../types/tldr';
 
-export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: string | undefined): void {
+export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: string | undefined, articles?: Article[]): void {
   if (!el || !markdown) return;
   try {
     // Log raw markdown for local debugging (will show in browser console).
@@ -16,6 +17,25 @@ export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: str
     temp.innerHTML = html;
     const children = Array.from(temp.children);
     el.innerHTML = '';
+
+    // Precompute canonical article URLs (host + full URL) so that source
+    // links in the rendered summary always point to the exact article,
+    // even if the LLM simplified or corrupted the link (e.g. using an
+    // image CDN URL instead of the article URL). We keep this list in
+    // order so we can align the N source links in the summary with the
+    // first N articles returned from the API.
+    const articleMeta: { host: string; url: string }[] = Array.isArray(articles)
+      ? articles.map((a) => {
+          try {
+            const u = new URL(a.url);
+            const host = (u.hostname || '').replace(/^www\./, '');
+            return { host, url: u.toString() };
+          } catch {
+            return null as any;
+          }
+        }).filter(Boolean)
+      : [];
+    let nextArticleIdx = 0;
 
     children.forEach((child, idx) => {
       if (child.tagName === 'UL') {
@@ -85,15 +105,47 @@ export function renderMarkdownToElement(el: HTMLDivElement | null, markdown: str
         link.setAttribute('rel', 'noopener noreferrer');
         const rawHref = link.getAttribute('href') || '';
         if (rawHref && !/^https?:/i.test(rawHref)) return;
+
         let url = new URL(rawHref || '#', window.location.href);
         let host = (url.hostname || '').replace(/^www\./, '');
         const currentText = (link.textContent || '').trim();
+
+        // Heuristic: treat most links in the generated summary as
+        // "source" links for individual articles and realign them to
+        // the canonical article URLs from the API payload. This fixes
+        // cases where the LLM accidentally uses the image CDN URL (for
+        // example, i.guim.co.uk) instead of the article URL for the
+        // last item, which breaks the source link and image.
+        let metaForThis: { host: string; url: string } | null = null;
+        if (articleMeta.length && nextArticleIdx < articleMeta.length) {
+          try {
+            const parentText = (link.parentElement?.textContent || '').trim().toLowerCase();
+            const textLower = currentText.toLowerCase();
+
+            // Looks like a standalone host or short label, not an
+            // arbitrary inline hyperlink.
+            const looksLikeHostLabel = !textLower || /^[a-z0-9_.-]+$/i.test(textLower);
+            const parentIsShort = parentText.length <= 80;
+
+            if (looksLikeHostLabel && parentIsShort) {
+              metaForThis = articleMeta[nextArticleIdx] || null;
+              if (metaForThis) {
+                nextArticleIdx++;
+                try {
+                  const canonical = new URL(metaForThis.url);
+                  url = canonical;
+                  host = metaForThis.host || (canonical.hostname || '').replace(/^www\./, '');
+                } catch {}
+              }
+            }
+          } catch {}
+        }
 
         if (!currentText || currentText.length > 42) link.textContent = (host || 'source').trim();
         link.title = `Open ${host || 'link'} in new tab`;
 
         const isGNews = /(^|\.)news\.google\.com$/i.test(url.hostname || '');
-        if (isGNews) {
+        if (isGNews && !metaForThis) {
           const raw = url.searchParams.get('url');
           if (raw) {
             try {

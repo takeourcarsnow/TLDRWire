@@ -116,10 +116,14 @@ export const responseHandler = {
     const regionName = regionCfg.name;
     const catName = (category || 'Top').replace(/^\w/, (c) => c.toUpperCase());
 
-    const { contextItems, contextLines } = buildContextItemsAndLines(translatedTopItems, uiLocale);
-
     const lengthPreset = (typeof length === 'string' ? length : 'medium').toLowerCase();
     const lengthConfig = LENGTH_CONFIGS[lengthPreset as keyof typeof LENGTH_CONFIGS] || LENGTH_CONFIGS.medium;
+
+    // Provide context (including image URLs) for as many articles as the
+    // length preset expects, so the "last" summarized item isn't missing
+    // its metadata.
+    const contextMaxItems = lengthConfig.bulletsMax;
+    const { contextItems, contextLines } = buildContextItemsAndLines(translatedTopItems, uiLocale, contextMaxItems);
 
     const { summary, usedLLM, llmError } = await summarizeWithPossibleFallback({ regionName, catName, maxAge: maxAgeHours, style, language, uiLocale, lengthPreset, lengthConfig, contextLines, requestLog });
     let payloadErrorForLogs = llmError;
@@ -129,8 +133,11 @@ export const responseHandler = {
     let finalSummary = summary; // Skip deduplication for new format
     // let finalSummary = dedupeSummaryBullets(summary);
 
-    // Images are now included directly in the LLM response, no need to insert them
-    // finalSummary = insertImagesIntoSummary(finalSummary, contextItems);
+    // Ensure each summarized article has an inline image, even if the
+    // LLM forgot to emit the markdown for the last item. We use
+    // insertImagesIntoSummary as a non-destructive fallback that only
+    // adds missing images and never duplicates existing ones.
+    finalSummary = insertImagesIntoSummary(finalSummary, contextItems);
 
     // const topSources = computeTopSources(cleanTopItems);
     // if (topSources) {
@@ -160,7 +167,9 @@ export const responseHandler = {
       },
       summary: finalSummary,
       images: translatedCleanTopItems.filter(a => a.imageUrl !== null).map(a => ({ title: a.title, url: a.url, imageUrl: a.imageUrl! })),
-      articles: translatedCleanTopItems.slice(0, -1).map(a => ({
+      // Include metadata for all articles so every summarized item can show
+      // its source and image (if available) in the UI.
+      articles: translatedCleanTopItems.map(a => ({
         title: a.title,
         url: a.url,
         publishedAt: a.publishedAt,

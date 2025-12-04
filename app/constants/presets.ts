@@ -47,7 +47,7 @@ export const presetColors: Record<string, string> = {
   entertainment: '#DB2777', // pink
   science: '#7C3AED', // violet
   health: '#EF4444', // red
-  business: '#6B7280', // neutral gray
+  business: '#F59E0B', // amber/gold
   international: '#3B82F6', // blue
   environment: '#16A34A', // green
   education: '#1E40AF', // navy

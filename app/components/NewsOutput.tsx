@@ -105,7 +105,12 @@ export const NewsOutput = memo(function NewsOutput({ isLoading, error, data, las
       </div>
 
       <div className="summary-wrapper">
-        <SummaryRenderer summary={data?.summary || null} isLoading={isLoading} summaryRef={summaryRef} />
+        <SummaryRenderer
+          summary={data?.summary || null}
+          isLoading={isLoading}
+          summaryRef={summaryRef}
+          articles={data?.articles || null}
+        />
       </div>
 
       <NewsControls isHidden={!!error} onCopy={copyToClipboard} onShare={shareContent} onHistory={onHistory || (() => {})} onPrint={printSummary} />

@@ -19,7 +19,7 @@ interface NewsFormProps {
 export const NewsForm = React.memo(function NewsForm(props: NewsFormProps) {
   return (
     <>
-      <NewsFormSelectors preferences={props.preferences} onPreferenceChange={props.onPreferenceChange} selectedPreset={props.selectedPreset} />
+      <NewsFormSelectors preferences={props.preferences} onPreferenceChange={props.onPreferenceChange} />
       <div className="form-divider"></div>
       <NewsFormSliders preferences={props.preferences} onPreferenceChange={props.onPreferenceChange} onSliderDrag={props.onSliderDrag} />
       <div className="form-divider"></div>

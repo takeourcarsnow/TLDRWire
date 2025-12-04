@@ -43,28 +43,55 @@ export const useCarousel = ({
   // transitions for subsequent updates so interactions feel continuous.
   const firstCenterRef = React.useRef(true);
   const prevOptionsRef = React.useRef(options);
+  const prevValueRef = React.useRef(value);
+
+  // Center option-based carousels (region/language/category/style) based on
+  // their controlled `value`. Only re-center when the value actually changes,
+  // not on every render or when unrelated props update.
   useEffect(() => {
+    if (!options) return; // handled by the preset-centric effect below
+
     const optionsChanged = prevOptionsRef.current !== options;
+    const valueChanged = prevValueRef.current !== value;
+    
+    // Only center on mount, options change, or actual value change
+    if (!firstCenterRef.current && !optionsChanged && !valueChanged) {
+      return;
+    }
+
     const behaviour: 'auto' | 'smooth' = firstCenterRef.current || optionsChanged ? 'auto' : 'smooth';
 
-    // Center the selected value after initialization.
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      centerSelected(carouselRef.current, value || selectedPreset || undefined, behaviour);
-    }));
+    if (value) {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        centerSelected(carouselRef.current, value, behaviour);
+      }));
+    }
 
     firstCenterRef.current = false;
     prevOptionsRef.current = options;
+    prevValueRef.current = value;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, value, selectedPreset]);
+  }, [options, value]);
 
-  // When a preset is selected, center all carousels on their current value
+  // Center the preset carousel (the one at the top of the page) when the
+  // selected preset changes. This hook instance has no `options` prop and
+  // only cares about `selectedPreset`.
   useEffect(() => {
-    if (value && selectedPreset !== undefined) {
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        centerSelected(carouselRef.current, value, 'smooth');
-      }));
-    }
-  }, [selectedPreset, value]);
+    if (options) return;
+
+    const behaviour: 'auto' | 'smooth' = firstCenterRef.current ? 'auto' : 'smooth';
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (selectedPreset) {
+        centerSelected(carouselRef.current, selectedPreset, behaviour);
+      } else {
+        initScrollToMiddle(carouselRef);
+      }
+    }));
+
+    firstCenterRef.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options, selectedPreset]);
 
   // Helper: compute the current visible carousel center (client coordinates)
   const getCarouselCenter = useCallback(() => {
@@ -359,16 +386,23 @@ export const useCarousel = ({
     isDraggingRef.current = false;
   };
 
-  // Scroll handler: maintain loop illusion by jumping back when crossing the midpoint
+  // Scroll handler: maintain loop illusion by jumping back when crossing the midpoint.
+  // Guard against work when neither user nor programmatic scroll is active
+  // so random layout reflows or parent scroll events don't cause visible
+  // "tugging" of the carousel when interacting elsewhere on the page.
   const handleScroll = () => {
     const carousel = carouselRef.current;
     if (!carousel) return;
 
     const totalWidth = carousel.scrollWidth;
-    const seg = totalWidth / 2;
+    const seg = totalWidth / 3 * 2;
     const x = carousel.scrollLeft;
-    if (x > seg) {
-      doInstantJump(carousel, x - seg);
+
+    // Only apply the seamless looping jump logic when the user is actually
+    // dragging/scrolling this carousel. This prevents tiny scroll updates
+    // triggered by layout or parent containers from causing flicker.
+    if (isInteractingRef.current && x > seg) {
+      doInstantJump(carousel, x - (totalWidth / 3));
     }
 
     // debounce scroll-end detection
@@ -398,8 +432,12 @@ export const useCarousel = ({
       }
       if (!closest) return;
 
-      // Removed auto-selection after drag to prevent jumping
-      setPendingValue(null);
+      // Clear pending value only if it matches the closest item (already selected)
+      // to avoid unnecessary state updates that cause re-renders
+      const closestVal = closest.dataset.originalValue;
+      if (closestVal && pendingValue === closestVal) {
+        setPendingValue(null);
+      }
     }, 120) as unknown as number;
   };
 
