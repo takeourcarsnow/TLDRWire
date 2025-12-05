@@ -102,11 +102,15 @@
   gap: var(--preset-button-gap);
   overflow-x: auto;
   scroll-behavior: smooth;
+  scroll-snap-type: x mandatory; /* snap to center items */
   /* limit the visible area so exactly 5 buttons fit in the viewport */
   flex: 0 1 auto;
   max-width: calc(var(--preset-button-width) * 5 + var(--preset-button-gap) * 4);
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
+  /* Add padding so first/last items can be centered */
+  padding-left: calc(50% - var(--preset-button-width) / 2);
+  padding-right: calc(50% - var(--preset-button-width) / 2);
 }
 
 /* Stronger fade for the left and right edges so partially-visible icons
@@ -164,7 +168,6 @@
   width: 32px;
   height: 32px;
   flex-shrink: 0;
-  scroll-snap-align: start;
   transition: all 0.2s ease;
   cursor: pointer;
   margin-top: -8px;
@@ -207,6 +210,7 @@
   min-height: 64px; /* fixed height to prevent jumping when label appears/disappears */
   flex-shrink: 0;
   cursor: pointer;
+  scroll-snap-align: center; /* snap this button to the center of the carousel */
 }
 
 .preset-icon {

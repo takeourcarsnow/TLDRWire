@@ -1,5 +1,6 @@
 import React from 'react';
 import TwEmoji from './TwEmoji';
+import { capitalizeLabel } from '../utils/carouselUtils';
 
 interface PresetButtonProps {
   value: string;
@@ -9,32 +10,8 @@ interface PresetButtonProps {
   color?: string;
   onClick: () => void;
   'data-seg'?: number;
+  'data-original-value'?: string;
 }
-
-const capitalizeLabel = (label: string): string => {
-  const special: Record<string, string> = {
-    'lt-local': 'Local',
-    'breaking': 'Breaking',
-    'weekend': 'Weekend',
-    'arts': 'Arts',
-    'tech': 'Tech',
-    'sports': 'Sports',
-    'health': 'Health',
-    'business': 'Business',
-    'education': 'Education',
-    'environment': 'Environment',
-    'entertainment': 'Entertainment',
-    'international': 'International',
-    'politics': 'Politics',
-    'science': 'Science',
-    'weather': 'Weather',
-    'travel': 'Travel',
-    'finance': 'Finance',
-    'markets': 'Markets',
-    'morning': 'Morning'
-  };
-  return special[label] || label.charAt(0).toUpperCase() + label.slice(1);
-};
 
 const PresetButton: React.FC<PresetButtonProps> = ({
   value,
@@ -43,7 +20,8 @@ const PresetButton: React.FC<PresetButtonProps> = ({
   isSelected,
   color,
   onClick,
-  'data-seg': dataSeg
+  'data-seg': dataSeg,
+  'data-original-value': dataOriginalValue
 }) => {
   const iconSize = isSelected ? 36 : 28;
 
@@ -56,6 +34,7 @@ const PresetButton: React.FC<PresetButtonProps> = ({
       aria-pressed={isSelected}
       data-value={value}
       data-seg={dataSeg}
+      data-original-value={dataOriginalValue}
     >
       <div
         className="preset-icon"
