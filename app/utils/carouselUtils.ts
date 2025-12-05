@@ -96,7 +96,7 @@ export const centerNeighbor = (
   direction: 1 | -1,
   onChange?: (value: string) => void,
   onPresetClick?: (preset: string) => void,
-  centerSelectedFn?: (value: string, behaviour?: 'auto' | 'smooth') => void
+  centerSelectedFn?: (carousel: HTMLDivElement | null, value: string, behaviour?: 'auto' | 'smooth') => void
 ): void => {
   if (!carousel) return;
 
@@ -119,12 +119,7 @@ export const centerNeighbor = (
     }
   });
 
-  const nextIndex = closestIndex + direction;
-  if (nextIndex < 0 || nextIndex >= candidates.length) {
-    // At the edge, do nothing (no seamless wrap)
-    return;
-  }
-
+  const nextIndex = (closestIndex + direction + candidates.length) % candidates.length;
   const nextEl = candidates[nextIndex];
   const val = nextEl?.dataset.originalValue;
   if (!val) return;
@@ -133,7 +128,7 @@ export const centerNeighbor = (
   else if (onPresetClick) onPresetClick(val);
 
   // Center the chosen item (no special segment logic required)
-  if (centerSelectedFn) centerSelectedFn(val, 'smooth');
+  if (centerSelectedFn) centerSelectedFn(carousel, val, 'smooth');
 };
 
 // Helper to find the closest item to the carousel center and select it.
@@ -141,9 +136,9 @@ export const selectClosest = (
   carousel: HTMLDivElement | null,
   onChange?: (value: string) => void,
   onPresetClick?: (preset: string) => void,
-  currentValue?: string,
+  currentValue?: string | null,
   currentSelectedPreset?: string | null,
-  centerSelectedFn?: (value: string, behaviour?: 'auto' | 'smooth') => void
+  centerSelectedFn?: (carousel: HTMLDivElement | null, value: string, behaviour?: 'auto' | 'smooth') => void
 ): void => {
   if (!carousel) return;
 
@@ -175,6 +170,6 @@ export const selectClosest = (
     }
 
     // Center the found item smoothly
-    if (centerSelectedFn) centerSelectedFn(val, 'smooth');
+    if (centerSelectedFn) centerSelectedFn(carousel, val, 'smooth');
   }
 };

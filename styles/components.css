@@ -168,11 +168,12 @@
   transition: all 0.2s ease;
   cursor: pointer;
   margin-top: -8px;
-  opacity: 0;
-  pointer-events: none;
+  opacity: 1;
+  pointer-events: auto;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
+  z-index: 1;
 }
 
 /* Position the first arrow on the left */
@@ -183,12 +184,6 @@
 /* Position the second arrow on the right */
 .preset-carousel-container .arrow-button:nth-child(2) {
   right: 0;
-}
-
-/* Show arrows on hover */
-.preset-carousel-container:hover .arrow-button {
-  opacity: 1;
-  pointer-events: auto;
 }
 
 /* Preset buttons: stack icon + label vertically and allow wider buttons to

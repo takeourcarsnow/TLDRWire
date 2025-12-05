@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useCallback, useEffect } from 'react';
 import { presets, Option, presetColors } from '../constants/presets';
-import { useCarousel } from '../hooks/useCarousel';
 import PresetButton from './PresetButton';
+import CarouselArrows from './CarouselArrows';
 
 interface PresetCarouselProps {
   onPresetClick?: (preset: string) => void;
@@ -39,6 +39,8 @@ const capitalizeLabel = (label: string): string => {
 };
 
 const PresetCarousel = React.memo((props: PresetCarouselProps) => {
+  const carouselRef = useRef<HTMLDivElement>(null);
+
   const items = useMemo(() => 
     props.options?.map(opt => ({ 
       value: opt.value, 
@@ -54,25 +56,52 @@ const PresetCarousel = React.memo((props: PresetCarouselProps) => {
     [props.options]
   );
 
-  const {
-    carouselRef,
-    handleKeyDown,
-    handleMouseDown,
-    handleMouseMove,
-    handleMouseUp,
-    handleTouchStart,
-    handleTouchMove,
-    handleTouchEnd,
-    selectValue,
-  } = useCarousel({
-    options: items,
-    value: props.value,
-    selectedPreset: props.selectedPreset,
-    onChange: props.onChange,
-    onPresetClick: props.onPresetClick,
-  });
+  const scrollToCenter = useCallback((val: string) => {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+    const button = carousel.querySelector(`[data-value="${val}"]`) as HTMLElement;
+    if (button) {
+      const carouselRect = carousel.getBoundingClientRect();
+      const buttonRect = button.getBoundingClientRect();
+      const offset = buttonRect.left - carouselRect.left - (carouselRect.width - buttonRect.width) / 2;
+      carousel.scrollBy({ left: offset, behavior: 'smooth' });
+    }
+  }, []);
 
   const currentValue = props.value || props.selectedPreset;
+
+  const handleSelect = useCallback((val: string) => {
+    if (props.onChange) props.onChange(val);
+    else if (props.onPresetClick) props.onPresetClick(val);
+  }, [props.onChange, props.onPresetClick]);
+
+  useEffect(() => {
+    if (currentValue) {
+      scrollToCenter(currentValue);
+    }
+  }, [currentValue, scrollToCenter]);
+
+  const scrollLeft = useCallback(() => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+    }
+  }, []);
+
+  const scrollRight = useCallback(() => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+    }
+  }, []);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      scrollLeft();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      scrollRight();
+    }
+  }, [scrollLeft, scrollRight]);
 
   return (
     <div
@@ -82,16 +111,10 @@ const PresetCarousel = React.memo((props: PresetCarouselProps) => {
       onMouseEnter={props.onMouseEnter}
       onMouseLeave={props.onMouseLeave}
     >
+      <CarouselArrows onScrollLeft={scrollLeft} onScrollRight={scrollRight} />
       <div 
         className="preset-carousel" 
         ref={carouselRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         {items.map((it) => (
           <PresetButton
@@ -101,8 +124,7 @@ const PresetCarousel = React.memo((props: PresetCarouselProps) => {
             icon={it.icon}
             color={it.color}
             isSelected={currentValue === it.value}
-            onClick={() => selectValue(it.value)}
-            data-seg={0}
+            onClick={() => handleSelect(it.value)}
           />
         ))}
       </div>

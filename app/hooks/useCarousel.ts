@@ -1,4 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react';
+import { centerSelected, selectClosest } from '../utils/carouselUtils';
+import { doInstantJump } from '../hooks/carouselHandlers';
 
 interface UseCarouselProps {
   options?: Array<{ value: string; label?: string; icon?: string | React.ComponentType<any> }>;
@@ -16,30 +18,13 @@ export const useCarousel = ({
   onPresetClick
 }: UseCarouselProps) => {
   const carouselRef = useRef<HTMLDivElement | null>(null);
-  const isDraggingRef = useRef(false);
-  const startXRef = useRef(0);
-  const scrollLeftRef = useRef(0);
-
   const items = options || [];
   const currentValue = value || selectedPreset;
 
   // Center the selected item when selection changes
   useEffect(() => {
     if (!currentValue || !carouselRef.current) return;
-
-    const carousel = carouselRef.current;
-    const button = carousel.querySelector(`[data-value="${currentValue}"]`) as HTMLElement;
-    
-    if (button) {
-      const carouselRect = carousel.getBoundingClientRect();
-      const buttonRect = button.getBoundingClientRect();
-      const offset = buttonRect.left - carouselRect.left - (carouselRect.width - buttonRect.width) / 2;
-      
-      carousel.scrollTo({
-        left: carousel.scrollLeft + offset,
-        behavior: 'smooth'
-      });
-    }
+    centerSelected(carouselRef.current, currentValue);
   }, [currentValue]);
 
   const handleSelect = useCallback((val: string) => {
@@ -49,16 +34,14 @@ export const useCarousel = ({
 
   const scrollToPrev = useCallback(() => {
     const idx = items.findIndex(it => it.value === currentValue);
-    if (idx > 0) {
-      handleSelect(items[idx - 1].value);
-    }
+    const newIdx = idx > 0 ? idx - 1 : items.length - 1;
+    handleSelect(items[newIdx].value);
   }, [items, currentValue, handleSelect]);
 
   const scrollToNext = useCallback(() => {
     const idx = items.findIndex(it => it.value === currentValue);
-    if (idx < items.length - 1) {
-      handleSelect(items[idx + 1].value);
-    }
+    const newIdx = idx < items.length - 1 ? idx + 1 : 0;
+    handleSelect(items[newIdx].value);
   }, [items, currentValue, handleSelect]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -71,51 +54,33 @@ export const useCarousel = ({
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    isDraggingRef.current = true;
-    startXRef.current = e.pageX;
-    scrollLeftRef.current = carouselRef.current?.scrollLeft || 0;
-    e.preventDefault();
-  };
+  // Handle seamless looping and keep selected in middle
+  useEffect(() => {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDraggingRef.current || !carouselRef.current) return;
-    const dx = e.pageX - startXRef.current;
-    carouselRef.current.scrollLeft = scrollLeftRef.current - dx;
-  };
+    let timeoutId: ReturnType<typeof setTimeout>;
 
-  const handleMouseUp = () => {
-    isDraggingRef.current = false;
-  };
+    const handleScroll = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        // Select the closest item to the center and center it
+        selectClosest(carousel, onChange, onPresetClick, currentValue, selectedPreset, centerSelected);
+      }, 100);
+    };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    isDraggingRef.current = true;
-    startXRef.current = e.touches[0].pageX;
-    scrollLeftRef.current = carouselRef.current?.scrollLeft || 0;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDraggingRef.current || !carouselRef.current) return;
-    const dx = e.touches[0].pageX - startXRef.current;
-    carouselRef.current.scrollLeft = scrollLeftRef.current - dx;
-  };
-
-  const handleTouchEnd = () => {
-    isDraggingRef.current = false;
-  };
+    carousel.addEventListener('scroll', handleScroll);
+    return () => {
+      clearTimeout(timeoutId);
+      carousel.removeEventListener('scroll', handleScroll);
+    };
+  }, [onChange, onPresetClick, currentValue, selectedPreset]);
 
   return {
     carouselRef,
     scrollLeft: scrollToPrev,
     scrollRight: scrollToNext,
     handleKeyDown,
-    handleMouseDown,
-    handleMouseMove,
-    handleMouseUp,
-    handleTouchStart,
-    handleTouchMove,
-    handleTouchEnd,
     selectValue: handleSelect,
   };
 };
