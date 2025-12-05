@@ -94,7 +94,7 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, onSli
       <div className="slider-row">
         <div className="slider-group">
           <label htmlFor="timeframe" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Clock size={18} /> Timeframe (hours)
+            <Clock size={18} /> Timeframe
           </label>
           <div className="slider-container" style={{ marginTop: 4, position: 'relative' }}>
             <input
@@ -117,6 +117,7 @@ export default function NewsFormSliders({ preferences, onPreferenceChange, onSli
               min={TIMEFRAME_MIN}
               max={TIMEFRAME_MAX}
               dragging={dragging.timeframe || false}
+              displayValue={`${preferences.timeframe} hours`}
             />
           </div>
         </div>

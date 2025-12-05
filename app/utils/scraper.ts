@@ -16,11 +16,9 @@ export async function scrapeArticleImage(articleUrl: string): Promise<string | n
       const age = Date.now() - cached.ts;
       if (age < SCRAPE_CACHE_TTL_MS) {
         if (cached.error) {
-          console.log(`DEBUG: Cached scrape error for ${articleUrl}: ${cached.error}`);
           return null;
         }
         if (cached.imageUrl) {
-          console.log(`DEBUG: Cached scraped image for ${articleUrl}: ${cached.imageUrl}`);
           return cached.imageUrl;
         }
       }
@@ -31,25 +29,20 @@ export async function scrapeArticleImage(articleUrl: string): Promise<string | n
     try {
       hostname = new URL(articleUrl).hostname;
     } catch (e: unknown) {
-      console.log(`DEBUG: Invalid URL for scraping: ${articleUrl}`);
       SCRAPE_CACHE.set(articleUrl, { ts: Date.now(), error: 'Invalid URL' });
       return null;
     }
 
     // Check rate limits
     if (!checkRateLimit(hostname)) {
-      console.log(`DEBUG: Skipping scrape due to rate limit: ${articleUrl}`);
       return null;
     }
-
-    console.log(`DEBUG: Scraping article for image: ${articleUrl}`);
 
     // Fetch the article page with improved timeout handling
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
-      console.log(`DEBUG: Scraping timed out for ${articleUrl}`);
-    }, 8000); // Reduced timeout to 8 seconds for better responsiveness
+    }, 5000); // 5 second timeout for faster response
 
     const response = await fetch(articleUrl, {
       signal: controller.signal,
@@ -65,9 +58,7 @@ export async function scrapeArticleImage(articleUrl: string): Promise<string | n
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const error = `HTTP ${response.status}`;
-      console.log(`DEBUG: Scrape failed for ${articleUrl}: ${error}`);
-      SCRAPE_CACHE.set(articleUrl, { ts: Date.now(), error });
+      SCRAPE_CACHE.set(articleUrl, { ts: Date.now(), error: `HTTP ${response.status}` });
       return null;
     }
 
@@ -121,7 +112,6 @@ export async function scrapeArticleImage(articleUrl: string): Promise<string | n
           if (metaTag.length > 0) {
             const content = metaTag.attr('content');
             if (content && isValidImageUrl(content, articleUrl)) {
-              console.log(`DEBUG: Found image via meta tag ${selector}: ${content}`);
               SCRAPE_CACHE.set(articleUrl, { ts: Date.now(), imageUrl: content });
               return content;
             }
@@ -139,14 +129,12 @@ export async function scrapeArticleImage(articleUrl: string): Promise<string | n
                 continue; // Skip small images
               }
 
-              console.log(`DEBUG: Found image via selector ${selector}: ${src}`);
               SCRAPE_CACHE.set(articleUrl, { ts: Date.now(), imageUrl: src });
               return src;
             }
           }
         }
       } catch (e: unknown) {
-        console.log(`DEBUG: Error with selector ${selector}:`, errorToString(e));
         continue;
       }
     }
@@ -165,23 +153,19 @@ export async function scrapeArticleImage(articleUrl: string): Promise<string | n
             continue;
           }
 
-          console.log(`DEBUG: Found fallback image: ${src}`);
           SCRAPE_CACHE.set(articleUrl, { ts: Date.now(), imageUrl: src });
           return src;
         }
       }
     } catch (e: unknown) {
-      console.log(`DEBUG: Error in fallback image search:`, errorToString(e));
+      // Silently continue
     }
 
-    console.log(`DEBUG: No suitable image found for article: ${articleUrl}`);
     SCRAPE_CACHE.set(articleUrl, { ts: Date.now(), error: 'No image found' });
     return null;
 
   } catch (error: unknown) {
-    const errorMsg = errorToString(error);
-    console.log(`DEBUG: Scrape error for ${articleUrl}: ${errorMsg}`);
-    SCRAPE_CACHE.set(articleUrl, { ts: Date.now(), error: errorMsg });
+    SCRAPE_CACHE.set(articleUrl, { ts: Date.now(), error: errorToString(error) });
     return null;
   }
 }

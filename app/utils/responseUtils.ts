@@ -50,24 +50,36 @@ export function insertImagesIntoSummary(finalSummary: string, contextItems: TopI
   const usedImages = new Set<string>();
 
   // Helper to find the best matching article for a given text
-  const findBestMatchingArticle = (text: string): TopItem | null => {
+  const findBestMatchingArticle = (text: string, requireUnused = true): TopItem | null => {
     let bestMatch: TopItem | null = null;
     let bestScore = 0;
 
     const textLower = text.toLowerCase();
-    const textWords = textLower.split(/\s+/).filter(w => w.length > 3);
+    // Include shorter words (2+ chars) for better matching with short titles
+    const textWords = textLower.split(/\s+/).filter(w => w.length > 2);
 
     for (const article of contextItems) {
-      if (!article.imageUrl || usedImages.has(String(article.imageUrl)) || existingImages.has(String(article.imageUrl))) continue;
+      if (!article.imageUrl) continue;
+      if (requireUnused && (usedImages.has(String(article.imageUrl)) || existingImages.has(String(article.imageUrl)))) continue;
 
-      const titleWords = (article.title || '').toLowerCase().split(/\s+/).filter(Boolean);
+      const titleLower = (article.title || '').toLowerCase();
+      const titleWords = titleLower.split(/\s+/).filter(w => w.length > 2);
+      
+      // Check for exact or near-exact title match first
+      if (textLower === titleLower || textLower.includes(titleLower) || titleLower.includes(textLower)) {
+        bestMatch = article;
+        bestScore = 1;
+        break;
+      }
+      
       const overlap = textWords.filter((word: string) =>
         titleWords.some((titleWord: string) => titleWord.includes(word) || word.includes(titleWord))
       ).length;
 
+      // Use lower threshold (0.15) for better matching
       const score = overlap / Math.max(textWords.length || 1, titleWords.length || 1);
 
-      if (score > bestScore && score > 0.2) {
+      if (score > bestScore && score > 0.15) {
         bestScore = score;
         bestMatch = article;
       }
@@ -76,34 +88,45 @@ export function insertImagesIntoSummary(finalSummary: string, contextItems: TopI
     return bestMatch;
   };
 
-  // Split into article blocks (separated by ---)
-  const blocks = finalSummary.split(/\n---\n/);
+  // Split into article blocks (separated by --- with possible whitespace)
+  const blocks = finalSummary.split(/\n---\s*\n/);
   const processedBlocks: string[] = [];
 
-  for (const block of blocks) {
+  for (let blockIdx = 0; blockIdx < blocks.length; blockIdx++) {
+    const block = blocks[blockIdx];
     const lines = block.split('\n');
     let hasImage = lines.some(l => l.trim().startsWith('!['));
     
-    // Check if this block has a bold header (article title)
-    const headerLine = lines.find(l => l.match(/^\*\*(.+)\*\*$/));
+    // Check if this block has a bold header (article title) - allow trailing whitespace
+    const headerLine = lines.find(l => l.match(/^\*\*(.+)\*\*\s*$/));
     
     if (headerLine && !hasImage) {
-      const titleMatch = headerLine.match(/^\*\*(.+)\*\*$/);
+      const titleMatch = headerLine.match(/^\*\*(.+)\*\*\s*$/);
       if (titleMatch) {
-        const articleTitle = titleMatch[1];
-        const matchingArticle = findBestMatchingArticle(articleTitle);
+        const articleTitle = titleMatch[1].trim();
+        // For the last block, be more lenient with matching
+        const isLastBlock = blockIdx === blocks.length - 1;
+        const matchingArticle = findBestMatchingArticle(articleTitle, !isLastBlock);
         
         if (matchingArticle && matchingArticle.imageUrl) {
           // Find where to insert the image: after the summary paragraph, before the source link
           const newLines: string[] = [];
           let insertedImage = false;
           
+          // Find the index of the source link line (last line matching [text](url))
+          let sourceLinkIdx = -1;
+          for (let i = lines.length - 1; i >= 0; i--) {
+            if (lines[i].trim().match(/^\[.+\]\(.+\)$/)) {
+              sourceLinkIdx = i;
+              break;
+            }
+          }
+          
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
-            newLines.push(line);
             
-            // Insert image before the source link [source](url) if we haven't inserted yet
-            if (!insertedImage && i + 1 < lines.length && lines[i + 1].match(/^\[.+\]\(.+\)$/)) {
+            // Insert image right before the source link
+            if (!insertedImage && i === sourceLinkIdx) {
               const safeTitle = (matchingArticle.title || '').replace(/[\[\]]/g, '');
               newLines.push('');
               newLines.push(`![${safeTitle}](${matchingArticle.imageUrl})`);
@@ -111,19 +134,20 @@ export function insertImagesIntoSummary(finalSummary: string, contextItems: TopI
               usedImages.add(matchingArticle.imageUrl);
               insertedImage = true;
             }
+            
+            newLines.push(line);
           }
           
-          // If we couldn't find a source link, try inserting before an empty line at the end
+          // If we couldn't find a source link, append image at the end
           if (!insertedImage) {
-            // Find last non-empty line that's not a source link
-            for (let i = newLines.length - 1; i >= 0; i--) {
-              if (newLines[i].match(/^\[.+\]\(.+\)$/)) {
-                const safeTitle = (matchingArticle.title || '').replace(/[\[\]]/g, '');
-                newLines.splice(i, 0, '', `![${safeTitle}](${matchingArticle.imageUrl})`, '');
-                usedImages.add(matchingArticle.imageUrl);
-                break;
-              }
+            const safeTitle = (matchingArticle.title || '').replace(/[\[\]]/g, '');
+            // Remove trailing empty lines before adding image
+            while (newLines.length > 0 && newLines[newLines.length - 1].trim() === '') {
+              newLines.pop();
             }
+            newLines.push('');
+            newLines.push(`![${safeTitle}](${matchingArticle.imageUrl})`);
+            usedImages.add(matchingArticle.imageUrl);
           }
           
           processedBlocks.push(newLines.join('\n'));

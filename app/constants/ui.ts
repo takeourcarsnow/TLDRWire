@@ -3,11 +3,11 @@
 import { MapPin, Globe, Folder, Star, Briefcase, Monitor, Microscope, Trophy, Film, Theater, Hospital, Building, Leaf, Coins, Zap, GraduationCap, Plane, Gamepad, Rocket, Shield, PenTool, FileText, Target, MessageCircle, Newspaper, BarChart, Meh, Rainbow, Eye, Book, Frown, Clock, TrendingUp, AlertTriangle, Glasses, Pen, Angry } from 'lucide-react';
 
 export const REGION_OPTIONS = [
-  { value: 'global', label: 'Global', icon: '🌍' },
+  { value: 'germany', label: 'Germany', icon: '🇩🇪' },
   { value: 'lithuania', label: 'Lithuania', icon: '🇱🇹' },
+  { value: 'global', label: 'Global', icon: '🌍' },
   { value: 'united-states', label: 'United States', icon: '🇺🇸' },
   { value: 'united-kingdom', label: 'United Kingdom', icon: '🇬🇧' },
-  { value: 'germany', label: 'Germany', icon: '🇩🇪' },
   { value: 'france', label: 'France', icon: '🇫🇷' },
   { value: 'india', label: 'India', icon: '🇮🇳' },
   { value: 'japan', label: 'Japan', icon: '🇯🇵' },
@@ -16,9 +16,9 @@ export const REGION_OPTIONS = [
 ];
 
 export const LANGUAGE_OPTIONS = [
-  { value: 'en', label: 'English', icon: '🇬🇧' },
-  { value: 'lt', label: 'Lithuanian', icon: '🇱🇹' },
   { value: 'de', label: 'German', icon: '🇩🇪' },
+  { value: 'lt', label: 'Lithuanian', icon: '🇱🇹' },
+  { value: 'en', label: 'English', icon: '🇬🇧' },
   { value: 'fr', label: 'French', icon: '🇫🇷' },
   { value: 'pt', label: 'Portuguese', icon: '🇵🇹' },
   { value: 'ja', label: 'Japanese', icon: '🇯🇵' },
@@ -26,9 +26,9 @@ export const LANGUAGE_OPTIONS = [
 ];
 
 export const CATEGORY_OPTIONS = [
-  { value: 'top', label: 'Top Stories', icon: Star },
-  { value: 'world', label: 'World', icon: Globe },
   { value: 'business', label: 'Business', icon: Briefcase },
+  { value: 'world', label: 'World', icon: Globe },
+  { value: 'top', label: 'Top Stories', icon: Star },
   { value: 'technology', label: 'Technology', icon: Monitor },
   { value: 'science', label: 'Science', icon: Microscope },
   { value: 'sports', label: 'Sports', icon: Trophy },
@@ -106,7 +106,7 @@ export const PRESET_CONFIGS = {
     region: 'global',
     language: 'en',
     category: 'top',
-    style: 'concise-bullets',
+    style: 'casual',
     length: 'short',
     timeframe: '6',
     limit: '15'

@@ -15,7 +15,7 @@ export async function fetchFeedsConcurrently(
   abortedControllers: number;
   feedTimedOut: boolean;
 }> {
-  const concurrency = Math.min(2, urls.length);
+  const concurrency = Math.min(4, urls.length); // Increased from 2 for faster fetching
   const results: FetchResult[] = new Array(urls.length);
   let workerIndex = 0;
   let stopFetching = false;
@@ -84,14 +84,17 @@ export async function fetchFeedsConcurrently(
   const REQUEST_TIMEOUT_MS = 20000; // 20s overall for feed stage
   const feedTimeoutMs = Math.max(REQUEST_TIMEOUT_MS - 5000, 5000);
   let feedTimedOut = false;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   await Promise.race([
-    workersPromise,
+    workersPromise.then(() => {
+      // Clear timeout when workers complete
+      if (timeoutId) clearTimeout(timeoutId);
+    }),
     new Promise<void>((resolve) => {
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         feedTimedOut = true;
         stopFetching = true;
-        try { console.warn('Feed fetching taking too long, aborting'); } catch { /* ignore */ }
         resolve();
       }, feedTimeoutMs);
     })

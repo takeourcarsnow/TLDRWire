@@ -127,6 +127,14 @@ select:hover, input:hover {
   justify-content: center;
 }
 
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 0px;
+  justify-content: center;
+  align-items: center;
+}
+
 /* Ensure the primary action is visually prominent and wider */
 .actions > button {
   min-width: 240px;

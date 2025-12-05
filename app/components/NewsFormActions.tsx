@@ -1,6 +1,9 @@
 import React from 'react';
-import { Clock, Sparkles, Loader } from 'lucide-react';
+import { Clock, Sparkles, Loader, User } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import PresetCarousel from './PresetCarousel';
+
+const ThemeToggle = dynamic(() => import('./ThemeToggle').then(m => ({ default: m.ThemeToggle })), { ssr: false });
 
 interface Props {
   onGenerate: () => Promise<void>;
@@ -8,9 +11,11 @@ interface Props {
   isLoading: boolean;
   rateLimited?: boolean;
   rateLimitCountdown?: number;
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
 }
 
-export default function NewsFormActions({ onGenerate, onPresetClick, isLoading, rateLimited = false, rateLimitCountdown = 0 }: Props) {
+export default function NewsFormActions({ onGenerate, onPresetClick, isLoading, rateLimited = false, rateLimitCountdown = 0, theme, onToggleTheme }: Props) {
   return (
     <>
       <div className="actions">
@@ -31,6 +36,20 @@ export default function NewsFormActions({ onGenerate, onPresetClick, isLoading, 
             )}
           </button>
         </div>
+      </div>
+
+      <div className="form-actions">
+        <a
+          href="https://nefas.tv"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="author-link"
+          title="Visit author's website"
+          aria-label="Visit author's website"
+        >
+          <User size={16} />
+        </a>
+        <ThemeToggle theme={theme} onToggle={onToggleTheme} />
       </div>
 
   {/* PresetCarousel moved to top of home panel (pages/index.tsx) */}

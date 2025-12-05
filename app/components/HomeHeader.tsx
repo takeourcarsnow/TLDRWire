@@ -1,7 +1,4 @@
 import React from 'react';
-import dynamic from 'next/dynamic';
-
-const ThemeToggle = dynamic(() => import('./ThemeToggle').then(m => ({ default: m.ThemeToggle })), { ssr: false });
 
 interface HomeHeaderProps {
   theme: 'light' | 'dark';
@@ -17,7 +14,6 @@ export function HomeHeader({ theme, onToggleTheme }: HomeHeaderProps) {
           <span className="tag">Get the news, minus the noise</span>
         </div>
       </div>
-      <ThemeToggle theme={theme} onToggle={onToggleTheme} />
     </header>
   );
 }

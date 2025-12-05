@@ -14,6 +14,8 @@ interface NewsFormProps {
   rateLimitCountdown?: number;
   selectedPreset?: string | null;
   onSliderDrag?: (isDragging: boolean) => void;
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
 }
 
 export const NewsForm = React.memo(function NewsForm(props: NewsFormProps) {
@@ -23,7 +25,7 @@ export const NewsForm = React.memo(function NewsForm(props: NewsFormProps) {
       <div className="form-divider"></div>
       <NewsFormSliders preferences={props.preferences} onPreferenceChange={props.onPreferenceChange} onSliderDrag={props.onSliderDrag} />
       <div className="form-divider"></div>
-      <NewsFormActions onGenerate={props.onGenerate} onPresetClick={props.onPresetClick} isLoading={props.isLoading} rateLimited={props.rateLimited} rateLimitCountdown={props.rateLimitCountdown} />
+      <NewsFormActions onGenerate={props.onGenerate} onPresetClick={props.onPresetClick} isLoading={props.isLoading} rateLimited={props.rateLimited} rateLimitCountdown={props.rateLimitCountdown} theme={props.theme} onToggleTheme={props.onToggleTheme} />
     </>
   );
 });

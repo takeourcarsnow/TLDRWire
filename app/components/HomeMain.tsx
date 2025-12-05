@@ -92,6 +92,8 @@ export function HomeMain({
               rateLimited={rateLimited}
               rateLimitCountdown={rateLimitCountdown}
               onSliderDrag={setIsDraggingSlider}
+              theme={theme}
+              onToggleTheme={onToggleTheme}
             />
           </section>
 

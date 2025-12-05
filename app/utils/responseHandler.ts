@@ -75,7 +75,12 @@ export const responseHandler = {
       query: '',
       loggerContext: { uiLocale },
       maxAgeHours: timeframeHours,
-      enableImageScraping: process.env.ENABLE_IMAGE_SCRAPING === 'true'
+      enableImageScraping: process.env.ENABLE_IMAGE_SCRAPING === 'true',
+      scrapingOptions: {
+        maxConcurrent: 4,
+        delayBetweenRequests: 150,
+        lazyLoad: false // Process synchronously but with faster settings
+      }
     });
     processTimer();
 

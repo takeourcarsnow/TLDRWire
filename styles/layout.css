@@ -16,56 +16,68 @@
   top: 6px;
 }
 
-/* Theme toggle */
 .theme-toggle {
-  /* anchor the toggle to the header's top-right (positioned parent) */
-  position: absolute !important;
-  top: 4px !important;
-  right: 12px !important;
-
-  /* visual appearance */
-  background: transparent !important;
   border: none !important;
-  border-radius: var(--radius) !important;
-  padding: 6px !important;
-  font-size: 16px !important;
-  color: var(--text) !important;
-
-  /* interaction: remove animations or visual changes on click/tap */
-  cursor: pointer !important;
-  transition: none !important;
-  box-shadow: none !important;
-  transform: none !important;
-  filter: none !important;
-
-  /* remove default focus outline here (we provide a deliberate focus-visible style below)
-     and suppress mobile tap highlights & long-press callouts */
-  outline: none !important;
-  -webkit-tap-highlight-color: transparent !important;
-  -webkit-touch-callout: none !important;
-  -webkit-user-select: none !important;
-  -ms-user-select: none !important;
-  user-select: none !important;
-  touch-action: manipulation !important;
-  -webkit-user-drag: none !important;
-  appearance: none !important;
-  -webkit-appearance: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  line-height: 0 !important;
+  font-size: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-/* Remove hover/active/focus visual changes so clicks/taps produce no effect */
-.theme-toggle:hover,
-.theme-toggle:active,
-.theme-toggle:focus {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  transform: none !important;
-  filter: none !important;
+/* Ensure icons are visible across themes by inheriting text color */
+.theme-toggle svg {
+  width: 16px !important;
+  height: 16px !important;
+  color: var(--text) !important;
+  stroke: currentColor !important;
 }
 
 /* Keep an accessible focus indication for keyboard users */
 .theme-toggle:focus-visible {
-  outline: 2px solid rgba(77,163,255,0.18) !important;
+  outline: 1px solid rgba(77,163,255,0.3) !important;
+}
+
+.header-actions {
+  position: absolute;
+  top: 4px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.author-link {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  line-height: 0 !important;
+  font-size: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-decoration: none !important;
+}
+
+.author-link svg {
+  width: 16px !important;
+  height: 16px !important;
+  color: var(--text) !important;
+  stroke: currentColor !important;
+}
+
+.author-link:focus-visible {
+  outline: 1px solid rgba(77,163,255,0.3) !important;
 }
 .site-header {
   /* account for device safe area (notches) where supported */

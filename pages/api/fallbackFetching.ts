@@ -54,13 +54,15 @@ export async function fetchFallbackFeeds(
       const REQUEST_TIMEOUT_MS = 20000;
       const fbTimeoutMs = Math.max(REQUEST_TIMEOUT_MS - 8000, 8000);
       let fbTimedOut = false;
+      let fbTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
       await Promise.race([
-        fbWorkersPromise,
+        fbWorkersPromise.then(() => {
+          if (fbTimeoutId) clearTimeout(fbTimeoutId);
+        }),
         new Promise<void>((resolve) => {
-          setTimeout(() => {
+          fbTimeoutId = setTimeout(() => {
             fbTimedOut = true;
-            try { console.warn('Fallback feed fetching taking too long, aborting'); } catch { /* ignore */ }
             resolve();
           }, fbTimeoutMs);
         })

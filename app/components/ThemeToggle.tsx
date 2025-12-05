@@ -16,7 +16,7 @@ export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
       aria-label="Toggle theme"
       aria-pressed={theme === 'dark'}
     >
-      <span>{theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</span>
+      {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
     </button>
   );
 }

@@ -22,29 +22,14 @@ export async function processArticles(opts: {
   loggerContext?: any;
   maxAgeHours?: number;
   enableImageScraping?: boolean;
+  scrapingOptions?: {
+    maxConcurrent?: number;
+    delayBetweenRequests?: number;
+    lazyLoad?: boolean;
+  };
 }): Promise<ProcessArticlesResult> {
-  const { feedsResult, maxArticles = 20, preferLatest = false, region, category, query, loggerContext, maxAgeHours, enableImageScraping = false } = opts;
+  const { feedsResult, maxArticles = 20, preferLatest = false, region, category, query, loggerContext, maxAgeHours, enableImageScraping = false, scrapingOptions } = opts;
   const log = logger.child({ route: '/api/tldr/processArticles', region, category, maxArticles, query, ...(loggerContext || {}) });
-
-  // Track if we've logged sample fields
-  let loggedSampleFields = false;
-
-  // Debug: log available fields in the first few items
-  if (!loggedSampleFields && feedsResult?.items?.length > 0) {
-    const firstItem = feedsResult.items[0];
-    console.log('DEBUG: Sample RSS item fields:', Object.keys(firstItem));
-    console.log('DEBUG: Sample RSS item content fields:', {
-      title: firstItem.title,
-      enclosure: firstItem.enclosure,
-      'media:content': firstItem['media:content'],
-      'media:thumbnail': firstItem['media:thumbnail'],
-      content: firstItem.content?.substring(0, 200),
-      'content:encoded': firstItem['content:encoded']?.substring(0, 200),
-      contentSnippet: firstItem.contentSnippet?.substring(0, 200),
-      image: firstItem.image
-    });
-    loggedSampleFields = true;
-  }
 
   const rawItems = normalizeArticles(feedsResult);
 
@@ -112,10 +97,10 @@ export async function processArticles(opts: {
   }));
 
   // Optional: Scrape articles for images if RSS didn't provide them
-  await performImageScraping(topItems, cleanTopItems, enableImageScraping, {
-    maxConcurrent: 3, // Allow 3 concurrent requests
-    delayBetweenRequests: 500, // 500ms delay between requests
-    lazyLoad: false // Wait for scraping to complete before returning
+  await performImageScraping(topItems, cleanTopItems, enableImageScraping, scrapingOptions || {
+    maxConcurrent: 4,
+    delayBetweenRequests: 150,
+    lazyLoad: false
   });
 
   log.info('processed articles', { rawCount: rawItems.length, deduped: normalized.length, selected: topItems.length });

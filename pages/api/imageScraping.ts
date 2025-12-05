@@ -27,22 +27,19 @@ export const performImageScraping = async (
     return;
   }
 
-  const { maxConcurrent = 3, delayBetweenRequests = 500, lazyLoad = false } = options;
+  const { maxConcurrent = 4, delayBetweenRequests = 200, lazyLoad = false } = options;
 
-  console.log('DEBUG: Starting article scraping for missing images', { maxConcurrent, delayBetweenRequests, lazyLoad });
+  // Reduced delays and increased concurrency for faster processing
 
-  // Scrape articles that don't have images (limit to avoid overwhelming)
+  // Scrape articles that don't have images (limit to reduce server load)
   const articlesToScrape = cleanTopItems
     .filter(item => !item.imageUrl)
-    .slice(0, 10); // Limit scraping to first 10 articles without images
+    .slice(0, 5); // Limit to 5 articles for faster response
 
   if (articlesToScrape.length > 0) {
-    console.log(`DEBUG: Scraping ${articlesToScrape.length} articles for images`);
-
     if (lazyLoad) {
       // For lazy loading, start scraping in background without waiting
       scrapeImagesInBackground(articlesToScrape, topItems, cleanTopItems, maxConcurrent, delayBetweenRequests);
-      console.log('DEBUG: Started lazy image scraping in background');
     } else {
       // Synchronous scraping - wait for completion
       await scrapeImagesWithConcurrency(articlesToScrape, topItems, cleanTopItems, maxConcurrent, delayBetweenRequests);
@@ -61,7 +58,7 @@ const scrapeImagesInBackground = async (
   try {
     await scrapeImagesWithConcurrency(articlesToScrape, topItems, cleanTopItems, maxConcurrent, delayBetweenRequests);
   } catch (error) {
-    console.log('DEBUG: Background image scraping failed:', error);
+    // Silently fail on background scraping
   }
 };
 
@@ -90,7 +87,6 @@ const scrapeImagesWithConcurrency = async (
         const scrapedImageUrl = await scrapeArticleImageWithCache(item.url);
         return { item, imageUrl: scrapedImageUrl };
       } catch (error) {
-        console.log(`DEBUG: Failed to scrape image for article: ${item.title.substring(0, 50)} - ${error}`);
         return { item, imageUrl: null };
       }
     });
@@ -109,7 +105,6 @@ const scrapeImagesWithConcurrency = async (
           if (index !== -1) {
             topItems[index].imageUrl = imageUrl;
           }
-          console.log(`DEBUG: Successfully scraped image for article: ${item.title.substring(0, 50)}`);
         }
       }
     }
@@ -119,8 +114,6 @@ const scrapeImagesWithConcurrency = async (
       await new Promise(resolve => setTimeout(resolve, delayBetweenRequests * 2));
     }
   }
-
-  console.log('DEBUG: Article scraping completed');
 };
 
 // Enhanced scraping with persistent caching
@@ -134,7 +127,6 @@ const scrapeArticleImageWithCache = async (articleUrl: string): Promise<string |
         return null; // Cached failure
       }
       if (cached.imageUrl) {
-        console.log(`DEBUG: Cache hit for scraped image: ${articleUrl}`);
         return cached.imageUrl;
       }
     } else {

@@ -14,11 +14,11 @@ export interface Preferences {
 const defaultPreferences: Preferences = {
   region: 'global',
   category: 'top',
-  style: 'neutral',
+  style: 'casual',
   language: 'en',
-  timeframe: '24',
-  limit: '20',
-  length: 'medium',
+  timeframe: '6',
+  limit: '15',
+  length: 'short',
 };
 
 export function usePreferences() {

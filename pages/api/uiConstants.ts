@@ -1,5 +1,5 @@
 // Supported languages
-export const SUPPORTED_LANGUAGES = ['en', 'lt', 'de', 'fr', 'pt', 'ja', 'hi'];
+export const SUPPORTED_LANGUAGES = ['de', 'lt', 'en', 'fr', 'pt', 'ja', 'hi'];
 
 // Length presets
 export const LENGTH_OPTIONS = ['short', 'medium', 'long', 'very-long'];
