@@ -66,6 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(200).json(result.payload);
   } catch (err: any) {
     logger.error('tldr handler error', { message: err?.message, stack: err?.stack });
+    console.error('API Error:', err?.message, err?.stack);
     if (err && typeof err.message === 'string' && err.message.toLowerCase().includes('timed out')) {
       return res.status(504).json({ ok: false, error: 'Request timed out', details: err.message });
     }

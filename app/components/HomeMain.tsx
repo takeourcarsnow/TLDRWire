@@ -66,7 +66,7 @@ export function HomeMain({
   return (
     <>
       <main id="main-content">
-        <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab} disabled={true}>
+        <SwipeableContainer activeIndex={activeTab} onSlideChange={setActiveTab}>
           <section className="panel home-panel">
             {/* Very top: short intro about the website (scrolling/ticker like results meta) */}
             <div className="meta" style={{ marginBottom: 12 }}>

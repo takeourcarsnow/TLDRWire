@@ -23,6 +23,7 @@ export async function generateSummary({ prompt, style }: { prompt: string; style
   }
   const temp = (style === 'headlines-only' || style === 'urgent-brief') ? 0.3 : 0.5;
   const generationConfig = { temperature: temp, topP: 0.9 };
+  console.log('Generating content with model:', GEMINI_MODEL, 'temperature:', temp);
   const result = await mdl.generateContent({
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: { ...generationConfig, maxOutputTokens: 1500 }
@@ -51,6 +52,7 @@ export async function generateSummary({ prompt, style }: { prompt: string; style
     }
     return trimmed;
   } catch (err: any) {
+    console.error('LLM generation error:', err?.message || err);
     throw new Error(err?.message || 'LLM generation failed with an unknown error');
   }
 }

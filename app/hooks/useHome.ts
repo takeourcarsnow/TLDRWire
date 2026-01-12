@@ -44,7 +44,9 @@ export function useHome() {
     } catch (e) {
       // ignore localStorage errors (e.g., SSR or privacy modes)
     }
+  }, []);
 
+  useEffect(() => {
     if (data && !isLoading) {
       setActiveTab(1);
     }

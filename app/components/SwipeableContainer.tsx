@@ -9,10 +9,9 @@ interface SwipeableContainerProps {
   children: React.ReactNode[];
   activeIndex: number;
   onSlideChange: (index: number) => void;
-  disabled?: boolean;
 }
 
-export function SwipeableContainer({ children, activeIndex, onSlideChange, disabled = false }: SwipeableContainerProps) {
+export function SwipeableContainer({ children, activeIndex, onSlideChange }: SwipeableContainerProps) {
   const swiperRef = useRef<SwiperType | null>(null);
   const [slideMinHeight, setSlideMinHeight] = useState<number>(0);
 
@@ -91,16 +90,6 @@ export function SwipeableContainer({ children, activeIndex, onSlideChange, disab
     return () => observer.disconnect();
   }, [slideMinHeight]);
 
-  useEffect(() => {
-    if (swiperRef.current) {
-      if (disabled) {
-        swiperRef.current.disable();
-      } else {
-        swiperRef.current.enable();
-      }
-    }
-  }, [disabled]);
-
   return (
     <Swiper
       spaceBetween={0}
@@ -108,7 +97,7 @@ export function SwipeableContainer({ children, activeIndex, onSlideChange, disab
       autoHeight={true}
       onSlideChange={(swiper) => onSlideChange(swiper.activeIndex)}
       onSwiper={(swiper) => (swiperRef.current = swiper)}
-      allowTouchMove={!disabled}
+      allowTouchMove={false}
       simulateTouch={false}
       /* Let slides size to their content. Avoid forcing full-height which
          creates large empty space when content is short. */
